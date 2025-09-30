@@ -1,103 +1,200 @@
-import Image from "next/image";
+// src/app/page.tsx
+'use client';
 
-export default function Home() {
+import { useState, useEffect, useMemo, useCallback } from 'react';
+import { materialData } from '@/data/materials';
+import FilterSection from '@/components/FilterSection';
+import MaterialTable from '@/components/MaterialTable';
+import PropertyFilter from '@/components/PropertyFilter';
+import { Material, PropertyFilter as PropertyFilterType, SortState, PropertySortState, MaterialProperty } from '@/types';
+
+export default function MaterialDatabase() {
+  const [hiddenProperties, setHiddenProperties] = useState<Set<string>>(new Set());
+  const [propertyNames, setPropertyNames] = useState<string[]>([]);
+  const [propertyFilters, setPropertyFilters] = useState<PropertyFilterType[]>([]);
+  const [currentSort, setCurrentSort] = useState<SortState>({ column: '', direction: 'asc' });
+  const [currentPropertySort, setCurrentPropertySort] = useState<PropertySortState>({ property: '', direction: 'asc' });
+  const [materialFilter, setMaterialFilter] = useState<string>('');
+  const [herstellerFilter, setHerstellerFilter] = useState<string>('');
+
+  // Collect all property names on component mount
+  useEffect(() => {
+    const names = new Set<string>();
+    materialData.forEach((material) => {
+      material.Eigenschaften.forEach((prop: MaterialProperty) => {
+        names.add(prop.name);
+      });
+    });
+    setPropertyNames(Array.from(names).sort());
+  }, []);
+
+  // Use useMemo to compute filtered and sorted materials
+  const materials = useMemo(() => {
+    let filtered: Material[] = [...materialData];
+    
+    // Apply text filters
+    if (materialFilter) {
+      filtered = filtered.filter(material => 
+        material.Materialname.toLowerCase().includes(materialFilter.toLowerCase())
+      );
+    }
+
+    if (herstellerFilter) {
+      filtered = filtered.filter(material => 
+        material.Hersteller.toLowerCase().includes(herstellerFilter.toLowerCase())
+      );
+    }
+    
+    // Apply property filters
+    if (propertyFilters.length > 0) {
+      filtered = filtered.filter(material => {
+        return propertyFilters.every((filter) => {
+          if (!filter) return true;
+          
+          const prop = material.Eigenschaften.find((p: MaterialProperty) => p.name === filter.name);
+          if (!prop) return false;
+          
+          if (filter.type === 'text' && filter.value) {
+            return prop.wert.toLowerCase().includes(filter.value.toLowerCase());
+          } else if (filter.type === 'dropdown' && filter.value) {
+            return prop.wert === filter.value;
+          } else if (filter.type === 'range' && filter.min !== undefined && filter.max !== undefined) {
+            const num = parseFloat(prop.wert);
+            return !isNaN(num) && num >= filter.min && num <= filter.max;
+          }
+          return true;
+        });
+      });
+    }
+    
+    // Apply sorting
+    if (currentSort.column) {
+      filtered.sort((a, b) => {
+        const aValue = a[currentSort.column as keyof Material] as string;
+        const bValue = b[currentSort.column as keyof Material] as string;
+        return currentSort.direction === 'asc' 
+          ? aValue.localeCompare(bValue) 
+          : bValue.localeCompare(aValue);
+      });
+    } else if (currentPropertySort.property) {
+      filtered.sort((a, b) => {
+        const aProp = a.Eigenschaften.find((p: MaterialProperty) => p.name === currentPropertySort.property);
+        const bProp = b.Eigenschaften.find((p: MaterialProperty) => p.name === currentPropertySort.property);
+        
+        if (!aProp && !bProp) return 0;
+        if (!aProp) return 1;
+        if (!bProp) return -1;
+        
+        const aNum = parseFloat(aProp.wert);
+        const bNum = parseFloat(bProp.wert);
+        
+        if (!isNaN(aNum) && !isNaN(bNum)) {
+          return currentPropertySort.direction === 'asc' ? aNum - bNum : bNum - aNum;
+        } else {
+          return currentPropertySort.direction === 'asc' 
+            ? aProp.wert.localeCompare(bProp.wert) 
+            : bProp.wert.localeCompare(aProp.wert);
+        }
+      });
+    }
+    
+    return filtered;
+  }, [propertyFilters, currentSort, currentPropertySort, materialFilter, herstellerFilter]);
+
+  const togglePropertyVisibility = useCallback((propertyName: string) => {
+    setHiddenProperties(prev => {
+      const newSet = new Set(prev);
+      if (newSet.has(propertyName)) {
+        newSet.delete(propertyName);
+      } else {
+        newSet.add(propertyName);
+      }
+      return newSet;
+    });
+  }, []);
+
+  const sortTable = useCallback((column: string) => {
+    setCurrentSort((prev: SortState) => ({
+      column,
+      direction: prev.column === column ? 
+        (prev.direction === 'asc' ? 'desc' : 'asc') : 'asc'
+    }));
+    setCurrentPropertySort({ property: '', direction: 'asc' });
+  }, []);
+
+  const sortByProperty = useCallback((property: string, direction: 'asc' | 'desc') => {
+    setCurrentPropertySort({ property, direction });
+    setCurrentSort({ column: '', direction: 'asc' });
+  }, []);
+
+  const handleFilterChange = useCallback(({ materialFilter, herstellerFilter }: { 
+    materialFilter: string; 
+    herstellerFilter: string 
+  }) => {
+    setMaterialFilter(materialFilter);
+    setHerstellerFilter(herstellerFilter);
+  }, []);
+
+  const handleAddPropertyFilter = useCallback(() => {
+    if (propertyNames.length === 0) return;
+    
+    setPropertyFilters(prev => [
+      ...prev, 
+      { 
+        name: propertyNames[0], 
+        type: 'text', 
+        value: '1' 
+      }
+    ]);
+  }, [propertyNames]);
+
+  const handlePropertyFilterChange = useCallback((index: number, filter: PropertyFilterType | null) => {
+    setPropertyFilters(prev => {
+      const newFilters = [...prev];
+      if (filter === null) {
+        newFilters.splice(index, 1);
+      } else {
+        newFilters[index] = filter;
+      }
+      return newFilters;
+    });
+  }, []);
+
   return (
-    <div className="font-sans grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20">
-      <main className="flex flex-col gap-[32px] row-start-2 items-center sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={180}
-          height={38}
-          priority
-        />
-        <ol className="font-mono list-inside list-decimal text-sm/6 text-center sm:text-left">
-          <li className="mb-2 tracking-[-.01em]">
-            Get started by editing{" "}
-            <code className="bg-black/[.05] dark:bg-white/[.06] font-mono font-semibold px-1 py-0.5 rounded">
-              src/app/page.tsx
-            </code>
-            .
-          </li>
-          <li className="tracking-[-.01em]">
-            Save and see your changes instantly.
-          </li>
-        </ol>
-
-        <div className="flex gap-4 items-center flex-col sm:flex-row">
-          <a
-            className="rounded-full border border-solid border-transparent transition-colors flex items-center justify-center bg-foreground text-background gap-2 hover:bg-[#383838] dark:hover:bg-[#ccc] font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 sm:w-auto"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={20}
-              height={20}
-            />
-            Deploy now
-          </a>
-          <a
-            className="rounded-full border border-solid border-black/[.08] dark:border-white/[.145] transition-colors flex items-center justify-center hover:bg-[#f2f2f2] dark:hover:bg-[#1a1a1a] hover:border-transparent font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 w-full sm:w-auto md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Read our docs
-          </a>
+    <main className="container mx-auto p-4">
+      <h1 className="text-2xl font-bold mb-6">Materialdatenbank</h1>
+      
+      <FilterSection 
+        onFilterChange={handleFilterChange}
+        onAddPropertyFilter={handleAddPropertyFilter}
+        propertyNames={propertyNames}
+      />
+      
+      {propertyFilters.map((filter, index) => (
+        <div key={`filter-${index}`} className="mb-4">
+          <PropertyFilter
+            propertyNames={propertyNames}
+            onFilterChange={(newFilter) => handlePropertyFilterChange(index, newFilter)}
+            onRemove={() => handlePropertyFilterChange(index, null)}
+            propertyFilterTypeMap={{
+              'Materialstärke': 'range',
+              'color': 'dropdown',
+              'name': 'text'
+            }}
+          />
         </div>
-      </main>
-      <footer className="row-start-3 flex gap-[24px] flex-wrap items-center justify-center">
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/file.svg"
-            alt="File icon"
-            width={16}
-            height={16}
-          />
-          Learn
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/window.svg"
-            alt="Window icon"
-            width={16}
-            height={16}
-          />
-          Examples
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/globe.svg"
-            alt="Globe icon"
-            width={16}
-            height={16}
-          />
-          Go to nextjs.org →
-        </a>
-      </footer>
-    </div>
+      ))}
+      
+      <MaterialTable
+        materials={materials}
+        hiddenProperties={hiddenProperties}
+        togglePropertyVisibility={togglePropertyVisibility}
+        propertyNames={propertyNames}
+        sortTable={sortTable}
+        sortByProperty={sortByProperty}
+        currentSort={currentSort}
+        currentPropertySort={currentPropertySort}
+      />
+    </main>
   );
 }
