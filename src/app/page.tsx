@@ -46,9 +46,10 @@ export default function MaterialDatabase() {
     }
     
     // Apply property filters
-    if (propertyFilters.length > 0) {
+    const activeFilters = propertyFilters.filter((f) => f && f.enabled !== false);
+    if (activeFilters.length > 0) {
       filtered = filtered.filter(material => {
-        return propertyFilters.every((filter) => {
+        return activeFilters.every((filter) => {
           if (!filter) return true;
           
           const prop = material.Eigenschaften.find((p: MaterialProperty) => p.name === filter.name);
@@ -58,9 +59,11 @@ export default function MaterialDatabase() {
             return prop.wert.toLowerCase().includes(filter.value.toLowerCase());
           } else if (filter.type === 'dropdown' && filter.value) {
             return prop.wert === filter.value;
-          } else if (filter.type === 'range' && filter.min !== undefined && filter.max !== undefined) {
+          } else if (filter.type === 'range') {
             const num = parseFloat(prop.wert);
-            return !isNaN(num) && num >= filter.min && num <= filter.max;
+            const minOk = filter.min === undefined || (!isNaN(num) && num >= filter.min);
+            const maxOk = filter.max === undefined || (!isNaN(num) && num <= filter.max);
+            return minOk && maxOk;
           }
           return true;
         });
@@ -143,7 +146,8 @@ export default function MaterialDatabase() {
       { 
         name: propertyNames[0], 
         type: 'text', 
-        value: '1' 
+        value: '',
+        enabled: true,
       }
     ]);
   }, [propertyNames]);
@@ -173,13 +177,13 @@ export default function MaterialDatabase() {
       {propertyFilters.map((filter, index) => (
         <div key={`filter-${index}`} className="mb-4">
           <PropertyFilter
+            filter={filter}
             propertyNames={propertyNames}
             onFilterChange={(newFilter) => handlePropertyFilterChange(index, newFilter)}
             onRemove={() => handlePropertyFilterChange(index, null)}
             propertyFilterTypeMap={{
               'Materialstärke': 'range',
-              'color': 'dropdown',
-              'name': 'text'
+              'Gewicht': 'range',
             }}
           />
         </div>

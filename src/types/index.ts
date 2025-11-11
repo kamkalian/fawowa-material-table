@@ -33,6 +33,6 @@ export interface PropertySortState {
 export type FilterType = 'text' | 'dropdown' | 'range';
 
 export type PropertyFilter =
-  | { name: string; type: 'text'; value: string }
-  | { name: string; type: 'dropdown'; value: string }
-  | { name: string; type: 'range'; min: number; max: number };
+  | ({ name: string; type: 'text'; value: string } & { enabled?: boolean })
+  | ({ name: string; type: 'dropdown'; value: string } & { enabled?: boolean })
+  | ({ name: string; type: 'range'; min?: number; max?: number } & { enabled?: boolean });

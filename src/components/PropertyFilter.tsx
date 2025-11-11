@@ -1,151 +1,120 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useMemo } from 'react';
+import { materialData } from '@/data/materials';
 import { PropertyFilter as PropertyFilterType, FilterType } from '@/types';
 
 interface PropertyFilterProps {
+  filter: PropertyFilterType;
   propertyNames: string[];
-  onFilterChange: (filter: PropertyFilterType | null) => void;
+  onFilterChange: (filter: PropertyFilterType) => void;
   onRemove: () => void;
   propertyFilterTypeMap: Record<string, FilterType>;
 }
 
-export default function PropertyFilter({ 
+export default function PropertyFilter({
+  filter,
   propertyNames,
   onFilterChange,
   onRemove,
-  propertyFilterTypeMap
+  propertyFilterTypeMap,
 }: PropertyFilterProps) {
-  const [propertyName, setPropertyName] = useState<string>('');
-  const [filterType, setFilterType] = useState<FilterType>('text');
-  const [textValue, setTextValue] = useState<string>('');
-  const [dropdownValue, setDropdownValue] = useState<string>('');
-  const [minValue, setMinValue] = useState<number>(0);
-  const [maxValue, setMaxValue] = useState<number>(100);
-  const [uniqueValues, setUniqueValues] = useState<string[]>([]);
+  const enabled = filter.enabled !== false;
+  const currentType: FilterType = propertyFilterTypeMap[filter.name] || filter.type || 'text';
 
-  // Memoize the filter creation to prevent unnecessary updates
-  /*const createFilter = useCallback((): PropertyFilterType | null => {
-    if (!propertyName) return null;
-    
-    if (filterType === 'text' && textValue) {
-      return { name: propertyName, type: 'text', value: textValue };
-    } 
-    if (filterType === 'dropdown' && dropdownValue) {
-      return { name: propertyName, type: 'dropdown', value: dropdownValue };
-    } 
-    if (filterType === 'range') {
-      return { name: propertyName, type: 'range', min: minValue, max: maxValue };
+  const dropdownOptions = useMemo(() => {
+    if (currentType !== 'dropdown' || !filter.name) return [] as string[];
+    const values = new Set<string>();
+    for (const m of materialData) {
+      const p = m.Eigenschaften.find((e) => e.name === filter.name);
+      if (p?.wert) values.add(p.wert);
     }
-    
-    return null;
-  }, [propertyName, filterType, textValue, dropdownValue, minValue, maxValue]);
-  */
-
-  // Only call onFilterChange when the filter actually changes
-  // Update filter when any relevant state changes
-  useEffect(() => {
-    let currentFilter: PropertyFilterType | null = null;
-    
-    if (propertyName) {
-      if (filterType === 'text' && textValue) {
-        currentFilter = { name: propertyName, type: 'text', value: textValue };
-      } 
-      else if (filterType === 'dropdown' && dropdownValue) {
-        currentFilter = { name: propertyName, type: 'dropdown', value: dropdownValue };
-      } 
-      else if (filterType === 'range') {
-        currentFilter = { name: propertyName, type: 'range', min: minValue, max: maxValue };
-      }
-    }
-    
-    onFilterChange(currentFilter);
-  }, [propertyName, filterType, textValue, dropdownValue, minValue, maxValue, onFilterChange]);
-  
-
-  // Update unique values when property changes
-  useEffect(() => {
-    if (propertyName) {
-      const mappedFilterType = propertyFilterTypeMap[propertyName] || 'text';
-      setFilterType(mappedFilterType);
-      // Here you would calculate unique values or range for the selected property
-      // For now, we'll use a simple mock
-      const values = ['Wert 1', 'Wert 2', 'Wert 3']; // Replace with actual values
-      setUniqueValues(values);
-      
-      // Reset other values when property changes
-      setTextValue('');
-      setDropdownValue('');
-      setMinValue(0);
-      setMaxValue(100);
-    }
-  }, [propertyName]);
+    return Array.from(values).sort((a, b) => a.localeCompare(b, 'de'));
+  }, [currentType, filter.name]);
 
   return (
     <div className="property-filter-group mb-4 mt-2 p-2 rounded bg-amber-200">
-      <div className="flex flex-wrap gap-2 mb-2">
+      <div className="flex flex-wrap gap-2 mb-2 items-center">
+        <label className="flex items-center gap-2">
+          <input
+            type="checkbox"
+            checked={enabled}
+            onChange={(e) => onFilterChange({ ...filter, enabled: e.target.checked })}
+          />
+          <span className="text-sm">Aktiv</span>
+        </label>
+
         <select
-          value={propertyName}
-          onChange={(e) => setPropertyName(e.target.value)}
           className="property-name-select border rounded px-2 py-1 bg-white"
+          value={filter.name}
+          onChange={(e) => {
+            const name = e.target.value;
+            const mapped = propertyFilterTypeMap[name] || 'text';
+            const base = { enabled, name } as Partial<PropertyFilterType>;
+            if (mapped === 'range') onFilterChange({ ...(base as any), type: 'range' });
+            else if (mapped === 'dropdown') onFilterChange({ ...(base as any), type: 'dropdown', value: '' });
+            else onFilterChange({ ...(base as any), type: 'text', value: '' });
+          }}
+          disabled={!enabled}
         >
           <option value="">Eigenschaft wählen...</option>
-          {propertyNames.map(name => (
-            <option key={name} value={name}>{name}</option>
+          {propertyNames.map((n) => (
+            <option key={n} value={n}>
+              {n}
+            </option>
           ))}
         </select>
 
-        {filterType === 'text' && (
-          <div className="text-filter-container">
+        {currentType === 'text' && (
+          <input
+            type="text"
+            className="property-value-input border rounded px-2 py-1 w-full bg-white"
+            placeholder="Wert (optional)"
+            value={filter.type === 'text' ? filter.value ?? '' : ''}
+            onChange={(e) => onFilterChange({ ...filter, type: 'text', value: e.target.value })}
+            disabled={!enabled}
+          />
+        )}
+
+        {currentType === 'dropdown' && (
+          <select
+            value={filter.type === 'dropdown' ? filter.value ?? '' : ''}
+            onChange={(e) => onFilterChange({ ...filter, type: 'dropdown', value: e.target.value })}
+            className="dropdown-select border rounded px-2 py-1 w-full bg-white"
+            disabled={!enabled}
+          >
+            <option value="">Wert auswählen...</option>
+            {dropdownOptions.map((v) => (
+              <option key={v} value={v}>
+                {v}
+              </option>
+            ))}
+          </select>
+        )}
+
+        {currentType === 'range' && (
+          <div className="range-filter-container flex items-center gap-2">
             <input
-              type="text"
-              className="property-value-input border rounded px-2 py-1 w-full bg-white"
-              placeholder="Wert (optional)"
-              value={textValue}
-              onChange={(e) => setTextValue(e.target.value)}
+              type="number"
+              className="range-min-input range-input border rounded px-2 py-1 w-24"
+              value={filter.type === 'range' && filter.min !== undefined ? filter.min : ''}
+              onChange={(e) => onFilterChange({ ...filter, type: 'range', min: e.target.value === '' ? undefined : Number(e.target.value) })}
+              disabled={!enabled}
+              placeholder="min"
+            />
+            <span>bis</span>
+            <input
+              type="number"
+              className="range-max-input range-input border rounded px-2 py-1 w-24"
+              value={filter.type === 'range' && filter.max !== undefined ? filter.max : ''}
+              onChange={(e) => onFilterChange({ ...filter, type: 'range', max: e.target.value === '' ? undefined : Number(e.target.value) })}
+              disabled={!enabled}
+              placeholder="max"
             />
           </div>
         )}
 
-        {filterType === 'dropdown' && (
-          <div className="dropdown-filter-container">
-            <select
-              value={dropdownValue}
-              onChange={(e) => setDropdownValue(e.target.value)}
-              className="dropdown-select border rounded px-2 py-1 w-full bg-white"
-            >
-              <option value="">Wert auswählen...</option>
-              {uniqueValues.map(value => (
-                <option key={value} value={value}>{value}</option>
-              ))}
-            </select>
-          </div>
-        )}
-
-        {filterType === 'range' && (
-          <div className="range-filter-container">
-            <div className="range-inputs flex items-center mb-2">
-              <input
-                type="number"
-                className="range-min-input range-input border rounded px-2 py-1 w-20"
-                value={minValue}
-                onChange={(e) => setMinValue(parseFloat(e.target.value) || 0)}
-              />
-              <span className="mx-2">bis</span>
-              <input
-                type="number"
-                className="range-max-input range-input border rounded px-2 py-1 w-20"
-                value={maxValue}
-                onChange={(e) => setMaxValue(parseFloat(e.target.value) || 100)}
-              />
-            </div>
-          </div>
-        )}
-        
-        <button 
-          onClick={onRemove}
-          className="remove-filter bg-amber-600 text-white px-2 py-1 rounded"
-        >
+        <button onClick={onRemove} className="remove-filter bg-amber-600 text-white px-2 py-1 rounded">
           x
         </button>
       </div>
