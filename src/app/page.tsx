@@ -3,10 +3,10 @@
 
 import { useState, useEffect, useMemo, useCallback } from 'react';
 import { materialData } from '@/data/materials';
-import FilterSection from '@/components/FilterSection';
+import FilterSection, { matchesOperator, PropertyFilter as FilterSectionPropertyFilter } from '@/components/FilterSection';
 import MaterialTable from '@/components/MaterialTable';
-import PropertyFilter from '@/components/PropertyFilter';
 import { Material, PropertyFilter as PropertyFilterType, SortState, PropertySortState, MaterialProperty } from '@/types';
+import PropertyFilter from '@/components/PropertyFilter';
 
 export default function MaterialDatabase() {
   const [hiddenProperties, setHiddenProperties] = useState<Set<string>>(new Set());
@@ -16,6 +16,9 @@ export default function MaterialDatabase() {
   const [currentPropertySort, setCurrentPropertySort] = useState<PropertySortState>({ property: '', direction: 'asc' });
   const [materialFilter, setMaterialFilter] = useState<string>('');
   const [herstellerFilter, setHerstellerFilter] = useState<string>('');
+  
+  // Neue State für FilterSection PropertyFilters
+  const [filterSectionPropertyFilters, setFilterSectionPropertyFilters] = useState<FilterSectionPropertyFilter[]>([]);
 
   // Collect all property names on component mount
   useEffect(() => {
@@ -45,7 +48,20 @@ export default function MaterialDatabase() {
       );
     }
     
-    // Apply property filters
+    // Apply FilterSection property filters
+    const activeFilterSectionFilters = filterSectionPropertyFilters.filter(f => f.name && f.value);
+    if (activeFilterSectionFilters.length > 0) {
+      filtered = filtered.filter(material => {
+        return activeFilterSectionFilters.every(filter => {
+          const prop = material.Eigenschaften.find((p: MaterialProperty) => p.name === filter.name);
+          if (!prop) return false;
+          
+          return matchesOperator(prop.wert, filter.operator, filter.value);
+        });
+      });
+    }
+    
+    // Apply property filters (existing PropertyFilter components)
     const activeFilters = propertyFilters.filter((f) => f && f.enabled !== false);
     if (activeFilters.length > 0) {
       filtered = filtered.filter(material => {
@@ -102,7 +118,7 @@ export default function MaterialDatabase() {
     }
     
     return filtered;
-  }, [propertyFilters, currentSort, currentPropertySort, materialFilter, herstellerFilter]);
+  }, [propertyFilters, filterSectionPropertyFilters, currentSort, currentPropertySort, materialFilter, herstellerFilter]);
 
   const togglePropertyVisibility = useCallback((propertyName: string) => {
     setHiddenProperties(prev => {
@@ -130,12 +146,14 @@ export default function MaterialDatabase() {
     setCurrentSort({ column: '', direction: 'asc' });
   }, []);
 
-  const handleFilterChange = useCallback(({ materialFilter, herstellerFilter }: { 
+  const handleFilterChange = useCallback(({ materialFilter, herstellerFilter, propertyFilters }: { 
     materialFilter: string; 
-    herstellerFilter: string 
+    herstellerFilter: string;
+    propertyFilters: FilterSectionPropertyFilter[];
   }) => {
     setMaterialFilter(materialFilter);
     setHerstellerFilter(herstellerFilter);
+    setFilterSectionPropertyFilters(propertyFilters);
   }, []);
 
   const handleAddPropertyFilter = useCallback(() => {
@@ -170,7 +188,6 @@ export default function MaterialDatabase() {
       
       <FilterSection 
         onFilterChange={handleFilterChange}
-        onAddPropertyFilter={handleAddPropertyFilter}
         propertyNames={propertyNames}
       />
       
