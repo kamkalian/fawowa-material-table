@@ -1,6 +1,12 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Card, CardContent } from '@/components/ui/card';
+import { Plus, X } from 'lucide-react';
 
 // Exportiere den Typ, damit der Parent ihn optional verwenden kann
 export type PropertyFilter = { name: string; operator: '=' | '!=' | '<' | '<=' | '>' | '>=' | 'contains'; value: string };
@@ -62,82 +68,110 @@ export default function FilterSection({
   }
 
   return (
-    <div className="filter-container bg-amber-200 p-2 m-0 rounded-md">
-      <div className="filter-row flex items-center">
-          <label htmlFor="materialFilter" className="mr-2">Materialname:</label>
-          <input
-            type="text"
-            id="materialFilter"
-            className="border rounded px-2 py-1 mr-4 bg-white"
-            value={materialFilter}
-            onChange={(e) => setMaterialFilter(e.target.value)}
-          />
-          <label htmlFor="herstellerFilter" className="mr-2">Hersteller:</label>
-          <input
-            type="text"
-            id="herstellerFilter"
-            className="border rounded px-2 py-1 bg-white"
-            value={herstellerFilter}
-            onChange={(e) => setHerstellerFilter(e.target.value)}
-          />
-          <button 
-            onClick={handleAddPropertyFilter}
-            className="bg-amber-600 text-white px-3 py-1 rounded hover:bg-amber-800 ml-auto"
-          >
-            + Eigenschaftsfilter hinzufügen
-          </button>
-      </div>
-
-      <div id="propertyFiltersContainer" className="mt-2 space-y-2">
-        {propertyFilters.length === 0 ? (
-          <div className="text-sm text-gray-600">Keine Eigenschaftsfilter hinzugefügt.</div>
-        ) : (
-          propertyFilters.map((pf, idx) => (
-            <div key={idx} className="flex items-center gap-2">
-              <select
-                className="border rounded px-2 py-1 bg-white"
-                value={pf.name}
-                onChange={(e) => updatePropertyFilter(idx, { name: e.target.value })}
-              >
-                <option value="">Eigenschaft wählen...</option>
-                {propertyNames.map((n) => (
-                  <option key={n} value={n}>{n}</option>
-                ))}
-              </select>
-
-              <select
-                className="border rounded px-2 py-1 bg-white"
-                value={pf.operator}
-                onChange={(e) => updatePropertyFilter(idx, { operator: e.target.value as PropertyFilter['operator'] })}
-              >
-                <option value="=">=</option>
-                <option value="!=">!=</option>
-                <option value="<">{'<'}</option>
-                <option value="<=">{'<='}</option>
-                <option value=">">{'>'}</option>
-                <option value=">=">{'>='}</option>
-                <option value="contains">enthält</option>
-              </select>
-
-              <input
-                type="text"
-                className="border rounded px-2 py-1 bg-white"
-                placeholder="Wert"
-                value={pf.value}
-                onChange={(e) => updatePropertyFilter(idx, { value: e.target.value })}
+    <Card className="mb-4">
+      <CardContent className="p-4">
+        <div className="flex flex-col space-y-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 items-end">
+            <div className="space-y-2">
+              <Label htmlFor="materialFilter">Materialname</Label>
+              <Input
+                id="materialFilter"
+                placeholder="Material suchen..."
+                value={materialFilter}
+                onChange={(e) => setMaterialFilter(e.target.value)}
               />
-
-              <button
-                type="button"
-                className="text-red-700 hover:underline"
-                onClick={() => removePropertyFilter(idx)}
-              >
-                Entfernen
-              </button>
             </div>
-          ))
-        )}
-      </div>
-    </div>
+            
+            <div className="space-y-2">
+              <Label htmlFor="herstellerFilter">Hersteller</Label>
+              <Input
+                id="herstellerFilter"
+                placeholder="Hersteller suchen..."
+                value={herstellerFilter}
+                onChange={(e) => setHerstellerFilter(e.target.value)}
+              />
+            </div>
+            
+            <Button 
+              onClick={handleAddPropertyFilter}
+              className="flex items-center gap-2"
+              variant="default"
+            >
+              <Plus className="h-4 w-4" />
+              Eigenschaftsfilter hinzufügen
+            </Button>
+          </div>
+
+          <div className="space-y-3">
+            {propertyFilters.length === 0 ? (
+              <p className="text-sm text-muted-foreground">
+                Keine Eigenschaftsfilter hinzugefügt.
+              </p>
+            ) : (
+              <>
+                <Label className="text-sm font-medium">Eigenschaftsfilter</Label>
+                {propertyFilters.map((pf, idx) => (
+                  <Card key={idx} className="border-dashed">
+                    <CardContent className="p-3">
+                      <div className="grid grid-cols-1 md:grid-cols-4 gap-3 items-center">
+                        <Select
+                          value={pf.name}
+                          onValueChange={(value) => updatePropertyFilter(idx, { name: value })}
+                        >
+                          <SelectTrigger>
+                            <SelectValue placeholder="Eigenschaft wählen..." />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {propertyNames.map((name) => (
+                              <SelectItem key={name} value={name}>
+                                {name}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+
+                        <Select
+                          value={pf.operator}
+                          onValueChange={(value) => updatePropertyFilter(idx, { operator: value as PropertyFilter['operator'] })}
+                        >
+                          <SelectTrigger>
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="=">=</SelectItem>
+                            <SelectItem value="!=">!=</SelectItem>
+                            <SelectItem value="<">{'<'}</SelectItem>
+                            <SelectItem value="<=">{'<='}</SelectItem>
+                            <SelectItem value=">">{'>'}</SelectItem>
+                            <SelectItem value=">=">{'>='}</SelectItem>
+                            <SelectItem value="contains">enthält</SelectItem>
+                          </SelectContent>
+                        </Select>
+
+                        <Input
+                          placeholder="Wert eingeben..."
+                          value={pf.value}
+                          onChange={(e) => updatePropertyFilter(idx, { value: e.target.value })}
+                        />
+
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => removePropertyFilter(idx)}
+                          className="flex items-center gap-2 text-destructive hover:text-destructive"
+                        >
+                          <X className="h-4 w-4" />
+                          Entfernen
+                        </Button>
+                      </div>
+                    </CardContent>
+                  </Card>
+                ))}
+              </>
+            )}
+          </div>
+        </div>
+      </CardContent>
+    </Card>
   );
 }
