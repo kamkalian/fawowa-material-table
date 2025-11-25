@@ -1,8 +1,7 @@
 'use client';
 
 import { useMemo } from 'react';
-import { materialData } from '@/data/materials';
-import { PropertyFilter as PropertyFilterType, FilterType } from '@/types';
+import { PropertyFilter as PropertyFilterType, FilterType, Material, MaterialProperty } from '@/types';
 
 interface PropertyFilterProps {
   filter: PropertyFilterType;
@@ -10,6 +9,7 @@ interface PropertyFilterProps {
   onFilterChange: (filter: PropertyFilterType) => void;
   onRemove: () => void;
   propertyFilterTypeMap: Record<string, FilterType>;
+  materials?: Material[]; // Neue Prop für die Materialien
 }
 
 export default function PropertyFilter({
@@ -18,6 +18,7 @@ export default function PropertyFilter({
   onFilterChange,
   onRemove,
   propertyFilterTypeMap,
+  materials = [], // Default leeres Array
 }: PropertyFilterProps) {
   const enabled = filter.enabled !== false;
   const currentType: FilterType = propertyFilterTypeMap[filter.name] || filter.type || 'text';
@@ -25,12 +26,12 @@ export default function PropertyFilter({
   const dropdownOptions = useMemo(() => {
     if (currentType !== 'dropdown' || !filter.name) return [] as string[];
     const values = new Set<string>();
-    for (const m of materialData) {
-      const p = m.Eigenschaften.find((e) => e.name === filter.name);
+    for (const m of materials) {
+      const p = m.Eigenschaften.find((e: MaterialProperty) => e.name === filter.name);
       if (p?.wert) values.add(p.wert);
     }
     return Array.from(values).sort((a, b) => a.localeCompare(b, 'de'));
-  }, [currentType, filter.name]);
+  }, [currentType, filter.name, materials]);
 
   return (
     <div className="property-filter-group mb-4 mt-2 p-2 rounded bg-amber-200">

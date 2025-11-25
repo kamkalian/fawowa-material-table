@@ -12,6 +12,7 @@ export interface MaterialLink {
 }
 
 export interface Material {
+  id?: number;
   Materialname: string;
   Hersteller: string;
   Eigenschaften: MaterialProperty[];
@@ -32,7 +33,11 @@ export interface PropertySortState {
 
 export type FilterType = 'text' | 'dropdown' | 'range';
 
-export type PropertyFilter =
-  | ({ name: string; type: 'text'; value: string } & { enabled?: boolean })
-  | ({ name: string; type: 'dropdown'; value: string } & { enabled?: boolean })
-  | ({ name: string; type: 'range'; min?: number; max?: number } & { enabled?: boolean });
+export interface PropertyFilter {
+  name: string;
+  type: 'text' | 'dropdown' | 'range';
+  value?: string;
+  min?: number;
+  max?: number;
+  enabled?: boolean;
+}
