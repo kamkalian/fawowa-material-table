@@ -1,6 +1,7 @@
 'use client';
 
 import { useMemo } from 'react';
+import { X } from 'lucide-react';
 import { PropertyFilter as PropertyFilterType, FilterType, Material, MaterialProperty } from '@/types';
 
 interface PropertyFilterProps {
@@ -34,27 +35,28 @@ export default function PropertyFilter({
   }, [currentType, filter.name, materials]);
 
   return (
-    <div className="property-filter-group mb-4 mt-2 p-2 rounded bg-amber-200">
-      <div className="flex flex-wrap gap-2 mb-2 items-center">
+    <div className="p-3 rounded-md bg-card border border-border">
+      <div className="flex flex-wrap gap-2 items-center">
         <label className="flex items-center gap-2">
           <input
             type="checkbox"
             checked={enabled}
             onChange={(e) => onFilterChange({ ...filter, enabled: e.target.checked })}
+            className="rounded accent-primary"
           />
-          <span className="text-sm">Aktiv</span>
+          <span className="text-sm text-muted-foreground">Aktiv</span>
         </label>
 
         <select
-          className="property-name-select border rounded px-2 py-1 bg-white"
+          className="border border-border bg-input rounded px-2 py-1 text-sm text-foreground"
           value={filter.name}
           onChange={(e) => {
             const name = e.target.value;
             const mapped = propertyFilterTypeMap[name] || 'text';
             const base = { enabled, name } as Partial<PropertyFilterType>;
-            if (mapped === 'range') onFilterChange({ ...(base as any), type: 'range' });
-            else if (mapped === 'dropdown') onFilterChange({ ...(base as any), type: 'dropdown', value: '' });
-            else onFilterChange({ ...(base as any), type: 'text', value: '' });
+            if (mapped === 'range') onFilterChange({ ...base, type: 'range' } as PropertyFilterType);
+            else if (mapped === 'dropdown') onFilterChange({ ...base, type: 'dropdown', value: '' } as PropertyFilterType);
+            else onFilterChange({ ...base, type: 'text', value: '' } as PropertyFilterType);
           }}
           disabled={!enabled}
         >
@@ -69,7 +71,7 @@ export default function PropertyFilter({
         {currentType === 'text' && (
           <input
             type="text"
-            className="property-value-input border rounded px-2 py-1 w-full bg-white"
+            className="border border-border bg-input rounded px-2 py-1 text-sm flex-1 text-foreground placeholder:text-muted-foreground"
             placeholder="Wert (optional)"
             value={filter.type === 'text' ? filter.value ?? '' : ''}
             onChange={(e) => onFilterChange({ ...filter, type: 'text', value: e.target.value })}
@@ -81,7 +83,7 @@ export default function PropertyFilter({
           <select
             value={filter.type === 'dropdown' ? filter.value ?? '' : ''}
             onChange={(e) => onFilterChange({ ...filter, type: 'dropdown', value: e.target.value })}
-            className="dropdown-select border rounded px-2 py-1 w-full bg-white"
+            className="border border-border bg-input rounded px-2 py-1 text-sm flex-1 text-foreground"
             disabled={!enabled}
           >
             <option value="">Wert auswählen...</option>
@@ -94,19 +96,19 @@ export default function PropertyFilter({
         )}
 
         {currentType === 'range' && (
-          <div className="range-filter-container flex items-center gap-2">
+          <div className="flex items-center gap-2">
             <input
               type="number"
-              className="range-min-input range-input border rounded px-2 py-1 w-24"
+              className="border border-border bg-input rounded px-2 py-1 w-20 text-sm text-foreground"
               value={filter.type === 'range' && filter.min !== undefined ? filter.min : ''}
               onChange={(e) => onFilterChange({ ...filter, type: 'range', min: e.target.value === '' ? undefined : Number(e.target.value) })}
               disabled={!enabled}
               placeholder="min"
             />
-            <span>bis</span>
+            <span className="text-muted-foreground text-sm">bis</span>
             <input
               type="number"
-              className="range-max-input range-input border rounded px-2 py-1 w-24"
+              className="border border-border bg-input rounded px-2 py-1 w-20 text-sm text-foreground"
               value={filter.type === 'range' && filter.max !== undefined ? filter.max : ''}
               onChange={(e) => onFilterChange({ ...filter, type: 'range', max: e.target.value === '' ? undefined : Number(e.target.value) })}
               disabled={!enabled}
@@ -115,8 +117,8 @@ export default function PropertyFilter({
           </div>
         )}
 
-        <button onClick={onRemove} className="remove-filter bg-amber-600 text-white px-2 py-1 rounded">
-          x
+        <button onClick={onRemove} className="text-destructive hover:bg-destructive/10 px-2 py-1 rounded text-sm">
+          <X className="h-4 w-4" />
         </button>
       </div>
     </div>
