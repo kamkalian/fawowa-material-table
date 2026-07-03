@@ -363,6 +363,7 @@ function renderTable() {
               const ls = linkStatus[l.url];
               const dot = ls
                 ? (ls.status === 'ok' ? '<span class="link-dot link-ok" title="Erreichbar (HTTP ' + ls.code + ')"></span>'
+                  : ls.status === 'blocked' ? '<span class="link-dot link-warn" title="Bot-Schutz — im Browser prüfen (HTTP ' + ls.code + ')"></span>'
                   : ls.status === 'timeout' ? '<span class="link-dot link-warn" title="Zeitüberschreitung"></span>'
                   : ls.status === 'redirect' ? '<span class="link-dot link-warn" title="Weiterleitung (HTTP ' + ls.code + ')"></span>'
                   : '<span class="link-dot link-err" title="Nicht erreichbar"></span>')

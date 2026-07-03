@@ -286,9 +286,35 @@ app.get('/api/links/status', async (req, res) => {
           const ctrl = new AbortController();
           const t = setTimeout(() => ctrl.abort(), 5000);
           try {
-            const resp = await fetch(url, { method: 'HEAD', signal: ctrl.signal, redirect: 'follow' });
+            // Try HEAD first; fall back to GET if blocked (403/405)
+            const fetchOpts = {
+              method: 'HEAD',
+              signal: ctrl.signal,
+              redirect: 'follow',
+              headers: { 'User-Agent': 'Mozilla/5.0 (compatible; MaterialDB/1.0; +https://github.com)' }
+            };
+            let resp = await fetch(url, fetchOpts);
+            let usedGet = false;
+            if (resp.status === 403 || resp.status === 405) {
+              fetchOpts.method = 'GET';
+              resp = await fetch(url, fetchOpts);
+              usedGet = true;
+            }
             clearTimeout(t);
-            const status = resp.ok ? 'ok' : (resp.status >= 300 && resp.status < 400 ? 'redirect' : 'error');
+
+            // For GET fallback, verify response has meaningful content
+            let contentOK = true;
+            if (usedGet && resp.ok) {
+              try {
+                const text = await resp.text();
+                contentOK = text.length > 200; // short pages are likely error pages
+              } catch { contentOK = true; }
+            }
+
+            const status = !resp.ok
+              ? (resp.status === 403 ? 'blocked' : (resp.status >= 300 && resp.status < 400 ? 'redirect' : 'error'))
+              : !contentOK ? 'error'
+              : 'ok';
             return { url, status, code: resp.status };
           } catch (e) {
             clearTimeout(t);
