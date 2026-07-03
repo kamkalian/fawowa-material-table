@@ -208,9 +208,9 @@ function renderMatList() {
   el.innerHTML = materials.map((m, i) => `
     <div class="mat-item ${editingIndex === i ? 'active' : ''}" data-idx="${i}">
       <div style="flex:1;min-width:0">
-        <div class="mat-name truncate">${escHtml(m.Materialname) || '—'}</div>
-        <div class="mat-sub truncate">${escHtml(m.Hersteller) || '—'}</div>
-        <div class="mat-info">${m.Eigenschaften.length} Eigenschaften · ${m.Link.length} Links</div>
+        <div class="mat-name truncate">${escHtml(m.name) || '—'}</div>
+        <div class="mat-sub truncate">${escHtml(m.hersteller) || '—'}</div>
+        <div class="mat-info">${Object.keys(m.eigenschaften).length} Eigenschaften · ${m.links.length} Links</div>
       </div>
       <button class="btn btn-ghost btn-icon" data-delete="${i}" style="color:var(--danger);flex-shrink:0" title="Löschen">
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
@@ -258,11 +258,11 @@ function renderEditor() {
       <div class="card-body" style="display:flex;flex-direction:column;gap:.75rem">
         <div>
           <label for="edit-name">Materialname</label>
-          <input type="text" class="input" id="edit-name" value="${escHtml(m.Materialname)}">
+          <input type="text" class="input" id="edit-name" value="${escHtml(m.name)}">
         </div>
         <div>
           <label for="edit-hersteller">Hersteller</label>
-          <input type="text" class="input" id="edit-hersteller" value="${escHtml(m.Hersteller)}">
+          <input type="text" class="input" id="edit-hersteller" value="${escHtml(m.hersteller)}">
         </div>
         <div>
           <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:.25rem">
@@ -270,15 +270,15 @@ function renderEditor() {
             <button class="btn btn-ghost btn-sm" id="edit-add-prop">+ Hinzufügen</button>
           </div>
           <div id="edit-props">
-            ${m.Eigenschaften.map((p, i) => `
+            ${Object.entries(m.eigenschaften).map(([name, p]) => `
               <div class="form-row" style="margin-bottom:.25rem">
-                <input type="text" class="input edit-prop-name" value="${escHtml(p.name)}" placeholder="Name" style="flex:1;font-size:.75rem">
+                <input type="text" class="input edit-prop-name" value="${escHtml(name)}" placeholder="Name" style="flex:1;font-size:.75rem">
                 <input type="text" class="input edit-prop-wert" value="${escHtml(p.wert)}" placeholder="Wert" style="width:80px;font-size:.75rem">
                 <input type="text" class="input edit-prop-einheit" value="${escHtml(p.einheit||'')}" placeholder="Einheit" style="width:70px;font-size:.75rem">
                 <button class="btn btn-ghost btn-icon remove-edit-prop"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
               </div>
             `).join('')}
-            ${m.Eigenschaften.length === 0 ? '<div class="form-row" style="margin-bottom:.25rem"><input type="text" class="input edit-prop-name" placeholder="Name" style="flex:1;font-size:.75rem"><input type="text" class="input edit-prop-wert" placeholder="Wert" style="width:80px;font-size:.75rem"><input type="text" class="input edit-prop-einheit" placeholder="Einheit" style="width:70px;font-size:.75rem"></div>' : ''}
+            ${Object.keys(m.eigenschaften).length === 0 ? '<div class="form-row" style="margin-bottom:.25rem"><input type="text" class="input edit-prop-name" placeholder="Name" style="flex:1;font-size:.75rem"><input type="text" class="input edit-prop-wert" placeholder="Wert" style="width:80px;font-size:.75rem"><input type="text" class="input edit-prop-einheit" placeholder="Einheit" style="width:70px;font-size:.75rem"></div>' : ''}
           </div>
         </div>
         <div>
@@ -287,14 +287,14 @@ function renderEditor() {
             <button class="btn btn-ghost btn-sm" id="edit-add-link">+ Hinzufügen</button>
           </div>
           <div id="edit-links">
-            ${m.Link.map((l, i) => `
+            ${m.links.map((l, i) => `
               <div class="form-row" style="margin-bottom:.25rem">
                 <input type="text" class="input edit-link-text" value="${escHtml(l.text)}" placeholder="Link Text" style="flex:1;font-size:.75rem">
                 <input type="text" class="input edit-link-url" value="${escHtml(l.url)}" placeholder="URL" style="flex:1;font-size:.75rem">
                 <button class="btn btn-ghost btn-icon remove-edit-link"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
               </div>
             `).join('')}
-            ${m.Link.length === 0 ? '<div class="form-row" style="margin-bottom:.25rem"><input type="text" class="input edit-link-text" placeholder="Link Text" style="flex:1;font-size:.75rem"><input type="text" class="input edit-link-url" placeholder="URL" style="flex:1;font-size:.75rem"></div>' : ''}
+            ${m.links.length === 0 ? '<div class="form-row" style="margin-bottom:.25rem"><input type="text" class="input edit-link-text" placeholder="Link Text" style="flex:1;font-size:.75rem"><input type="text" class="input edit-link-url" placeholder="URL" style="flex:1;font-size:.75rem"></div>' : ''}
           </div>
         </div>
         <div class="form-actions">
@@ -306,8 +306,8 @@ function renderEditor() {
   `;
 
   // Collect edited data
-  document.getElementById('edit-name').addEventListener('input', e => editingMaterial.Materialname = e.target.value);
-  document.getElementById('edit-hersteller').addEventListener('input', e => editingMaterial.Hersteller = e.target.value);
+  document.getElementById('edit-name').addEventListener('input', e => editingMaterial.name = e.target.value);
+  document.getElementById('edit-hersteller').addEventListener('input', e => editingMaterial.hersteller = e.target.value);
 
   document.getElementById('edit-add-prop').addEventListener('click', () => {
     document.getElementById('edit-props').insertAdjacentHTML('beforeend', `
@@ -340,14 +340,14 @@ function renderEditor() {
 
   document.getElementById('edit-save').addEventListener('click', async () => {
     // Collect properties
-    const props = [];
+    const props = {};
     document.querySelectorAll('#edit-props .form-row').forEach(row => {
       const n = row.querySelector('.edit-prop-name')?.value.trim();
       const w = row.querySelector('.edit-prop-wert')?.value.trim();
       const e = row.querySelector('.edit-prop-einheit')?.value.trim();
-      if (n && w !== '') props.push({ name: n, wert: w, einheit: e || '' });
+      if (n && w !== '') props[n] = { wert: w, einheit: e || '' };
     });
-    editingMaterial.Eigenschaften = props;
+    editingMaterial.eigenschaften = props;
 
     // Collect links
     const links = [];
@@ -356,7 +356,7 @@ function renderEditor() {
       const u = row.querySelector('.edit-link-url')?.value.trim();
       if (t && u) links.push({ text: t, url: u });
     });
-    editingMaterial.Link = links;
+    editingMaterial.links = links;
 
     if (isNew) {
       materials.push(editingMaterial);
@@ -383,7 +383,7 @@ function renderEditor() {
 
 function bindMatActions() {
   document.getElementById('btn-new-mat').addEventListener('click', () => {
-    editingMaterial = { Materialname: '', Hersteller: '', Eigenschaften: [], Link: [] };
+    editingMaterial = { name: '', hersteller: '', eigenschaften: {}, links: [] };
     editingIndex = -1;
     isNew = true;
     renderEditor();
@@ -410,7 +410,7 @@ function bindMatActions() {
       const name = (cols[0] || '').trim();
       if (!name) continue;
 
-      const eigenschaften = [];
+      const eigenschaften = {};
       for (let j = 0; j < propCols.length; j++) {
         const ci = j + 2;
         const val = (cols[ci] || '').replace(',', '.').trim();
@@ -421,7 +421,8 @@ function bindMatActions() {
         if (m) einheit = m[1];
         else if (/stärke|dicke/i.test(pname)) einheit = 'mm';
         else if (/gewicht/i.test(pname)) einheit = 'kg/m²';
-        eigenschaften.push({ name: pname.replace(/\s*\(.*?\)$/, ''), wert: val, einheit });
+        const cleanName = pname.replace(/\s*\(.*?\)$/, '');
+        eigenschaften[cleanName] = { wert: val, einheit };
       }
 
       const links = [];
@@ -433,7 +434,8 @@ function bindMatActions() {
         });
       }
 
-      newMats.push({ Materialname: name, Hersteller: (cols[1] || '').trim(), Eigenschaften: eigenschaften, Link: links });
+      const id = name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/, '');
+      newMats.push({ id, name, hersteller: (cols[1] || '').trim(), eigenschaften, links });
     }
 
     materials = newMats;
@@ -455,17 +457,17 @@ async function saveMaterials() {
 function exportCSV() {
   // Build CSV from materials
   const allProps = new Set();
-  materials.forEach(m => m.Eigenschaften.forEach(p => allProps.add(p.name)));
+  materials.forEach(m => Object.keys(m.eigenschaften).forEach(k => allProps.add(k)));
   const sortedProps = [...allProps].sort();
 
   let csv = ['Materialname', 'Hersteller', ...sortedProps, 'Links'].join(';') + '\n';
   materials.forEach(m => {
-    const row = [m.Materialname, m.Hersteller];
+    const row = [m.name, m.hersteller];
     sortedProps.forEach(pn => {
-      const p = m.Eigenschaften.find(e => e.name === pn);
-      row.push(p ? p.wert.replace('.', ',') : '');
+      const p = m.eigenschaften[pn];
+      row.push(p ? String(p.wert).replace('.', ',') : '');
     });
-    row.push(m.Link.map(l => `${l.text}:${l.url}`).join('|'));
+    row.push(m.links.map(l => `${l.text}:${l.url}`).join('|'));
     csv += row.join(';') + '\n';
   });
 
@@ -522,14 +524,17 @@ function renderRequestCard(req) {
   return `
     <div class="req-card ${borderClass}">
       <div class="req-header">${actionBadge}${statusBadge}</div>
-      <div class="req-name">${escHtml(req.material.Materialname)}</div>
-      <div class="req-meta">${escHtml(req.material.Hersteller) || '—'} · ${new Date(req.createdAt).toLocaleString('de-DE')}</div>
+      <div class="req-name">${escHtml(req.material.name || req.material.Materialname)}</div>
+      <div class="req-meta">${escHtml(req.material.hersteller || req.material.Hersteller || '—')} · ${new Date(req.createdAt).toLocaleString('de-DE')}</div>
       <div style="display:flex;flex-wrap:wrap;gap:2px;margin-top:.25rem">
-        ${req.material.Eigenschaften.map(p => `
-          <span class="prop-tag">${escHtml(p.name)}: ${escHtml(p.wert)}${p.einheit ? ' ' + escHtml(p.einheit) : ''}</span>
+        ${Object.entries(req.material.eigenschaften || {}).map(([name, p]) => `
+          <span class="prop-tag">${escHtml(name)}: ${escHtml(p.wert)}${p.einheit ? ' ' + escHtml(p.einheit) : ''}</span>
         `).join('')}
+        ${(!req.material.eigenschaften || Object.keys(req.material.eigenschaften).length === 0) && req.material.Eigenschaften ? req.material.Eigenschaften.map(p => `
+          <span class="prop-tag">${escHtml(p.name)}: ${escHtml(p.wert)}${p.einheit ? ' ' + escHtml(p.einheit) : ''}</span>
+        `).join('') : ''}
       </div>
-      ${req.material.Link.length > 0 ? `<div style="font-size:.75rem;color:var(--fg-muted);margin-top:.25rem">Links: ${req.material.Link.map(l => escHtml(l.text)).join(', ')}</div>` : ''}
+      ${(req.material.links || req.material.Link || []).length > 0 ? `<div style="font-size:.75rem;color:var(--fg-muted);margin-top:.25rem">Links: ${(req.material.links || req.material.Link).map(l => escHtml(l.text)).join(', ')}</div>` : ''}
       ${req.note ? `<div style="font-size:.75rem;color:var(--fg-muted);font-style:italic;margin-top:.25rem">Notiz: ${escHtml(req.note)}</div>` : ''}
       ${isPending ? `
         <div class="req-actions">

@@ -83,7 +83,7 @@ async function init() {
 
 function extractPropertyNames() {
   const names = new Set();
-  materials.forEach(m => m.Eigenschaften.forEach(p => names.add(p.name)));
+  materials.forEach(m => Object.keys(m.eigenschaften).forEach(k => names.add(k)));
   propertyNames = [...names].sort();
 }
 
@@ -161,8 +161,8 @@ function renderPropFilterForm() {
 function getPropValues(propName) {
   const vals = new Set();
   materials.forEach(m => {
-    const p = m.Eigenschaften.find(e => e.name === propName);
-    if (p && p.wert) vals.add(p.wert);
+    const p = m.eigenschaften[propName];
+    if (p && p.wert !== undefined && p.wert !== '') vals.add(String(p.wert));
   });
   return [...vals].sort((a, b) => {
     const na = parseFloat(a), nb = parseFloat(b);
@@ -242,11 +242,11 @@ function getFilteredMaterials() {
   for (const tag of searchTags) {
     const q = tag.toLowerCase();
     filtered = filtered.filter(m =>
-      m.Materialname.toLowerCase().includes(q) ||
-      m.Hersteller.toLowerCase().includes(q) ||
-      m.Eigenschaften.some(p =>
-        p.name.toLowerCase().includes(q) ||
-        p.wert.toLowerCase().includes(q) ||
+      m.name.toLowerCase().includes(q) ||
+      m.hersteller.toLowerCase().includes(q) ||
+      Object.entries(m.eigenschaften).some(([k, p]) =>
+        k.toLowerCase().includes(q) ||
+        String(p.wert).toLowerCase().includes(q) ||
         (p.einheit && p.einheit.toLowerCase().includes(q))
       )
     );
@@ -254,7 +254,7 @@ function getFilteredMaterials() {
 
   for (const pf of propFilterTags) {
     filtered = filtered.filter(m => {
-      const prop = m.Eigenschaften.find(p => p.name === pf.name);
+      const prop = m.eigenschaften[pf.name];
       if (!prop) return false;
       switch (pf.operator) {
         case '=': return String(prop.wert) === pf.value;
@@ -277,14 +277,14 @@ function getFilteredMaterials() {
     });
   } else if (currentPropSort.property) {
     filtered.sort((a, b) => {
-      const pa = a.Eigenschaften.find(p => p.name === currentPropSort.property);
-      const pb = b.Eigenschaften.find(p => p.name === currentPropSort.property);
+      const pa = a.eigenschaften[currentPropSort.property];
+      const pb = b.eigenschaften[currentPropSort.property];
       if (!pa && !pb) return 0;
       if (!pa) return 1;
       if (!pb) return -1;
       const na = parseFloat(pa.wert), nb = parseFloat(pb.wert);
       if (!isNaN(na) && !isNaN(nb)) return currentPropSort.direction === 'asc' ? na - nb : nb - na;
-      return currentPropSort.direction === 'asc' ? pa.wert.localeCompare(pb.wert) : pb.wert.localeCompare(pa.wert);
+      return currentPropSort.direction === 'asc' ? String(pa.wert).localeCompare(String(pb.wert)) : String(pb.wert).localeCompare(String(pa.wert));
     });
   }
 
@@ -308,8 +308,8 @@ function renderTable() {
 
   $tableContainer.innerHTML =
     '<table><thead><tr>' +
-      '<th class="sortable" data-sort="Materialname">Materialname ' + sortArrow('Materialname') + '</th>' +
-      '<th class="sortable" data-sort="Hersteller">Hersteller ' + sortArrow('Hersteller') + '</th>' +
+      '<th class="sortable" data-sort="name">Materialname ' + sortArrow('name') + '</th>' +
+      '<th class="sortable" data-sort="hersteller">Hersteller ' + sortArrow('hersteller') + '</th>' +
       '<th>' +
         '<div style="display:flex;align-items:center;justify-content:space-between">' +
           '<span>Eigenschaften</span>' +
@@ -338,15 +338,15 @@ function renderTable() {
       ? '<tr><td colspan="4" class="empty-row">Keine Materialien gefunden</td></tr>'
       : pageItems.map(m =>
         '<tr>' +
-          '<td style="font-weight:500">' + escHtml(m.Materialname) + '</td>' +
-          '<td style="color:var(--fg-muted)">' + (escHtml(m.Hersteller) || '\u2014') + '</td>' +
+          '<td style="font-weight:500">' + escHtml(m.name) + '</td>' +
+          '<td style="color:var(--fg-muted)">' + (escHtml(m.hersteller) || '\u2014') + '</td>' +
           '<td><div style="display:flex;flex-wrap:wrap;gap:2px">' +
-            (m.Eigenschaften.length === 0 ? '<span style="color:var(--fg-muted);font-size:.6875rem">\u2014</span>' : '') +
-            m.Eigenschaften.map(p => '<span class="prop-tag ' + (hiddenProps.has(p.name) ? 'hidden' : '') + '">' + escHtml(p.name) + ': ' + escHtml(p.wert) + (p.einheit ? ' ' + escHtml(p.einheit) : '') + '</span>').join('') +
+            (Object.keys(m.eigenschaften).length === 0 ? '<span style="color:var(--fg-muted);font-size:.6875rem">\u2014</span>' : '') +
+            Object.entries(m.eigenschaften).map(([name, p]) => '<span class="prop-tag ' + (hiddenProps.has(name) ? 'hidden' : '') + '">' + escHtml(name) + ': ' + escHtml(p.wert) + (p.einheit ? ' ' + escHtml(p.einheit) : '') + '</span>').join('') +
           '</div></td>' +
           '<td><div style="display:flex;flex-wrap:wrap;gap:2px">' +
-            (m.Link.length === 0 ? '<span style="color:var(--fg-muted);font-size:.6875rem">\u2014</span>' : '') +
-            m.Link.map(l => '<a href="' + escHtml(l.url) + '" target="_blank" rel="noopener" class="link-btn">' + escHtml(l.text) + '<svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg></a>').join('') +
+            (m.links.length === 0 ? '<span style="color:var(--fg-muted);font-size:.6875rem">\u2014</span>' : '') +
+            m.links.map(l => '<a href="' + escHtml(l.url) + '" target="_blank" rel="noopener" class="link-btn">' + escHtml(l.text) + '<svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg></a>').join('') +
           '</div></td>' +
         '</tr>'
       ).join('')
@@ -516,12 +516,12 @@ function renderRequestForm() {
       document.getElementById('req-error').style.display = 'block';
       return;
     }
-    const props = [];
+    const propsObj = {};
     document.querySelectorAll('#req-props .form-row').forEach(row => {
       const n = row.querySelector('.req-prop-name')?.value.trim();
       const w = row.querySelector('.req-prop-wert')?.value.trim();
       const e = row.querySelector('.req-prop-einheit')?.value.trim();
-      if (n && w) props.push({ name: n, wert: w, einheit: e || undefined });
+      if (n && w) propsObj[n] = { wert: w, einheit: e || '' };
     });
     const links = [];
     document.querySelectorAll('#req-links .form-row').forEach(row => {
@@ -531,10 +531,10 @@ function renderRequestForm() {
     });
     const note = document.getElementById('req-note').value.trim();
     const material = {
-      Materialname: name,
-      Hersteller: document.getElementById('req-hersteller').value.trim(),
-      Eigenschaften: props,
-      Link: links
+      name,
+      hersteller: document.getElementById('req-hersteller').value.trim(),
+      eigenschaften: propsObj,
+      links
     };
     try {
       await submitRequest({ action, material, note: note || undefined });

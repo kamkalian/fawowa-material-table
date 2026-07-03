@@ -6,7 +6,8 @@ import { fileURLToPath } from 'url';
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const app = express();
 const PORT = process.env.PORT || 3456;
-const CSV_PATH = join(__dirname, 'public', 'materials.csv');
+const JSON_PATH = join(__dirname, 'data', 'materials.json');
+const CSV_PATH = join(__dirname, 'public', 'materials.csv'); // legacy, for import/export only
 const REQUESTS_PATH = join(__dirname, 'data', 'requests.json');
 const KEY_PATH = join(__dirname, 'data', 'editor-key.txt');
 
@@ -42,7 +43,18 @@ function writeRequests(requests) {
   writeFileSync(REQUESTS_PATH, JSON.stringify(requests, null, 2));
 }
 
-// --- CSV Parser ---
+// --- JSON read/write ---
+
+function readMaterials() {
+  if (!existsSync(JSON_PATH)) return [];
+  return JSON.parse(readFileSync(JSON_PATH, 'utf-8')).materialien || [];
+}
+
+function writeMaterials(materialien) {
+  writeFileSync(JSON_PATH, JSON.stringify({ materialien }, null, 2));
+}
+
+// --- CSV helpers (for import/export compatibility) ---
 
 function parseCSV(text) {
   const lines = text.trim().split('\n');
@@ -58,7 +70,7 @@ function parseCSV(text) {
     const name = (cols[0] || '').trim();
     if (!name) continue;
 
-    const eigenschaften = [];
+    const eigenschaften = {};
     for (let j = 0; j < propCols.length; j++) {
       const ci = j + 2;
       const val = (cols[ci] || '').replace(',', '.').trim();
@@ -72,11 +84,8 @@ function parseCSV(text) {
       else if (/gewicht/i.test(pname)) einheit = 'kg/m²';
       else if (/temperatur/i.test(pname)) einheit = '°C';
 
-      eigenschaften.push({
-        name: pname.replace(/\s*\(.*?\)$/, ''),
-        wert: val,
-        einheit
-      });
+      const cleanName = pname.replace(/\s*\(.*?\)$/, '');
+      eigenschaften[cleanName] = { wert: isNaN(parseFloat(val)) ? val : parseFloat(val), einheit };
     }
 
     const links = [];
@@ -88,32 +97,29 @@ function parseCSV(text) {
       });
     }
 
-    materials.push({
-      Materialname: name,
-      Hersteller: (cols[1] || '').trim(),
-      Eigenschaften: eigenschaften,
-      Link: links
-    });
+    const id = name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/, '');
+
+    materials.push({ id, name, hersteller: (cols[1] || '').trim(), eigenschaften, links });
   }
   return materials;
 }
 
-function materialsToCSV(materials) {
-  if (!materials.length) return 'Materialname;Hersteller;Links\n';
+function materialsToCSV(materialien) {
+  if (!materialien.length) return 'Materialname;Hersteller;Links\n';
 
   const allProps = new Set();
-  materials.forEach(m => m.Eigenschaften.forEach(p => allProps.add(p.name)));
+  materialien.forEach(m => Object.keys(m.eigenschaften).forEach(k => allProps.add(k)));
   const sortedProps = [...allProps].sort();
 
   const header = ['Materialname', 'Hersteller', ...sortedProps, 'Links'].join(';') + '\n';
 
-  const rows = materials.map(m => {
-    const row = [m.Materialname, m.Hersteller];
+  const rows = materialien.map(m => {
+    const row = [m.name, m.hersteller];
     sortedProps.forEach(pn => {
-      const p = m.Eigenschaften.find(e => e.name === pn);
-      row.push(p ? p.wert.replace('.', ',') : '');
+      const p = m.eigenschaften[pn];
+      row.push(p ? String(p.wert).replace('.', ',') : '');
     });
-    row.push(m.Link.map(l => `${l.text}:${l.url}`).join('|'));
+    row.push(m.links.map(l => `${l.text}:${l.url}`).join('|'));
     return row.join(';');
   });
 
@@ -125,9 +131,7 @@ function materialsToCSV(materials) {
 // GET /api/materials — public
 app.get('/api/materials', (req, res) => {
   try {
-    if (!existsSync(CSV_PATH)) return res.json([]);
-    const csv = readFileSync(CSV_PATH, 'utf-8');
-    res.json(parseCSV(csv));
+    res.json(readMaterials());
   } catch (e) {
     res.status(500).json({ error: 'Failed to read materials' });
   }
@@ -148,25 +152,29 @@ app.post('/api/materials', (req, res) => {
       if (ri === -1) return res.status(404).json({ error: 'Request not found' });
 
       const reqEntry = requests[ri];
-      const material = { ...reqEntry.material, status: 'active' };
-
-      if (reqEntry.action === 'new') {
-        // Append to CSV
-        let materials = [];
-        if (existsSync(CSV_PATH)) {
-          materials = parseCSV(readFileSync(CSV_PATH, 'utf-8'));
-        }
-        materials.push(material);
-        writeFileSync(CSV_PATH, materialsToCSV(materials));
-      } else {
-        // Update existing
-        if (!existsSync(CSV_PATH)) return res.status(404).json({ error: 'CSV not found' });
-        const materials = parseCSV(readFileSync(CSV_PATH, 'utf-8'));
-        const mi = materials.findIndex(m => m.Materialname === reqEntry.originalMaterialName);
-        if (mi !== -1) materials[mi] = material;
-        else materials.push(material);
-        writeFileSync(CSV_PATH, materialsToCSV(materials));
+      // Normalize material to new format (support both old and new request formats)
+      let material = reqEntry.material;
+      if (material.Materialname && !material.name) {
+        material = {
+          id: material.Materialname.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/, ''),
+          name: material.Materialname,
+          hersteller: material.Hersteller || '',
+          eigenschaften: Array.isArray(material.Eigenschaften)
+            ? material.Eigenschaften.reduce((acc, p) => { acc[p.name] = { wert: p.wert, einheit: p.einheit || '' }; return acc; }, {})
+            : (material.eigenschaften || {}),
+          links: material.Link || material.links || []
+        };
       }
+
+      const materialien = readMaterials();
+      if (reqEntry.action === 'new') {
+        materialien.push(material);
+      } else {
+        const mi = materialien.findIndex(m => m.name === reqEntry.originalMaterialName);
+        if (mi !== -1) materialien[mi] = material;
+        else materialien.push(material);
+      }
+      writeMaterials(materialien);
 
       requests[ri].status = 'active';
       writeRequests(requests);
@@ -174,7 +182,7 @@ app.post('/api/materials', (req, res) => {
     }
 
     // Save all materials
-    writeFileSync(CSV_PATH, materialsToCSV(body));
+    writeMaterials(body);
     res.json({ message: 'Saved', count: body.length });
   } catch (e) {
     console.error(e);
@@ -193,17 +201,29 @@ app.get('/api/requests', (req, res) => {
 app.post('/api/requests', (req, res) => {
   try {
     const { action, material, note } = req.body;
-    if (!action || !material || !material.Materialname) {
+    const matName = material?.name || material?.Materialname;
+    if (!action || !material || !matName) {
       return res.status(400).json({ error: 'Missing fields' });
     }
+
+    // Normalize material to new format
+    const normalizedMaterial = material.name ? material : {
+      id: material.Materialname.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/, ''),
+      name: material.Materialname,
+      hersteller: material.Hersteller || '',
+      eigenschaften: Array.isArray(material.Eigenschaften)
+        ? material.Eigenschaften.reduce((acc, p) => { acc[p.name] = { wert: p.wert, einheit: p.einheit || '' }; return acc; }, {})
+        : (material.eigenschaften || {}),
+      links: material.Link || material.links || []
+    };
 
     const entry = {
       id: Date.now().toString(36) + Math.random().toString(36).slice(2, 7),
       createdAt: new Date().toISOString(),
       status: 'check',
       action,
-      material,
-      originalMaterialName: action === 'change' ? material.Materialname : undefined,
+      material: normalizedMaterial,
+      originalMaterialName: action === 'change' ? normalizedMaterial.name : undefined,
       note: note || undefined
     };
 
