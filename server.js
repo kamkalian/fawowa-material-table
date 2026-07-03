@@ -263,6 +263,59 @@ app.post('/api/editor/auth', (req, res) => {
   res.json({ valid: true });
 });
 
+// GET /api/links/status — check all URLs from materials (cached 1h)
+const linkStatusCache = new Map(); // url → { status, code, checkedAt }
+
+app.get('/api/links/status', async (req, res) => {
+  try {
+    const materialien = readMaterials();
+    const urls = [...new Set(materialien.flatMap(m => m.links.map(l => l.url)))];
+
+    // Return cached results if fresh (< 1 hour)
+    const now = Date.now();
+    const cacheTTL = 3600000; // 1 hour
+    const uncached = urls.filter(u => {
+      const c = linkStatusCache.get(u);
+      return !c || (now - c.checkedAt > cacheTTL);
+    });
+
+    // Check uncached URLs in parallel
+    if (uncached.length > 0) {
+      const results = await Promise.allSettled(
+        uncached.map(async (url) => {
+          const ctrl = new AbortController();
+          const t = setTimeout(() => ctrl.abort(), 5000);
+          try {
+            const resp = await fetch(url, { method: 'HEAD', signal: ctrl.signal, redirect: 'follow' });
+            clearTimeout(t);
+            const status = resp.ok ? 'ok' : (resp.status >= 300 && resp.status < 400 ? 'redirect' : 'error');
+            return { url, status, code: resp.status };
+          } catch (e) {
+            clearTimeout(t);
+            return { url, status: e.name === 'AbortError' ? 'timeout' : 'error', code: 0 };
+          }
+        })
+      );
+      for (const r of results) {
+        if (r.status === 'fulfilled') {
+          linkStatusCache.set(r.value.url, { ...r.value, checkedAt: now });
+        }
+      }
+    }
+
+    // Build response
+    const result = {};
+    for (const url of urls) {
+      const c = linkStatusCache.get(url);
+      result[url] = c ? { status: c.status, code: c.code } : { status: 'unknown', code: 0 };
+    }
+
+    res.json(result);
+  } catch (e) {
+    res.status(500).json({ error: 'Failed to check links' });
+  }
+});
+
 // SPA fallback
 app.get('*', (req, res) => {
   if (process.env.NODE_ENV === 'production') {

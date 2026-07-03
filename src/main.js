@@ -17,8 +17,17 @@ async function submitRequest(data) {
   return res.json();
 }
 
+async function fetchLinkStatus() {
+  try {
+    const res = await fetch(`${API}/links/status`);
+    if (!res.ok) return {};
+    return res.json();
+  } catch { return {}; }
+}
+
 // ===== STATE =====
 let materials = [];
+let linkStatus = {};
 let hiddenProps = new Set();
 let propertyNames = [];
 let currentSort = { column: '', direction: 'asc' };
@@ -73,10 +82,14 @@ async function init() {
     if (btn) btn.style.display = 'inline-flex';
   }
   try {
-    materials = await fetchMaterials();
+    [materials, linkStatus] = await Promise.all([
+      fetchMaterials(),
+      fetchLinkStatus()
+    ]);
     extractPropertyNames();
   } catch (e) {
     materials = [];
+    linkStatus = {};
   }
   render();
 }
@@ -346,7 +359,16 @@ function renderTable() {
           '</div></td>' +
           '<td><div style="display:flex;flex-wrap:wrap;gap:2px">' +
             (m.links.length === 0 ? '<span style="color:var(--fg-muted);font-size:.6875rem">\u2014</span>' : '') +
-            m.links.map(l => '<a href="' + escHtml(l.url) + '" target="_blank" rel="noopener" class="link-btn">' + escHtml(l.text) + '<svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg></a>').join('') +
+            m.links.map(l => {
+              const ls = linkStatus[l.url];
+              const dot = ls
+                ? (ls.status === 'ok' ? '<span class="link-dot link-ok" title="Erreichbar (HTTP ' + ls.code + ')"></span>'
+                  : ls.status === 'timeout' ? '<span class="link-dot link-warn" title="Zeitüberschreitung"></span>'
+                  : ls.status === 'redirect' ? '<span class="link-dot link-warn" title="Weiterleitung (HTTP ' + ls.code + ')"></span>'
+                  : '<span class="link-dot link-err" title="Nicht erreichbar"></span>')
+                : '<span class="link-dot link-unknown" title="Noch nicht geprüft"></span>';
+              return '<a href="' + escHtml(l.url) + '" target="_blank" rel="noopener" class="link-btn">' + dot + escHtml(l.text) + '<svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg></a>';
+            }).join('') +
           '</div></td>' +
         '</tr>'
       ).join('')

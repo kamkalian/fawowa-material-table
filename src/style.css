@@ -196,6 +196,16 @@ tbody tr:first-child td{border-top:none}
 .link-btn:hover{border-color:var(--primary);color:var(--primary)}
 .link-btn svg{width:.75rem;height:.75rem}
 
+/* Link status dot */
+.link-dot{
+  display:inline-block;width:8px;height:8px;border-radius:50%;
+  margin-right:4px;flex-shrink:0;
+}
+.link-ok{background:#22c55e;box-shadow:0 0 4px rgba(34,197,94,.5)}
+.link-warn{background:#f59e0b;box-shadow:0 0 4px rgba(245,158,11,.5)}
+.link-err{background:#ef4444;box-shadow:0 0 4px rgba(239,68,68,.5)}
+.link-unknown{background:#52525b}
+
 /* ===== MODAL ===== */
 .modal-overlay{
   position:fixed;inset:0;background:rgba(0,0,0,.6);
