@@ -1,0 +1,26 @@
+{
+  "_comment": "Dies ist eine Beispiel-Datei. Kopiere sie nach data/materials.json und fülle sie mit deinen Daten.",
+  "materialien": [
+    {
+      "id": "evazote-4mm",
+      "name": "Evazote",
+      "hersteller": "",
+      "eigenschaften": {
+        "Materialstärke": { "wert": 4, "einheit": "mm" },
+        "Gewicht": { "wert": 0.19, "einheit": "kg/m²" },
+        "W/(m²K)": { "wert": 0.0401, "einheit": "W/(m²K)" }
+      },
+      "links": []
+    },
+    {
+      "id": "aluminiumblech-1mm",
+      "name": "Aluminiumblech",
+      "hersteller": "",
+      "eigenschaften": {
+        "Materialstärke": { "wert": 1, "einheit": "mm" },
+        "Gewicht": { "wert": 2.70, "einheit": "kg/m²" }
+      },
+      "links": []
+    }
+  ]
+}
