@@ -1,5 +1,7 @@
 // Central domain types used across the app
 
+export type MaterialStatus = 'active' | 'check' | 'rejected';
+
 export interface MaterialProperty {
   name: string;
   wert: string; // numeric values are stored as numeric strings where applicable
@@ -17,6 +19,7 @@ export interface Material {
   Hersteller: string;
   Eigenschaften: MaterialProperty[];
   Link: MaterialLink[];
+  status?: MaterialStatus;
 }
 
 export type SortDirection = 'asc' | 'desc';
@@ -40,4 +43,17 @@ export interface PropertyFilter {
   min?: number;
   max?: number;
   enabled?: boolean;
+}
+
+// Request types for user-submitted changes
+export type RequestAction = 'new' | 'change';
+
+export interface RequestEntry {
+  id: string;
+  createdAt: string;
+  status: MaterialStatus;
+  action: RequestAction;
+  material: Material;
+  originalMaterialName?: string; // for "change" actions, the original material name
+  note?: string;
 }
