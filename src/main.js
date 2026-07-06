@@ -25,9 +25,18 @@ async function fetchLinkStatus() {
   } catch { return {}; }
 }
 
+async function fetchDonations() {
+  try {
+    const res = await fetch(`${API}/donations`);
+    if (!res.ok) return null;
+    return res.json();
+  } catch { return null; }
+}
+
 // ===== STATE =====
 let materials = [];
 let linkStatus = {};
+let donationsData = null;
 let hiddenProps = new Set();
 let propertyNames = [];
 let currentSort = { column: '', direction: 'asc' };
@@ -82,15 +91,18 @@ async function init() {
     if (btn) btn.style.display = 'inline-flex';
   }
   try {
-    [materials, linkStatus] = await Promise.all([
+    [materials, linkStatus, donationsData] = await Promise.all([
       fetchMaterials(),
-      fetchLinkStatus()
+      fetchLinkStatus(),
+      fetchDonations()
     ]);
     extractPropertyNames();
   } catch (e) {
     materials = [];
     linkStatus = {};
+    donationsData = null;
   }
+  renderDonations();
   render();
 }
 
@@ -583,6 +595,40 @@ function showToast(msg, type) {
 // ===== UTILS =====
 function escHtml(s) {
   return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+// ===== DONATIONS =====
+function renderDonations() {
+  if (!donationsData || !donationsData.buttonUrl || donationsData.buttonUrl === '#') return;
+  const footer = document.getElementById('donation-footer');
+  if (!footer) return;
+  footer.style.display = 'block';
+
+  const { total, count, goal, goalLabel, overflowLabel, buttonText, buttonUrl } = donationsData;
+  const pct = Math.min(100, Math.round((total / goal) * 100));
+  const overflow = Math.max(0, total - goal);
+  const isOver = overflow > 0;
+
+  document.getElementById('donation-text').innerHTML = isOver
+    ? '🎉 <strong>Server-Kosten gedeckt!</strong> Danke an ' + count + ' Unterstützer!'
+    : '💚 <strong>' + total.toLocaleString('de-DE') + ' €</strong> von ' + goal + ' € — ' + goalLabel;
+
+  document.getElementById('donation-bar').style.width = pct + '%';
+  document.getElementById('donation-bar').textContent = pct + '%';
+
+  const overflowEl = document.getElementById('donation-overflow');
+  if (isOver) {
+    const overflowPct = Math.round((overflow / goal) * 100);
+    overflowEl.style.width = overflowPct + '%';
+    overflowEl.style.display = 'block';
+    overflowEl.textContent = '+ ' + overflow.toLocaleString('de-DE') + ' € für ' + overflowLabel;
+  } else {
+    overflowEl.style.display = 'none';
+  }
+
+  const btn = document.getElementById('donation-btn');
+  btn.textContent = buttonText;
+  btn.href = buttonUrl;
 }
 
 // ===== START =====

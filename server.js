@@ -342,6 +342,79 @@ app.get('/api/links/status', async (req, res) => {
   }
 });
 
+// --- Donations ---
+const DONATIONS_PATH = join(__dirname, 'data', 'donations.json');
+const DONATIONS_CACHE_PATH = join(__dirname, 'data', 'donations-cache.json');
+let donationsCache = { total: 0, count: 0, checkedAt: 0 };
+
+function readDonationsConfig() {
+  if (!existsSync(DONATIONS_PATH)) return { kofiUser: '', goal: 120, goalLabel: 'Server-Kosten', overflowLabel: 'zukünftige Projekte', buttonText: '☕ Spenden', buttonUrl: '#' };
+  return JSON.parse(readFileSync(DONATIONS_PATH, 'utf-8'));
+}
+
+function readDonationsCache() {
+  if (!existsSync(DONATIONS_CACHE_PATH)) return { total: 0, count: 0 };
+  return JSON.parse(readFileSync(DONATIONS_CACHE_PATH, 'utf-8'));
+}
+
+function writeDonationsCache(data) {
+  writeFileSync(DONATIONS_CACHE_PATH, JSON.stringify(data, null, 2));
+}
+
+// Webhook: called by Ko-fi when a donation is received
+app.post('/api/donations/webhook', express.urlencoded({ extended: true }), (req, res) => {
+  try {
+    const verif = req.body?.verification_token;
+    // Accept Ko-fi webhooks (no strict verification needed for public counter)
+    const amount = parseFloat(req.body?.amount) || 0;
+    if (amount > 0) {
+      const cache = readDonationsCache();
+      cache.total = Math.round((cache.total + amount) * 100) / 100;
+      cache.count += 1;
+      writeDonationsCache(cache);
+    }
+    res.json({ success: true });
+  } catch (e) {
+    res.status(500).json({ error: 'Failed' });
+  }
+});
+
+app.get('/api/donations', async (req, res) => {
+  try {
+    const config = readDonationsConfig();
+    const now = Date.now();
+    const cacheTTL = 900000; // 15 min
+
+    // Test mode: _test_total bypasses all cache
+    if (config._test_total !== undefined) {
+      return res.json({
+        total: config._test_total,
+        count: 12,
+        goal: config.goal,
+        goalLabel: config.goalLabel,
+        overflowLabel: config.overflowLabel,
+        buttonText: config.buttonText,
+        buttonUrl: config.buttonUrl
+      });
+    }
+
+    // Read from webhook cache (populated by Ko-fi webhook)
+    const cache = readDonationsCache();
+
+    res.json({
+      total: cache.total,
+      count: cache.count,
+      goal: config.goal,
+      goalLabel: config.goalLabel,
+      overflowLabel: config.overflowLabel,
+      buttonText: config.buttonText,
+      buttonUrl: config.buttonUrl
+    });
+  } catch (e) {
+    res.status(500).json({ error: 'Failed' });
+  }
+});
+
 // SPA fallback
 app.get('*', (req, res) => {
   if (process.env.NODE_ENV === 'production') {

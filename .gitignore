@@ -6,6 +6,8 @@ dist/
 
 # Data files (user-specific, not in repo)
 data/materials.json
+data/donations.json
+data/donations-cache.json
 
 # Environment
 .env
