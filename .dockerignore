@@ -11,3 +11,4 @@ dist/
 docker-compose.yml
 Dockerfile
 .dockerignore
+Caddyfile
