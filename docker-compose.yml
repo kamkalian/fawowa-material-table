@@ -1,0 +1,13 @@
+services:
+  fawowa:
+    build: .
+    container_name: fawowa-material-table
+    ports:
+      - "3456:3456"
+    volumes:
+      # Persist data files outside the container
+      - ./data:/app/data
+    restart: unless-stopped
+    environment:
+      - NODE_ENV=production
+      - PORT=3456
