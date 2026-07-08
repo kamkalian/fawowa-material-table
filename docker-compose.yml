@@ -15,4 +15,4 @@ services:
 
 networks:
   caddy-net:
-    driver: bridge
+    external: true
