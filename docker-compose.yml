@@ -1,3 +1,6 @@
+networks:
+  - caddy-net
+
 services:
   fawowa:
     build: .
