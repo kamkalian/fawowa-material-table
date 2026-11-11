@@ -1,47 +1,32 @@
 <script>
-  import { LINIEN_ICONS, SYMBOL_ICONS } from '../../lib/icons.js';
+  import { ICON_NAMEN } from '../../lib/icons.js';
   import CategoryIcon from '../shared/CategoryIcon.svelte';
 
   let { value, onchange } = $props();
-
-  // [Titel, Namen, Größe]
-  const GRUPPEN = [
-    ['Material-Symbole', LINIEN_ICONS, 28],
-    ['Allgemeine Symbole', SYMBOL_ICONS, 22]
-  ];
 </script>
 
-<div class="gruppen" role="radiogroup" aria-label="Icon">
-  {#each GRUPPEN as [titel, namen, groesse] (titel)}
-    <div class="gruppe">
-      <span class="gruppen-titel">{titel}</span>
-      <div class="raster">
-        {#each namen as name (name)}
-          <button
-            type="button"
-            class="icon-btn"
-            class:aktiv={value === name}
-            role="radio"
-            aria-checked={value === name}
-            title={name}
-            aria-label={name}
-            onclick={() => onchange(name)}
-          >
-            <CategoryIcon {name} size={groesse} />
-          </button>
-        {/each}
-      </div>
-    </div>
+<!-- Eine einzige Auswahl: zuerst die Symbole für typische Materialien, dann die allgemeinen Symbole -->
+<div class="raster" role="radiogroup" aria-label="Icon">
+  {#each ICON_NAMEN as name (name)}
+    <button
+      type="button"
+      class="icon-btn"
+      class:aktiv={value === name}
+      role="radio"
+      aria-checked={value === name}
+      title={name}
+      aria-label={name}
+      onclick={() => onchange(name)}
+    >
+      <CategoryIcon {name} size={24} />
+    </button>
   {/each}
 </div>
 
 <style>
-  .gruppen { display: flex; flex-direction: column; gap: 1rem; }
-  .gruppe { display: flex; flex-direction: column; gap: .4rem; }
-  .gruppen-titel { font-size: .75rem; color: var(--fg-muted); }
-  .raster { display: grid; grid-template-columns: repeat(auto-fill, minmax(2.5rem, 1fr)); gap: .375rem; }
+  .raster { display: grid; grid-template-columns: repeat(auto-fill, minmax(2.75rem, 1fr)); gap: .375rem; }
   .icon-btn {
-    display: flex; align-items: center; justify-content: center; height: 2.5rem;
+    display: flex; align-items: center; justify-content: center; height: 2.75rem;
     background: var(--bg-input); border: 1px solid var(--border); border-radius: var(--radius-sm);
     cursor: pointer; color: var(--fg-muted);
   }
