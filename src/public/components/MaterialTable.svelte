@@ -4,11 +4,10 @@
     displayName, categoryName, formatValue, vermerkText, gruppenWert, gruppenHatVermerk
   } from '../lib/filter.js';
   import CategoryIcon from '../../shared/CategoryIcon.svelte';
-  import Flag from '@lucide/svelte/icons/flag';
-  import ChevronRight from '@lucide/svelte/icons/chevron-right';
+  import Icon from '../../shared/Icon.svelte';
 
-  // items: Zeilen der Tabelle, entweder einzelne Materialien oder Gruppen gleichnamiger Materialien
-  //        [{ typ: 'einzel', material } | { typ: 'gruppe', key, mitglieder }]
+  // items: Zeilen der Tabelle, entweder einzelne Materialien oder (verschachtelte) Gruppen nach Namensteilen
+  //        [{ typ: 'einzel', material } | { typ: 'gruppe', key, label, mitglieder, kinder: [items] }]
   // offen: Schlüssel der aufgeklappten Gruppen; columns: sichtbare Eigenschaften; sort: {key, dir} oder null
   let { lang, items, offen, columns, sort, onsort, onopen, onreport, ontoggle } = $props();
 
@@ -26,9 +25,9 @@
 </script>
 
 <!-- Zeile eines einzelnen Materials; eingerueckt = Mitglied einer aufgeklappten Gruppe -->
-{#snippet materialZeile(m, eingerueckt)}
-  <tr class="clickable" class:mitglied={eingerueckt} onclick={() => onopen(m.id)}>
-    <td class="sticky">
+{#snippet materialZeile(m, ebene)}
+  <tr class="clickable" class:mitglied={ebene > 0} onclick={() => onopen(m.id)}>
+    <td class="sticky" style:--ebene={ebene}>
       <button class="name-btn" onclick={(e) => { e.stopPropagation(); onopen(m.id); }}>{displayName(m, lang)}</button>
     </td>
     <td class="muted-cell">
@@ -54,10 +53,57 @@
     <td class="melden">
       <button class="melden-btn" title={t(lang, 'reportRow')} aria-label="{t(lang, 'reportRow')}: {displayName(m, lang)}"
         onclick={(e) => { e.stopPropagation(); onreport(m); }}>
-        <Flag size={15} />
+        <Icon name="ui-flag" size={15} />
       </button>
     </td>
   </tr>
+{/snippet}
+
+<!-- Einzelnes Material oder Gruppe (mit aufgeklappten Kindern); ebene = Tiefe der Verschachtelung -->
+{#snippet eintrag(it, ebene)}
+  {#if it.typ === 'einzel'}
+    {@render materialZeile(it.material, ebene)}
+  {:else}
+    {@const erstes = it.mitglieder[0]}
+    {@const aufgeklappt = offen.includes(it.key)}
+    <tr class="gruppe" class:aufgeklappt class:mitglied={ebene > 0} onclick={() => ontoggle(it.key)}>
+      <td class="sticky" style:--ebene={ebene}>
+        <button class="gruppen-btn" aria-expanded={aufgeklappt}
+          aria-label="{aufgeklappt ? t(lang, 'groupCollapse') : t(lang, 'groupExpand')}: {it.label}"
+          onclick={(e) => { e.stopPropagation(); ontoggle(it.key); }}>
+          <span class="gruppen-name">{it.label}</span>
+          <span class="anzahl" title={t(lang, 'groupVariants', it.mitglieder.length)}>{it.mitglieder.length}</span>
+          <span class="pfeil"><Icon name="ui-chevron" size={16} /></span>
+        </button>
+      </td>
+      <td class="muted-cell">
+        <span class="name-wrap">
+          <CategoryIcon name={erstes.kategorie.icon} size={18} />
+          {categoryName(erstes, lang)}
+        </span>
+      </td>
+      {#each columns as p (p.kurzwort)}
+        {@const text = gruppenWert(p, it.mitglieder, lang)}
+        <td>
+          {#if text}
+            {text}
+            {#if gruppenHatVermerk(p, it.mitglieder)}
+              <span class="badge badge-check" title={t(lang, 'unverifiedTitle')}>{t(lang, 'unverified')}</span>
+            {/if}
+          {:else}
+            <span class="muted-cell">{t(lang, 'empty')}</span>
+          {/if}
+        </td>
+      {/each}
+      <td class="melden"></td>
+    </tr>
+
+    {#if aufgeklappt}
+      {#each it.kinder as kind (schluessel(kind))}
+        {@render eintrag(kind, ebene + 1)}
+      {/each}
+    {/if}
+  {/if}
 {/snippet}
 
 <div class="table-wrap">
@@ -90,49 +136,7 @@
       {/if}
 
       {#each items as it (schluessel(it))}
-        {#if it.typ === 'einzel'}
-          {@render materialZeile(it.material, false)}
-        {:else}
-          {@const erstes = it.mitglieder[0]}
-          {@const aufgeklappt = offen.includes(it.key)}
-          <tr class="gruppe" class:aufgeklappt onclick={() => ontoggle(it.key)}>
-            <td class="sticky">
-              <button class="gruppen-btn" aria-expanded={aufgeklappt}
-                aria-label="{aufgeklappt ? t(lang, 'groupCollapse') : t(lang, 'groupExpand')}: {displayName(erstes, lang)}"
-                onclick={(e) => { e.stopPropagation(); ontoggle(it.key); }}>
-                <span class="pfeil"><ChevronRight size={16} /></span>
-                <span class="gruppen-name">{displayName(erstes, lang)}</span>
-                <span class="anzahl" title={t(lang, 'groupVariants', it.mitglieder.length)}>{it.mitglieder.length}</span>
-              </button>
-            </td>
-            <td class="muted-cell">
-              <span class="name-wrap">
-                <CategoryIcon name={erstes.kategorie.icon} size={18} />
-                {categoryName(erstes, lang)}
-              </span>
-            </td>
-            {#each columns as p (p.kurzwort)}
-              {@const text = gruppenWert(p, it.mitglieder, lang)}
-              <td>
-                {#if text}
-                  {text}
-                  {#if gruppenHatVermerk(p, it.mitglieder)}
-                    <span class="badge badge-check" title={t(lang, 'unverifiedTitle')}>{t(lang, 'unverified')}</span>
-                  {/if}
-                {:else}
-                  <span class="muted-cell">{t(lang, 'empty')}</span>
-                {/if}
-              </td>
-            {/each}
-            <td class="melden"></td>
-          </tr>
-
-          {#if aufgeklappt}
-            {#each it.mitglieder as m (m.id)}
-              {@render materialZeile(m, true)}
-            {/each}
-          {/if}
-        {/if}
+        {@render eintrag(it, 0)}
       {/each}
     </tbody>
   </table>
@@ -171,18 +175,22 @@
   /* Gruppen gleichnamiger Materialien */
   tr.gruppe { cursor: pointer; }
   tr.gruppe td { font-weight: 500; }
+  /* Der Pfeil sitzt am rechten Rand der Zelle */
   .gruppen-btn {
-    display: inline-flex; align-items: center; gap: .375rem; background: none; border: none; color: var(--fg);
-    font: inherit; font-weight: 500; cursor: pointer; padding: 0; text-align: left;
+    display: flex; align-items: center; gap: .5rem; width: 100%; min-width: 11rem; background: none; border: none;
+    color: var(--fg); font: inherit; font-weight: 500; cursor: pointer; padding: 0; text-align: left;
   }
   .gruppen-btn:focus-visible { outline: 2px solid var(--primary); outline-offset: 2px; border-radius: var(--radius-sm); }
-  .pfeil { display: inline-flex; color: var(--fg-muted); transition: transform .15s; }
+  .pfeil { display: inline-flex; margin-left: auto; color: var(--fg-muted); transition: transform .15s; }
   tr.aufgeklappt .pfeil { transform: rotate(90deg); color: var(--primary); }
   .anzahl {
     font-size: .6875rem; font-weight: 500; color: var(--fg-muted); border: 1px solid var(--border);
     border-radius: 999px; padding: 0 .4rem; line-height: 1.3;
   }
-  /* Mitglieder einer aufgeklappten Gruppe: leicht eingerückt, mit Linie am linken Rand */
+  /* Inhalt einer aufgeklappten Gruppe: je Ebene eingerückt, mit Linie am linken Rand */
   tr.mitglied td { background: var(--bg-hover); }
-  tr.mitglied td.sticky { background: var(--bg-hover); box-shadow: inset 2px 0 0 var(--primary); padding-left: 1.75rem; }
+  tr.mitglied td.sticky {
+    background: var(--bg-hover); box-shadow: inset 2px 0 0 var(--primary);
+    padding-left: calc(.75rem + var(--ebene, 1) * 1rem);
+  }
 </style>

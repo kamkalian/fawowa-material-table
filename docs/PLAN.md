@@ -117,7 +117,7 @@ Die Startseite ist die Tabelle selbst: eine Zeile pro Material, darüber eine Su
 - „Alle Filter zurücksetzen“ und eine Anzeige „12 von 61 Materialien“
 - Klick auf eine Spaltenüberschrift sortiert, zweiter Klick dreht die Richtung
 - Spaltenauswahl: Eigenschaften ein- und ausblenden. Standardmäßig sichtbar sind nur die im Admin-Bereich dafür markierten.
-- Materialien mit gleichem Namen (gleiche Kategorie) erscheinen als eine Gruppe mit Anzahl; die Kopfzeile fasst die Werte zusammen (Zahlen als Bereich, z. B. „0,2–1,5 mm“). Ein Pfeil klappt die Gruppe auf. Mit dem Schalter „Gruppieren“ lässt sich das ausschalten (`flat=1` in der Adresse).
+- Materialien werden nach Namensteilen gruppiert (wie die Tabellengruppen in phpMyAdmin): Teile sind durch `_` getrennt, gleiche Anfangsteile in derselben Kategorie bilden eine Gruppe, auch verschachtelt (`Holz_Pappel_4mm`, `Holz_Pappel_10mm`, `Holz_Kiefer` → Gruppe „Holz“ mit Untergruppe „Pappel“). Gleiche Namen ohne Unterstrich bilden ebenfalls eine Gruppe. Die Kopfzeile zeigt die Anzahl und fasst die Werte zusammen (Zahlen als Bereich, z. B. „0,2–1,5 mm“). Ein Pfeil am rechten Rand der Zelle klappt die Gruppe auf. Mit dem Schalter „Gruppieren“ lässt sich das ausschalten (`flat=1` in der Adresse).
 - Leere Werte werden als Strich angezeigt und beim Sortieren ans Ende gestellt
 - Werte mit Vermerk „ungeprüft“ sind in der Tabelle erkennbar markiert
 - Klick auf eine Zeile öffnet die Detailansicht mit allen Eigenschaften, Links, Quellen und der Schaltfläche „Fehler melden“
@@ -137,7 +137,7 @@ Die Startseite ist die Tabelle selbst: eine Zeile pro Material, darüber eine Su
 | `f=wasserfest:ja` | Ja/Nein-Eigenschaft |
 | `sort=gewicht` | Aufsteigend sortiert, `-gewicht` für absteigend |
 | `cols=…` | Sichtbare Spalten |
-| `flat=1` | Gleichnamige Materialien nicht gruppieren |
+| `flat=1` | Materialien nicht gruppieren |
 | `lang=en` | Sprache |
 
 Jede Eigenschaft hat ein festes Kurzwort wie `gewicht`. Es bleibt gleich, auch wenn der Anzeigename später geändert wird, damit alte Links weiter funktionieren. Unbekannte oder fehlerhafte Filter in einer URL werden ignoriert und kurz als Hinweis angezeigt.
@@ -225,3 +225,16 @@ Phase 4 kommt nach Phase 3, weil das Übernehmen von Meldungen die Bearbeitungsf
   und höchstens fünf Meldungen pro Stunde und Adresse; im Admin-Bereich liegen sie im Eingang mit Zähler. Fehlermeldungen werden
   mit einem Klick (nach Korrektur) übernommen, Vorschläge öffnen das Materialformular vorbefüllt. Erledigte Meldungen bleiben im Archiv.
 - [ ] Phase 5: Feinschliff und Start (Handy-Ansicht, Design, Link-Prüfung, Ko-fi-Fußzeile, Hinweis im Forum)
+
+## Icon-Stil „Feinstrich“
+
+Alle Icons (Kategorien und Bedienelemente) sind selbst gezeichnet und stehen in `src/shared/Icon.svelte`. Regeln:
+
+1. Zeichenfläche 24 × 24, Inhalt mit mindestens 2 Einheiten Rand.
+2. Nur Linien, keine Füllungen: Strichstärke 1,5, runde Enden und Ecken, Farbe = `currentColor`.
+3. Form aus einfachen Grundelementen (Kreise, gerade Linien, Bögen), Winkel möglichst 45° oder 90°.
+4. Parallele Linien haben mindestens 3 Einheiten Abstand.
+5. Innenlinien haben dieselbe Stärke wie die Außenlinie, höchstens eine Detailebene.
+6. Aufstehende Dinge stehen auf einer Grundlinie bei y = 21.
+
+Kategorie-Icons sind in der Akzentfarbe, Bedienelemente übernehmen die Textfarbe. Neue Kategorie-Icons müssen zusätzlich in `lib/icons.js` eingetragen werden.

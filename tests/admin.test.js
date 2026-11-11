@@ -194,8 +194,8 @@ test('Kategorie löschen nur ohne Materialien; Reihenfolge muss vollständig sei
 });
 
 test('Alle Icon-Namen haben eine Komponente und bekannte Kategorien ein Standard-Icon', () => {
-  const quelle = readFileSync(new URL('../src/shared/CategoryIcon.svelte', import.meta.url), 'utf8');
-  for (const name of ICON_NAMEN) assert.ok(quelle.includes(`'${name}'`), `Icon fehlt in CategoryIcon.svelte: ${name}`);
+  const quelle = readFileSync(new URL('../src/shared/Icon.svelte', import.meta.url), 'utf8');
+  for (const name of ICON_NAMEN) assert.ok(quelle.includes(`'${name}'`), `Icon fehlt in Icon.svelte: ${name}`);
   // Alle Kategorie-Icons sind selbst gezeichnet: keine Bibliothek im Icon-Baustein
   assert.ok(!/lucide/i.test(quelle), 'CategoryIcon.svelte darf keine Icon-Bibliothek einbinden');
   for (const icon of Object.values(ICON_NACH_SLUG)) assert.ok(ICON_NAMEN.includes(icon), `Vorschlag nicht in der Liste: ${icon}`);

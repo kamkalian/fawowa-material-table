@@ -225,3 +225,32 @@ test('Adresse: flat=1 schaltet die Gruppierung aus und wird wieder geschrieben, 
   assert.equal(buildSearch(state, props), '?flat=1&lang=de');
   assert.equal(buildSearch({ ...state, flat: false }, props), '?lang=de');
 });
+
+// --- Gruppieren nach Unterstrich-Teilen ---
+
+const ids = (items) => items.map(i => (i.typ === 'gruppe' ? { k: i.key, l: i.label, n: i.mitglieder.length, c: ids(i.kinder) } : i.material.id));
+
+test('Unterstriche: gemeinsame Anfangsteile bilden verschachtelte Gruppen', () => {
+  const rows = [
+    mat(1, 'Holz_Pappel_4mm', 'holz'), mat(2, 'Holz_Kiefer', 'holz'), mat(3, 'Holz_Pappel_10mm', 'holz'), mat(4, 'Birke', 'holz')
+  ];
+  assert.deepEqual(ids(gruppiere(rows)), [
+    { k: 'holz|holz', l: 'Holz', n: 3, c: [{ k: 'holz|holz_pappel', l: 'Pappel', n: 2, c: [1, 3] }, 2] },
+    4
+  ]);
+});
+
+test('Unterstriche: Ketten ohne Verzweigung werden zu einem Namen zusammengezogen', () => {
+  const rows = [mat(1, 'Holz_Pappel_4mm', 'holz'), mat(2, 'Holz_Pappel_10mm', 'holz')];
+  assert.deepEqual(ids(gruppiere(rows)), [{ k: 'holz|holz_pappel', l: 'Holz_Pappel', n: 2, c: [1, 2] }]);
+});
+
+test('Unterstriche: ein Material, dessen Name der Gruppenname ist, steht in der Gruppe; Kategorien bleiben getrennt', () => {
+  const rows = [mat(1, 'Holz', 'holz'), mat(2, 'Holz_Kiefer', 'holz'), mat(3, 'Holz_Kiefer', 'metall')];
+  assert.deepEqual(ids(gruppiere(rows)), [{ k: 'holz|holz', l: 'Holz', n: 2, c: [1, 2] }, 3]);
+});
+
+test('Unterstriche: Groß-/Kleinschreibung, Leerzeichen und doppelte Unterstriche stören nicht', () => {
+  const rows = [mat(1, 'holz_ Kiefer', 'holz'), mat(2, 'Holz__kiefer', 'holz')];
+  assert.deepEqual(ids(gruppiere(rows)), [{ k: 'holz|holz_kiefer', l: 'holz_Kiefer', n: 2, c: [1, 2] }]);
+});

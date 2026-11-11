@@ -1,4 +1,5 @@
 <script>
+  import Icon from '../../shared/Icon.svelte';
   import { t, pick } from '../lib/i18n.js';
 
   // props: Eigenschaften, sichtbare Spalten, Zustand, Callbacks
@@ -16,7 +17,7 @@
 
 <div class="toolbar">
   <div class="search-toolbar toolbar-search">
-    <svg class="search-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+    <span class="search-icon"><Icon name="ui-search" size={16} /></span>
     <input
       type="search"
       class="input search-input"
@@ -28,7 +29,7 @@
   </div>
 
   <button class="btn btn-outline" onclick={onaddfilter}>
-    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+    <Icon name="ui-plus" size={14} />
     {t(lang, 'addFilter')}
   </button>
 
@@ -56,7 +57,7 @@
   </button>
 
   <button class="btn btn-outline" onclick={onsuggest}>
-    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>
+    <Icon name="ui-plus" size={14} />
     {t(lang, 'suggest')}
   </button>
 
@@ -66,7 +67,7 @@
       <button class="btn btn-sm {lang === 'en' ? 'btn-primary' : 'btn-ghost'}" aria-pressed={lang === 'en'} onclick={() => onlang('en')}>EN</button>
     </div>
     <button class="btn btn-ghost btn-icon" title={t(lang, 'themeToggle')} aria-label={t(lang, 'themeToggle')} onclick={ontheme}>
-      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+      <Icon name="ui-moon" size={16} />
     </button>
   </div>
 </div>

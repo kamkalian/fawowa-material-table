@@ -125,28 +125,71 @@ export function unitsFor(materials, prop) {
   return [...units];
 }
 
-// --- Gruppieren gleichnamiger Materialien ---
+// --- Gruppieren nach Namensteilen (wie die Tabellengruppen in phpMyAdmin) ---
 
-/** Gleicher Name (deutsch, ohne Beachtung von Groß-/Kleinschreibung und doppelten Leerzeichen) in derselben Kategorie */
+/** Namensteile: am Unterstrich getrennt, ohne doppelte Leerzeichen; leere Teile entfallen. */
+export function namensTeile(m) {
+  const teile = m.name.de.split('_').map(t => t.trim().replace(/\s+/g, ' ')).filter(Boolean);
+  return teile.length ? teile : [''];
+}
+
+/** Schlüssel eines Materials auf voller Länge: Kategorie und alle Namensteile (ohne Groß-/Kleinschreibung) */
 export function gruppenSchluessel(m) {
-  return `${m.kategorie.slug}|${m.name.de.trim().toLowerCase().replace(/\s+/g, ' ')}`;
+  return `${m.kategorie.slug}|${namensTeile(m).join('_').toLowerCase()}`;
+}
+
+function zuItem(knoten) {
+  if (knoten.anzahl === 1) return { typ: 'einzel', material: knoten.alle[0] };
+  // Kette ohne Verzweigung zusammenziehen: "Holz" → "Pappel" wird zu "Holz_Pappel"
+  while (knoten.kinder.length === 1 && knoten.kinder[0].knoten) {
+    const kind = knoten.kinder[0].knoten;
+    knoten = { ...kind, label: `${knoten.label}_${kind.label}` };
+  }
+  return {
+    typ: 'gruppe',
+    key: knoten.key,
+    label: knoten.label,
+    mitglieder: knoten.alle,
+    kinder: knoten.kinder.map(k => (k.knoten ? zuItem(k.knoten) : { typ: 'einzel', material: k.material }))
+  };
 }
 
 /**
- * Fasst Materialien mit gleichem Namen zu Gruppen zusammen. Die Reihenfolge bleibt erhalten:
- * eine Gruppe steht an der Stelle ihres ersten Mitglieds. Einzelne Materialien bleiben einzeln.
- * Ergebnis: [{ typ: 'gruppe', key, mitglieder }, { typ: 'einzel', material }, ...]
+ * Fasst Materialien zu Gruppen zusammen, wenn ihre Namen am Anfang gleiche Teile haben (Teile sind durch "_" getrennt).
+ * Gruppen können verschachtelt sein: Holz_Pappel_4mm, Holz_Pappel_10mm, Holz_Kiefer → Gruppe "Holz" mit der
+ * Untergruppe "Pappel" und dem Einzelnen "Kiefer". Gleiche Namen ohne Unterstrich (Pappelsperrholz ×3) bilden
+ * ebenfalls eine Gruppe. Gruppiert wird nur innerhalb einer Kategorie. Die Reihenfolge bleibt erhalten:
+ * eine Gruppe steht an der Stelle ihres ersten Mitglieds; Einzelne bleiben einzeln.
+ * Ergebnis: [{ typ: 'gruppe', key, label, mitglieder, kinder: [Items] }, { typ: 'einzel', material }, ...]
  */
 export function gruppiere(rows) {
-  const gruppen = new Map();
+  const wurzeln = new Map(); // Kategorie → Knoten
+  const oben = [];           // Reihenfolge der obersten Knoten
   for (const m of rows) {
-    const key = gruppenSchluessel(m);
-    if (!gruppen.has(key)) gruppen.set(key, []);
-    gruppen.get(key).push(m);
+    let eltern = wurzeln.get(m.kategorie.slug);
+    if (!eltern) {
+      eltern = { kinder: [], index: new Map() };
+      wurzeln.set(m.kategorie.slug, eltern);
+    }
+    let pfad = '';
+    let knoten = eltern;
+    const teile = namensTeile(m);
+    teile.forEach((teil) => {
+      pfad = pfad ? `${pfad}_${teil.toLowerCase()}` : teil.toLowerCase();
+      let kind = knoten.index.get(teil.toLowerCase());
+      if (!kind) {
+        kind = { key: `${m.kategorie.slug}|${pfad}`, label: teil, kinder: [], index: new Map(), alle: [], anzahl: 0 };
+        knoten.index.set(teil.toLowerCase(), kind);
+        knoten.kinder.push({ knoten: kind });
+        if (knoten === eltern) oben.push(kind);
+      }
+      kind.alle.push(m);
+      kind.anzahl++;
+      knoten = kind;
+    });
+    knoten.kinder.push({ material: m }); // das Material selbst am Ende seines Namenspfads
   }
-  return [...gruppen.entries()].map(([key, mitglieder]) =>
-    mitglieder.length > 1 ? { typ: 'gruppe', key, mitglieder } : { typ: 'einzel', material: mitglieder[0] }
-  );
+  return oben.map(zuItem);
 }
 
 /** Ohne Gruppierung: jedes Material für sich */
