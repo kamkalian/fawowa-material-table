@@ -8,6 +8,8 @@ dist/
 data/materials.json
 data/donations.json
 data/donations-cache.json
+data/material.db
+data/material.db-*
 
 # Environment
 .env
@@ -59,3 +61,6 @@ yarn-error.log*
 next-env.d.ts
 
 public/materials.csv
+
+# Die Vorlage für die Umgebungsvariablen darf eingecheckt werden
+!.env.example

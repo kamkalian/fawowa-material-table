@@ -4,16 +4,23 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "dev": "node server.js & npx vite --port 5173",
-    "dev:api": "node server.js",
+    "dev": "concurrently -n api,web -c blue,green \"npm:dev:api\" \"npm:dev:web\"",
+    "dev:api": "node --watch server.js",
     "dev:web": "npx vite --port 5173",
     "build": "vite build",
+    "test": "node --test tests/",
+    "import:startdaten": "node scripts/import-startdaten.js",
     "start": "NODE_ENV=production node server.js"
   },
   "dependencies": {
+    "better-sqlite3": "^13.0.3",
     "express": "^4.21.0"
   },
   "devDependencies": {
+    "@lucide/svelte": "^1.72.0",
+    "@sveltejs/vite-plugin-svelte": "^5.1.1",
+    "concurrently": "^10.0.7",
+    "svelte": "^5.57.3",
     "vite": "^6.0.0"
   }
 }

@@ -2,8 +2,14 @@ import express from 'express';
 import { readFileSync, writeFileSync, existsSync } from 'fs';
 import { join, dirname } from 'path';
 import { fileURLToPath } from 'url';
+import { openDb, listKategorien, listEigenschaften, listMaterialien, getMaterial } from './lib/db.js';
+import { registerAdminRoutes } from './lib/admin-routes.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
+
+// Umgebungsvariablen aus .env laden (z. B. ADMIN_PASSWORD_HASH). Bestehende Variablen bleiben unverändert.
+const ENV_PATH = join(__dirname, '.env');
+if (existsSync(ENV_PATH)) process.loadEnvFile(ENV_PATH);
 const app = express();
 const PORT = process.env.PORT || 3456;
 const JSON_PATH = join(__dirname, 'data', 'materials.json');
@@ -415,6 +421,40 @@ app.get('/api/donations', async (req, res) => {
   }
 });
 
+// --- Datenbank-API (v2): nur lesend, veröffentlichte Daten ---
+// Schreibende Routen kommen mit dem Admin-Bereich (Phase 3), abgesichert per Login.
+const db = openDb();
+registerAdminRoutes(app, db);
+
+// Admin-Oberfläche: in Produktion unter /admin, in der Entwicklung über /admin.html
+app.get('/admin', (req, res, next) => {
+  if (process.env.NODE_ENV !== 'production') return next();
+  res.sendFile(join(__dirname, 'dist', 'admin.html'));
+});
+
+app.get('/api/v2/kategorien', (req, res) => {
+  try { res.json(listKategorien(db)); }
+  catch (e) { res.status(500).json({ error: 'Failed to read categories' }); }
+});
+
+app.get('/api/v2/eigenschaften', (req, res) => {
+  try { res.json(listEigenschaften(db)); }
+  catch (e) { res.status(500).json({ error: 'Failed to read properties' }); }
+});
+
+app.get('/api/v2/materialien', (req, res) => {
+  try { res.json(listMaterialien(db)); }
+  catch (e) { res.status(500).json({ error: 'Failed to read materials' }); }
+});
+
+app.get('/api/v2/materialien/:id', (req, res) => {
+  try {
+    const m = getMaterial(db, req.params.id);
+    if (!m) return res.status(404).json({ error: 'Not found' });
+    res.json(m);
+  } catch (e) { res.status(500).json({ error: 'Failed to read material' }); }
+});
+
 // SPA fallback
 app.get('*', (req, res) => {
   if (process.env.NODE_ENV === 'production') {
@@ -424,6 +464,15 @@ app.get('*', (req, res) => {
   }
 });
 
-app.listen(PORT, () => {
+const server = app.listen(PORT, () => {
   console.log(`API server running on http://localhost:${PORT}`);
+});
+
+server.on('error', (err) => {
+  if (err.code === 'EADDRINUSE') {
+    console.error(`Port ${PORT} ist schon belegt. Läuft noch eine ältere Instanz dieser Anwendung? Bitte beenden und neu starten.`);
+  } else {
+    console.error(err);
+  }
+  process.exit(1);
 });
