@@ -14,6 +14,7 @@
   let suche = $state('');
   let kategorieFilter = $state(null);
   let statusFilter = $state('alle'); // alle | entwurf | veroeffentlicht
+  let nurUngeprueft = $state(false); // nur Materialien mit Werten, die als ungeprüft markiert sind
   let dialog = $state(null); // { material } (null = neues Material)
 
   let gefiltert = $derived(
@@ -22,9 +23,16 @@
       if (q && ![m.name.de, m.name.en, m.hersteller].some(s => s && s.toLowerCase().includes(q))) return false;
       if (kategorieFilter !== null && m.kategorie.id !== kategorieFilter) return false;
       if (statusFilter !== 'alle' && m.status !== statusFilter) return false;
+      if (nurUngeprueft && !ungeprueftNamen(m).length) return false;
       return true;
     })
   );
+
+  // Namen der Eigenschaften, deren Wert bei diesem Material als ungeprüft markiert ist (Vermerk)
+  function ungeprueftNamen(m) {
+    return props.filter(p => m.werte[p.kurzwort]?.vermerk).map(p => p.name.de);
+  }
+  let anzahlUngeprueft = $derived(materials.filter(m => ungeprueftNamen(m).length > 0).length);
 
   // Die wichtigsten Werte als Kurzfassung unter dem Namen
   let kurzProps = $derived(props.filter(p => p.standardSichtbar));
@@ -110,6 +118,9 @@
     {#each [['alle', 'Alle Status'], ['veroeffentlicht', 'Veröffentlicht'], ['entwurf', 'Entwürfe']] as [wert, label] (wert)}
       <button class="pille" class:aktiv={statusFilter === wert} onclick={() => (statusFilter = wert)}>{label}</button>
     {/each}
+    <button class="pille pille-warnung" class:aktiv={nurUngeprueft} aria-pressed={nurUngeprueft} onclick={() => (nurUngeprueft = !nurUngeprueft)}>
+      Mit ungeprüften Werten ({anzahlUngeprueft})
+    </button>
   </div>
 </div>
 
@@ -131,8 +142,14 @@
             <span class="unter">
               {m.kategorie.name.de}{m.hersteller ? ` · ${m.hersteller}` : ''}{kurzfassung(m) ? ` · ${kurzfassung(m)}` : ''}
             </span>
+            {#if ungeprueftNamen(m).length}
+              <span class="unter warnung">Ungeprüft: {ungeprueftNamen(m).join(', ')}</span>
+            {/if}
           </span>
           <span class="rechts">
+            {#if ungeprueftNamen(m).length}
+              <span class="badge badge-check" title="Ungeprüft: {ungeprueftNamen(m).join(', ')}">{ungeprueftNamen(m).length} ungeprüft</span>
+            {/if}
             {#if m.status !== 'veroeffentlicht'}<span class="badge badge-check">Entwurf</span>{/if}
             <span aria-hidden="true">›</span>
           </span>
@@ -159,4 +176,7 @@
 
 <style>
   .filter-zeile { display: flex; flex-direction: column; gap: .5rem; margin-bottom: 1rem; }
+  /* Hinweis auf ungeprüfte Werte in der Liste und im Filter */
+  .liste :global(.unter.warnung) { color: var(--amber); }
+  .pille-warnung.aktiv { border-color: var(--amber); background: var(--amber-bg); color: var(--amber); }
 </style>
