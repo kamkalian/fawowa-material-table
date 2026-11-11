@@ -213,7 +213,13 @@ Jede Phase endet mit etwas, das sich ausprobieren lässt.
 
 Phase 4 kommt nach Phase 3, weil das Übernehmen von Meldungen die Bearbeitungsfunktionen des Admin-Bereichs nutzt.
 
-## Nächste Schritte
+## Stand
 
-- [ ] Admin-Schlüssel ändern und `data/editor-key.txt` aus dem öffentlichen Repo nehmen
-- [ ] Phase 1 umsetzen: Datenbank, Schnittstellen und Einspielen der Startdaten
+- [x] Admin-Schlüssel entfernt: `data/editor-key.txt` und die alten Routen sind aus dem Repo
+- [x] Phase 1: Datenbank, Schnittstellen und Einspielen der Startdaten
+- [x] Phase 2: öffentliche Tabelle (zusätzlich: Kategorie-Leiste mit Icons als Filter)
+- [x] Phase 3: Admin-Bereich (zusätzlich: Kategorien mit Icons verwalten)
+- [x] Phase 4: Meldungen. Ablauf: Besucher senden über Formulare (ohne Konto), Spam-Schutz mit verstecktem Feld, Mindestzeit
+  und höchstens fünf Meldungen pro Stunde und Adresse; im Admin-Bereich liegen sie im Eingang mit Zähler. Fehlermeldungen werden
+  mit einem Klick (nach Korrektur) übernommen, Vorschläge öffnen das Materialformular vorbefüllt. Erledigte Meldungen bleiben im Archiv.
+- [ ] Phase 5: Feinschliff und Start (Handy-Ansicht, Design, Link-Prüfung, Ko-fi-Fußzeile, Hinweis im Forum)
