@@ -5,7 +5,7 @@
   let { value, onchange } = $props();
 </script>
 
-<!-- Eine einzige Auswahl: zuerst die Symbole für typische Materialien, dann die allgemeinen Symbole -->
+<!-- Eine einzige Auswahl aus selbst gezeichneten Icons -->
 <div class="raster" role="radiogroup" aria-label="Icon">
   {#each ICON_NAMEN as name (name)}
     <button

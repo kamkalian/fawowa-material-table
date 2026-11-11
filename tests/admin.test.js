@@ -169,12 +169,12 @@ test('Zusammenführen verschiebt Werte, bei Doppelungen bleibt das Ziel', () => 
 
 test('Kategorie: anlegen mit Icon, ändern, Icon wird geprüft', () => {
   const { db } = neueDb();
-  const id = anlegenKategorie(db, { name_de: 'Dämm-Stoffe', icon: 'snowflake' });
+  const id = anlegenKategorie(db, { name_de: 'Dämm-Stoffe', icon: 'foam-bubbles' });
   const k = getKategorien(db).find(x => x.id === id);
   assert.equal(k.slug, 'daemm-stoffe');
-  assert.equal(k.icon, 'snowflake');
-  aendereKategorie(db, id, { icon: 'wind', name_en: 'Insulation' });
-  assert.equal(getKategorien(db).find(x => x.id === id).icon, 'wind');
+  assert.equal(k.icon, 'foam-bubbles');
+  aendereKategorie(db, id, { icon: 'tree-rings', name_en: 'Insulation' });
+  assert.equal(getKategorien(db).find(x => x.id === id).icon, 'tree-rings');
   assert.throws(() => aendereKategorie(db, id, { icon: 'gibt-es-nicht' }), /Icon/);
   // Leeres Icon ergibt das Standard-Icon
   aendereKategorie(db, id, { icon: '' });
@@ -196,6 +196,8 @@ test('Kategorie löschen nur ohne Materialien; Reihenfolge muss vollständig sei
 test('Alle Icon-Namen haben eine Komponente und bekannte Kategorien ein Standard-Icon', () => {
   const quelle = readFileSync(new URL('../src/shared/CategoryIcon.svelte', import.meta.url), 'utf8');
   for (const name of ICON_NAMEN) assert.ok(quelle.includes(`'${name}'`), `Icon fehlt in CategoryIcon.svelte: ${name}`);
+  // Alle Kategorie-Icons sind selbst gezeichnet: keine Bibliothek im Icon-Baustein
+  assert.ok(!/lucide/i.test(quelle), 'CategoryIcon.svelte darf keine Icon-Bibliothek einbinden');
   for (const icon of Object.values(ICON_NACH_SLUG)) assert.ok(ICON_NAMEN.includes(icon), `Vorschlag nicht in der Liste: ${icon}`);
 });
 
@@ -207,8 +209,8 @@ test('Migration: Datenbank ohne icon-Spalte bekommt die Spalte und Standard-Icon
   alt.close();
   const db = openDb(pfad);
   const icons = Object.fromEntries(db.prepare('SELECT slug, icon FROM kategorie').all().map(r => [r.slug, r.icon]));
-  assert.equal(icons.holz, 'wood-logs');
-  assert.equal(icons.eigene, null);
+  assert.equal(icons.holz, 'trees');
+  assert.equal(icons.eigene, 'circle');   // kein Vorschlag für diese Kategorie: neutraler Kreis
   db.close();
   rmSync(pfad, { force: true });
   rmSync(`${pfad}-wal`, { force: true });
@@ -228,21 +230,21 @@ test('Migration: frühere Icon-Vorschläge werden einmal ersetzt, spätere Wahl 
   // Die farbigen Icons ("mat-…") gibt es nicht mehr: Standard-Symbole, bei fremden Kategorien der Kreis
   let db = openDb(pfad);
   const icon = (slug) => db.prepare('SELECT icon FROM kategorie WHERE slug = ?').get(slug).icon;
-  assert.equal(icon('holz'), 'wood-logs');
+  assert.equal(icon('holz'), 'trees');
   assert.equal(icon('metall'), 'metal-beam');
   assert.equal(icon('kunststoff'), 'plastic-bottle');
   assert.equal(icon('verbundplatte'), 'sandwich-panel');
   assert.equal(icon('textil'), 'shirt');
   assert.equal(icon('staebe-leisten'), 'ruler');
-  assert.equal(icon('sperrholz'), 'layers');
-  assert.equal(icon('schaum-daemmung'), 'gem');     // eigene Wahl bleibt
+  assert.equal(icon('sperrholz'), 'circle');   // Kategorie ohne Vorschlag: neutraler Kreis
+  assert.equal(icon('schaum-daemmung'), 'foam-bubbles'); // Bibliotheks-Symbol (gem) gibt es nicht mehr
   assert.equal(icon('eigene'), 'circle');           // Kategorie ohne Vorschlag: neutraler Kreis
 
   // Wer danach ein anderes Symbol wählt, behält es beim nächsten Start
-  db.prepare("UPDATE kategorie SET icon = 'tree-pine' WHERE slug = 'holz'").run();
+  db.prepare("UPDATE kategorie SET icon = 'tree-rings' WHERE slug = 'holz'").run();
   db.close();
   db = openDb(pfad);
-  assert.equal(icon('holz'), 'tree-pine');
+  assert.equal(icon('holz'), 'tree-rings');
   db.close();
 
   for (const endung of ['', '-wal', '-shm']) rmSync(`${pfad}${endung}`, { force: true });

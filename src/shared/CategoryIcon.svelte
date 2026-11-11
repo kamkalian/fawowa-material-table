@@ -1,64 +1,14 @@
 <script>
-  // Zeigt das Icon einer Kategorie. Unbekannte oder fehlende Namen ergeben einen Kreis.
-  //
-  // Nur einfarbige Symbole in der Akzentfarbe:
-  //  - Linien-Icons für typische Materialien (eigene Zeichnungen)
-  //  - allgemeine Symbole aus Lucide
+  // Zeigt das Icon einer Kategorie. Alle Icons sind selbst gezeichnet: einfarbige Linien in der Akzentfarbe,
+  // Zeichenfläche 24 × 24. Unbekannte oder fehlende Namen ergeben einen neutralen Kreis.
   // Schlüssel = Namen aus lib/icons.js
-  import TreePine from '@lucide/svelte/icons/tree-pine';
-  import Trees from '@lucide/svelte/icons/trees';
-  import Leaf from '@lucide/svelte/icons/leaf';
-  import Sprout from '@lucide/svelte/icons/sprout';
-  import Layers from '@lucide/svelte/icons/layers';
-  import Layers2 from '@lucide/svelte/icons/layers-2';
-  import PanelsTopLeft from '@lucide/svelte/icons/panels-top-left';
-  import LayoutPanelTop from '@lucide/svelte/icons/layout-panel-top';
-  import BrickWall from '@lucide/svelte/icons/brick-wall';
-  import Wrench from '@lucide/svelte/icons/wrench';
-  import Hammer from '@lucide/svelte/icons/hammer';
-  import Anvil from '@lucide/svelte/icons/anvil';
-  import Cog from '@lucide/svelte/icons/cog';
-  import Axe from '@lucide/svelte/icons/axe';
-  import Snowflake from '@lucide/svelte/icons/snowflake';
-  import Shield from '@lucide/svelte/icons/shield';
-  import Flame from '@lucide/svelte/icons/flame';
-  import Droplets from '@lucide/svelte/icons/droplets';
-  import Wind from '@lucide/svelte/icons/wind';
-  import Sun from '@lucide/svelte/icons/sun';
-  import Zap from '@lucide/svelte/icons/zap';
-  import Box from '@lucide/svelte/icons/box';
-  import Package from '@lucide/svelte/icons/package';
-  import Cuboid from '@lucide/svelte/icons/cuboid';
-  import Hexagon from '@lucide/svelte/icons/hexagon';
-  import Triangle from '@lucide/svelte/icons/triangle';
-  import Circle from '@lucide/svelte/icons/circle';
-  import Grid3x3 from '@lucide/svelte/icons/grid-3x3';
-  import Shirt from '@lucide/svelte/icons/shirt';
-  import Scissors from '@lucide/svelte/icons/scissors';
-  import Ruler from '@lucide/svelte/icons/ruler';
-  import Feather from '@lucide/svelte/icons/feather';
-  import Gem from '@lucide/svelte/icons/gem';
-  import Mountain from '@lucide/svelte/icons/mountain';
-  import Paintbrush from '@lucide/svelte/icons/paintbrush';
-  import Puzzle from '@lucide/svelte/icons/puzzle';
-  import Sparkles from '@lucide/svelte/icons/sparkles';
-
-  const SYMBOLE = {
-    'tree-pine': TreePine, 'trees': Trees, 'leaf': Leaf, 'sprout': Sprout,
-    'layers': Layers, 'layers-2': Layers2, 'panels-top-left': PanelsTopLeft,
-    'layout-panel-top': LayoutPanelTop, 'brick-wall': BrickWall,
-    'wrench': Wrench, 'hammer': Hammer, 'anvil': Anvil, 'cog': Cog, 'axe': Axe,
-    'snowflake': Snowflake, 'shield': Shield, 'flame': Flame, 'droplets': Droplets,
-    'wind': Wind, 'sun': Sun, 'zap': Zap,
-    'box': Box, 'package': Package, 'cuboid': Cuboid, 'hexagon': Hexagon,
-    'triangle': Triangle, 'circle': Circle, 'grid-3x3': Grid3x3,
-    'shirt': Shirt, 'scissors': Scissors, 'ruler': Ruler, 'feather': Feather,
-    'gem': Gem, 'mountain': Mountain, 'paintbrush': Paintbrush, 'puzzle': Puzzle,
-    'sparkles': Sparkles
-  };
-
-  // --- Linien-Icons (Zeichenfläche 24 × 24, einfarbig in der Akzentfarbe) ---
-  const LINIEN = {
+  const ICONS = {
+    // Zwei Bäume: links ein Laubbaum mit wolkiger Krone, rechts eine Tanne
+    'trees': `
+      <path d="M3.2 9.5a3.3 3.3 0 0 1 6.6 0 3.2 3.2 0 0 1-.9 6.3H5.1a3.2 3.2 0 0 1-1.9-6.3z"/>
+      <path d="M6.5 15.8V22"/>
+      <path d="M16.5 2.5L13 8.5h2L12 13.5h2L11 18.5h11L19 13.5h2L18 8.5h2z"/>
+      <path d="M16.5 18.5V22"/>`,
     // Holzstapel: drei Stämme mit Jahresringen von der Stirnseite
     'wood-logs': `
       <circle cx="7.5" cy="16" r="4.5"/><circle cx="16.5" cy="16" r="4.5"/><circle cx="12" cy="8" r="4.5"/>
@@ -81,21 +31,27 @@
     // Verbundplatte: Platte mit sichtbaren Schichten an der Kante
     'sandwich-panel': `
       <path d="M12 3l9 4-9 4-9-4z"/><path d="M3 7v9l9 4 9-4V7"/><path d="M12 11v9"/>
-      <path d="M3 10l9 4 9-4" stroke-width="1.5"/><path d="M3 13l9 4 9-4" stroke-width="1.5"/>`
+      <path d="M3 10l9 4 9-4" stroke-width="1.5"/><path d="M3 13l9 4 9-4" stroke-width="1.5"/>`,
+    // T-Shirt mit kurzen Ärmeln, rundem Halsausschnitt und abgerundeten Ecken
+    'shirt': `
+      <path d="M8 2.5L3.7 4A2 2 0 0 0 2.4 6.2l.6 3.4a1 1 0 0 0 1 .8h2.2v9.6c0 1.1.9 2 2 2h7.6c1.1 0 2-.9 2-2v-9.6H20a1 1 0 0 0 1-.8l.6-3.4A2 2 0 0 0 20.3 4L16 2.5a4 4 0 0 1-8 0z"/>`,
+    // Lineal, schräg, mit Teilstrichen
+    'ruler': `
+      <g transform="rotate(-45 12 12)">
+        <rect x="1.5" y="8" width="21" height="8" rx="1.5"/>
+        <path d="M5.5 8v3M9.5 8v4.5M13.5 8v3M17.5 8v4.5"/>
+      </g>`,
+    // Neutral
+    'circle': `<circle cx="12" cy="12" r="8"/>`
   };
 
   let { name = null, size = 16, title = '' } = $props();
-  let Symbol = $derived(SYMBOLE[name] ?? Circle);
-  let linie = $derived(LINIEN[name] ?? null);
+  let zeichnung = $derived(ICONS[name] ?? ICONS.circle);
 </script>
 
 <span class="cat-icon" role={title ? 'img' : undefined} aria-label={title || undefined} aria-hidden={title ? undefined : 'true'} {title}>
-  {#if linie}
-    <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor"
-      stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">{@html linie}</svg>
-  {:else}
-    <Symbol {size} strokeWidth={2} />
-  {/if}
+  <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor"
+    stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">{@html zeichnung}</svg>
 </span>
 
 <style>
