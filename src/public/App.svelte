@@ -1,4 +1,5 @@
 <script>
+  import Icon from '../shared/Icon.svelte';
   import { onMount } from 'svelte';
   import { t } from './lib/i18n.js';
   import { parseSearch, buildSearch, emptyState, LANGS } from './lib/url.js';
@@ -171,6 +172,15 @@
         <p class="header-sub">{t(lang, 'results', rows.length, materials.length)}</p>
       {/if}
     </div>
+    <div class="header-tools">
+      <div class="lang-switch" role="group" aria-label={t(lang, 'langSwitch')}>
+        <button class="btn btn-sm {lang === 'de' ? 'btn-primary' : 'btn-ghost'}" aria-pressed={lang === 'de'} onclick={() => setLang('de')}>DE</button>
+        <button class="btn btn-sm {lang === 'en' ? 'btn-primary' : 'btn-ghost'}" aria-pressed={lang === 'en'} onclick={() => setLang('en')}>EN</button>
+      </div>
+      <button class="btn btn-ghost btn-icon" title={t(lang, 'themeToggle')} aria-label={t(lang, 'themeToggle')} onclick={toggleTheme}>
+        <Icon name="ui-moon" size={16} />
+      </button>
+    </div>
   </div>
 </header>
 
@@ -201,8 +211,6 @@
       gruppiert={!state.flat}
       ongruppen={() => update({ flat: !state.flat })}
       onsuggest={() => (report = { mode: 'vorschlag' })}
-      onlang={setLang}
-      ontheme={toggleTheme}
     />
 
     {#if ignored}

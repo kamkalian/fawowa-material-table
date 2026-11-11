@@ -3,7 +3,7 @@
   import { t, pick } from '../lib/i18n.js';
 
   // props: Eigenschaften, sichtbare Spalten, Zustand, Callbacks
-  let { lang, q, props, visibleKeys, gruppiert, onsearch, onaddfilter, oncolumns, ongruppen, onsuggest, onlang, ontheme } = $props();
+  let { lang, q, props, visibleKeys, gruppiert, onsearch, onaddfilter, oncolumns, ongruppen, onsuggest } = $props();
 
   let columnsOpen = $state(false);
 
@@ -61,22 +61,11 @@
     {t(lang, 'suggest')}
   </button>
 
-  <div class="toolbar-right">
-    <div class="lang-switch" role="group" aria-label={t(lang, 'langSwitch')}>
-      <button class="btn btn-sm {lang === 'de' ? 'btn-primary' : 'btn-ghost'}" aria-pressed={lang === 'de'} onclick={() => onlang('de')}>DE</button>
-      <button class="btn btn-sm {lang === 'en' ? 'btn-primary' : 'btn-ghost'}" aria-pressed={lang === 'en'} onclick={() => onlang('en')}>EN</button>
-    </div>
-    <button class="btn btn-ghost btn-icon" title={t(lang, 'themeToggle')} aria-label={t(lang, 'themeToggle')} onclick={ontheme}>
-      <Icon name="ui-moon" size={16} />
-    </button>
-  </div>
 </div>
 
 <style>
   .toolbar { display: flex; flex-wrap: wrap; gap: .5rem; align-items: center; margin-bottom: .75rem; }
   .toolbar-search { flex: 1 1 260px; margin-bottom: 0; }
-  .toolbar-right { display: flex; gap: .5rem; align-items: center; margin-left: auto; }
-  .lang-switch { display: inline-flex; gap: .125rem; }
   .btn.an { border-color: var(--primary); color: var(--primary); background: var(--primary-bg); }
   .dropdown { position: relative; }
   .dropdown-menu {

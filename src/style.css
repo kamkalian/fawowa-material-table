@@ -63,6 +63,8 @@ body{
   display:flex;align-items:center;justify-content:space-between;
   max-width:1280px;margin:0 auto;padding:1rem;
 }
+.header-tools{display:flex;gap:.5rem;align-items:center;margin-left:auto}
+.lang-switch{display:inline-flex;gap:.125rem}
 .header h1{font-size:1.25rem;font-weight:700;text-shadow:0 0 40px rgba(34,197,94,0.3)}
 .header-sub{font-size:.8125rem;color:var(--fg-muted)}
 
@@ -369,7 +371,7 @@ tbody tr:first-child td{border-top:none}
 
 /* ===== RESPONSIVE ===== */
 @media(max-width:768px){
-  .header-inner{flex-direction:column;gap:.5rem;align-items:flex-start}
+  .header-inner{gap:.5rem}
   .filter-grid{grid-template-columns:1fr}
   .req-card .req-actions{flex-direction:column}
   .form-grid{grid-template-columns:1fr}
