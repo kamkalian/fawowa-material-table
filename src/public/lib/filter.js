@@ -124,3 +124,63 @@ export function unitsFor(materials, prop) {
   });
   return [...units];
 }
+
+// --- Gruppieren gleichnamiger Materialien ---
+
+/** Gleicher Name (deutsch, ohne Beachtung von Groß-/Kleinschreibung und doppelten Leerzeichen) in derselben Kategorie */
+export function gruppenSchluessel(m) {
+  return `${m.kategorie.slug}|${m.name.de.trim().toLowerCase().replace(/\s+/g, ' ')}`;
+}
+
+/**
+ * Fasst Materialien mit gleichem Namen zu Gruppen zusammen. Die Reihenfolge bleibt erhalten:
+ * eine Gruppe steht an der Stelle ihres ersten Mitglieds. Einzelne Materialien bleiben einzeln.
+ * Ergebnis: [{ typ: 'gruppe', key, mitglieder }, { typ: 'einzel', material }, ...]
+ */
+export function gruppiere(rows) {
+  const gruppen = new Map();
+  for (const m of rows) {
+    const key = gruppenSchluessel(m);
+    if (!gruppen.has(key)) gruppen.set(key, []);
+    gruppen.get(key).push(m);
+  }
+  return [...gruppen.entries()].map(([key, mitglieder]) =>
+    mitglieder.length > 1 ? { typ: 'gruppe', key, mitglieder } : { typ: 'einzel', material: mitglieder[0] }
+  );
+}
+
+/** Ohne Gruppierung: jedes Material für sich */
+export function alsEinzelne(rows) {
+  return rows.map(material => ({ typ: 'einzel', material }));
+}
+
+/**
+ * Zusammenfassung einer Eigenschaft für die Kopfzeile einer Gruppe.
+ * Zahlen: Bereich (z. B. "4–10 mm"), bei verschiedenen Einheiten "…". Sonst: der gemeinsame Wert, bei Abweichungen "…".
+ * Liefert null, wenn kein Mitglied einen Wert hat.
+ */
+export function gruppenWert(prop, mitglieder, lang) {
+  const werte = mitglieder
+    .map(m => m.werte[prop.kurzwort])
+    .filter(w => w && w.wert !== null && w.wert !== undefined);
+  if (!werte.length) return null;
+
+  if (prop.typ === 'zahl') {
+    if (new Set(werte.map(w => w.einheit ?? '')).size > 1) return '…';
+    const zahlen = werte.map(w => w.wert);
+    const min = Math.min(...zahlen);
+    const max = Math.max(...zahlen);
+    const einheit = werte[0].einheit ? ` ${werte[0].einheit}` : '';
+    return min === max
+      ? `${formatNumber(min, lang)}${einheit}`
+      : `${formatNumber(min, lang)}–${formatNumber(max, lang)}${einheit}`;
+  }
+
+  const texte = new Set(werte.map(w => formatValue(prop, w, lang)));
+  return texte.size === 1 && werte.length === mitglieder.length ? [...texte][0] : '…';
+}
+
+/** Hat mindestens ein Mitglied bei dieser Eigenschaft einen Vermerk (z. B. "ungeprüft")? */
+export function gruppenHatVermerk(prop, mitglieder) {
+  return mitglieder.some(m => !!m.werte[prop.kurzwort]?.vermerk);
+}

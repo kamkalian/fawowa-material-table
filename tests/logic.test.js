@@ -1,7 +1,9 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { parseSearch, buildSearch, emptyState } from '../src/public/lib/url.js';
-import { filterMaterials, sortMaterials, filterLabel } from '../src/public/lib/filter.js';
+import {
+  filterMaterials, sortMaterials, filterLabel, gruppiere, alsEinzelne, gruppenWert, gruppenHatVermerk, gruppenSchluessel
+} from '../src/public/lib/filter.js';
 
 const props = [
   { kurzwort: 'staerke', name: { de: 'Stärke', en: 'Thickness' }, typ: 'zahl', einheit: 'mm', filterbar: true, standardSichtbar: true, reihenfolge: 1 },
@@ -145,4 +147,81 @@ test('Chip-Beschreibung nennt Name, Bedingung, Wert und Einheit', () => {
   const prop = props.find(p => p.kurzwort === 'gewicht');
   assert.equal(filterLabel({ kw: 'gewicht', op: 'bis', a: 3, unit: 'kg/m²' }, prop, 'de'), 'Flächengewicht höchstens 3 kg/m²');
   assert.equal(filterLabel({ kw: 'gewicht', op: 'von', a: 1, b: 2.5, unit: 'kg/m²' }, prop, 'en'), 'Area weight 1–2.5 kg/m²');
+});
+
+// --- Gruppieren gleichnamiger Materialien ---
+
+const kat = (slug) => ({ slug, icon: null, name: { de: slug, en: slug } });
+const mat = (id, name, slug, werte = {}) => ({ id, name: { de: name, en: null }, hersteller: null, kategorie: kat(slug), werte });
+const zahl = (wert, einheit, vermerk = null) => ({ wert, einheit, vermerk });
+
+test('Gruppieren: gleiche Namen (ohne Groß-/Kleinschreibung und doppelte Leerzeichen) werden zusammengefasst', () => {
+  const rows = [
+    mat(1, 'Pappelsperrholz', 'holz'), mat(2, 'Kiefer', 'holz'),
+    mat(3, 'pappelsperrholz', 'holz'), mat(4, ' Pappel  Sperrholz ', 'holz'), mat(5, 'PAPPELSPERRHOLZ ', 'holz')
+  ];
+  const items = gruppiere(rows);
+  assert.equal(items.length, 3);                          // Pappelsperrholz (3), Kiefer, "Pappel Sperrholz"
+  assert.equal(items[0].typ, 'gruppe');
+  assert.deepEqual(items[0].mitglieder.map(m => m.id), [1, 3, 5]);
+  assert.equal(items[1].typ, 'einzel');
+  assert.equal(items[1].material.id, 2);
+  assert.equal(items[2].material.id, 4);                  // anderer Name wegen Leerzeichen mitten im Wort
+});
+
+test('Gruppieren: die Gruppe steht an der Stelle ihres ersten Mitglieds, die Reihenfolge der Mitglieder bleibt', () => {
+  const rows = [mat(1, 'Kiefer', 'holz'), mat(2, 'Birke', 'holz'), mat(3, 'Kiefer', 'holz'), mat(4, 'Birke', 'holz')];
+  const items = gruppiere(rows);
+  assert.deepEqual(items.map(i => i.key ?? i.material.id), ['holz|kiefer', 'holz|birke']);
+  assert.deepEqual(items[1].mitglieder.map(m => m.id), [2, 4]);
+});
+
+test('Gruppieren: gleicher Name in verschiedenen Kategorien bleibt getrennt; ohne Gruppierung alles einzeln', () => {
+  const rows = [mat(1, 'Platte', 'holz'), mat(2, 'Platte', 'metall')];
+  assert.deepEqual(gruppiere(rows).map(i => i.typ), ['einzel', 'einzel']);
+  assert.notEqual(gruppenSchluessel(rows[0]), gruppenSchluessel(rows[1]));
+  const einzeln = alsEinzelne([mat(1, 'A', 'holz'), mat(2, 'A', 'holz')]);
+  assert.deepEqual(einzeln.map(i => i.typ), ['einzel', 'einzel']);
+  assert.deepEqual(gruppiere([]), []);
+});
+
+test('Gruppenzeile: Zahlen als Bereich, gleiche Werte einzeln, verschiedene Einheiten und Abweichungen als …', () => {
+  const stark = props.find(p => p.kurzwort === 'staerke');
+  const wasser = props.find(p => p.kurzwort === 'wasserfest');
+  const gruppe = [
+    mat(1, 'X', 'holz', { staerke: zahl(4, 'mm'), gewicht: zahl(2, 'kg/m²'), wasserfest: { wert: true } }),
+    mat(2, 'X', 'holz', { staerke: zahl(10, 'mm'), gewicht: zahl(2, 'kg/m²'), wasserfest: { wert: true } }),
+    mat(3, 'X', 'holz', { staerke: zahl(6.5, 'mm'), gewicht: zahl(3, 'g/cm²'), wasserfest: { wert: false } })
+  ];
+  assert.equal(gruppenWert(stark, gruppe, 'de'), '4–10 mm');
+  assert.equal(gruppenWert(stark, gruppe, 'en'), '4–10 mm');
+  assert.equal(gruppenWert(stark, [gruppe[0], gruppe[0]], 'de'), '4 mm');
+  assert.equal(gruppenWert(props.find(p => p.kurzwort === 'gewicht'), gruppe, 'de'), '…');   // verschiedene Einheiten
+  assert.equal(gruppenWert(wasser, gruppe, 'de'), '…');                                        // nicht einheitlich
+  assert.equal(gruppenWert(wasser, gruppe.slice(0, 2), 'de'), 'ja');
+  assert.equal(gruppenWert(props.find(p => p.kurzwort === 'waermewert'), gruppe, 'de'), null); // kein Mitglied hat einen Wert
+  assert.equal(gruppenWert(stark, [mat(1, 'X', 'holz', { staerke: zahl(1234.5, 'mm') }), mat(2, 'X', 'holz', { staerke: zahl(2000, 'mm') })], 'de'), '1.234,5–2.000 mm');
+});
+
+test('Gruppenzeile: Zahlen mit Wert nur bei einem Teil der Mitglieder zeigen trotzdem den Bereich, Text nur bei Übereinstimmung aller', () => {
+  const stark = props.find(p => p.kurzwort === 'staerke');
+  const wasser = props.find(p => p.kurzwort === 'wasserfest');
+  const gruppe = [mat(1, 'X', 'holz', { staerke: zahl(4, 'mm'), wasserfest: { wert: true } }), mat(2, 'X', 'holz', {})];
+  assert.equal(gruppenWert(stark, gruppe, 'de'), '4 mm');
+  assert.equal(gruppenWert(wasser, gruppe, 'de'), '…');
+});
+
+test('Gruppenzeile: Vermerk "ungeprüft" eines Mitglieds wird erkannt', () => {
+  const stark = props.find(p => p.kurzwort === 'staerke');
+  const mit = [mat(1, 'X', 'holz', { staerke: zahl(4, 'mm') }), mat(2, 'X', 'holz', { staerke: zahl(5, 'mm', { de: 'ungeprüft' }) })];
+  assert.equal(gruppenHatVermerk(stark, mit), true);
+  assert.equal(gruppenHatVermerk(stark, [mit[0]]), false);
+});
+
+test('Adresse: flat=1 schaltet die Gruppierung aus und wird wieder geschrieben, Standard ist gruppiert', () => {
+  assert.equal(parseSearch('', props).state.flat, false);
+  const { state } = parseSearch('?flat=1&lang=de', props);
+  assert.equal(state.flat, true);
+  assert.equal(buildSearch(state, props), '?flat=1&lang=de');
+  assert.equal(buildSearch({ ...state, flat: false }, props), '?lang=de');
 });

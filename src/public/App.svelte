@@ -2,7 +2,7 @@
   import { onMount } from 'svelte';
   import { t } from './lib/i18n.js';
   import { parseSearch, buildSearch, emptyState, LANGS } from './lib/url.js';
-  import { filterMaterials, sortMaterials, unitsFor, filterLabel } from './lib/filter.js';
+  import { filterMaterials, sortMaterials, unitsFor, filterLabel, gruppiere, alsEinzelne } from './lib/filter.js';
   import Toolbar from './components/Toolbar.svelte';
   import Chips from './components/Chips.svelte';
   import CategoryBar from './components/CategoryBar.svelte';
@@ -31,6 +31,9 @@
   );
   let visibleKeys = $derived(visibleProps.map(p => p.kurzwort));
   let rows = $derived(sortMaterials(filterMaterials(materials, state), state.sort, props, lang));
+  // Zeilen der Tabelle: gleichnamige Materialien als Gruppe, sofern die Gruppierung an ist
+  let items = $derived(state.flat ? alsEinzelne(rows) : gruppiere(rows));
+  let offeneGruppen = $state([]); // Schlüssel der aufgeklappten Gruppen (nur in dieser Ansicht, nicht in der Adresse)
   let selected = $derived(state.m ? materials.find(m => m.id === state.m) ?? null : null);
 
   // Kategorien mit Anzahl der veröffentlichten Materialien; leere werden nicht angeboten
@@ -98,6 +101,10 @@
 
   function resetFilters() {
     update({ q: '', cats: [], filters: [] });
+  }
+
+  function toggleGruppe(key) {
+    offeneGruppen = offeneGruppen.includes(key) ? offeneGruppen.filter(k => k !== key) : [...offeneGruppen, key];
   }
 
   function toggleCategory(slug) {
@@ -191,6 +198,8 @@
       onsearch={(v) => update({ q: v }, 'replace')}
       onaddfilter={() => (dialog = { index: -1 })}
       oncolumns={(keys) => update({ cols: keys })}
+      gruppiert={!state.flat}
+      ongruppen={() => update({ flat: !state.flat })}
       onsuggest={() => (report = { mode: 'vorschlag' })}
       onlang={setLang}
       ontheme={toggleTheme}
@@ -215,10 +224,12 @@
 
     <MaterialTable
       {lang}
-      {rows}
+      {items}
+      offen={offeneGruppen}
       columns={visibleProps}
       sort={state.sort}
       onsort={onSort}
+      ontoggle={toggleGruppe}
       onopen={(id) => update({ m: id })}
       onreport={(m) => (report = { mode: 'fehler', material: m })}
     />

@@ -117,6 +117,7 @@ Die Startseite ist die Tabelle selbst: eine Zeile pro Material, darüber eine Su
 - „Alle Filter zurücksetzen“ und eine Anzeige „12 von 61 Materialien“
 - Klick auf eine Spaltenüberschrift sortiert, zweiter Klick dreht die Richtung
 - Spaltenauswahl: Eigenschaften ein- und ausblenden. Standardmäßig sichtbar sind nur die im Admin-Bereich dafür markierten.
+- Materialien mit gleichem Namen (gleiche Kategorie) erscheinen als eine Gruppe mit Anzahl; die Kopfzeile fasst die Werte zusammen (Zahlen als Bereich, z. B. „0,2–1,5 mm“). Ein Pfeil klappt die Gruppe auf. Mit dem Schalter „Gruppieren“ lässt sich das ausschalten (`flat=1` in der Adresse).
 - Leere Werte werden als Strich angezeigt und beim Sortieren ans Ende gestellt
 - Werte mit Vermerk „ungeprüft“ sind in der Tabelle erkennbar markiert
 - Klick auf eine Zeile öffnet die Detailansicht mit allen Eigenschaften, Links, Quellen und der Schaltfläche „Fehler melden“
@@ -136,6 +137,7 @@ Die Startseite ist die Tabelle selbst: eine Zeile pro Material, darüber eine Su
 | `f=wasserfest:ja` | Ja/Nein-Eigenschaft |
 | `sort=gewicht` | Aufsteigend sortiert, `-gewicht` für absteigend |
 | `cols=…` | Sichtbare Spalten |
+| `flat=1` | Gleichnamige Materialien nicht gruppieren |
 | `lang=en` | Sprache |
 
 Jede Eigenschaft hat ein festes Kurzwort wie `gewicht`. Es bleibt gleich, auch wenn der Anzeigename später geändert wird, damit alte Links weiter funktionieren. Unbekannte oder fehlerhafte Filter in einer URL werden ignoriert und kurz als Hinweis angezeigt.

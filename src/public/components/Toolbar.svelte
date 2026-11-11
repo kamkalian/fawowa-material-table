@@ -2,7 +2,7 @@
   import { t, pick } from '../lib/i18n.js';
 
   // props: Eigenschaften, sichtbare Spalten, Zustand, Callbacks
-  let { lang, q, props, visibleKeys, onsearch, onaddfilter, oncolumns, onsuggest, onlang, ontheme } = $props();
+  let { lang, q, props, visibleKeys, gruppiert, onsearch, onaddfilter, oncolumns, ongruppen, onsuggest, onlang, ontheme } = $props();
 
   let columnsOpen = $state(false);
 
@@ -51,6 +51,10 @@
     {/if}
   </div>
 
+  <button class="btn btn-outline" class:an={gruppiert} aria-pressed={gruppiert} title={t(lang, 'groupToggleTitle')} onclick={ongruppen}>
+    {t(lang, 'groupToggle')}
+  </button>
+
   <button class="btn btn-outline" onclick={onsuggest}>
     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>
     {t(lang, 'suggest')}
@@ -72,6 +76,7 @@
   .toolbar-search { flex: 1 1 260px; margin-bottom: 0; }
   .toolbar-right { display: flex; gap: .5rem; align-items: center; margin-left: auto; }
   .lang-switch { display: inline-flex; gap: .125rem; }
+  .btn.an { border-color: var(--primary); color: var(--primary); background: var(--primary-bg); }
   .dropdown { position: relative; }
   .dropdown-menu {
     position: absolute; right: 0; top: calc(100% + 4px); z-index: 30;

@@ -4,6 +4,7 @@
 //   ?q=sperrholz&cat=holz,metall&f=gewicht:bis:3&f=staerke:4..10&f=wasserfest:ja&sort=gewicht&cols=staerke,gewicht&lang=de&m=12
 //
 // cat: Kurznamen der gewählten Kategorien (mehrere möglich, ohne Angabe gelten alle).
+// flat=1: Materialien mit gleichem Namen nicht zu Gruppen zusammenfassen (Standard ist gruppiert).
 //
 // Filter (Teil nach "f="):
 //   zahl:       kw:bis:V[:Einheit]   kw:ab:V[:Einheit]   kw:ist:V[:Einheit]   kw:A..B[:Einheit]
@@ -15,7 +16,7 @@
 export const LANGS = ['de', 'en'];
 
 export function emptyState(lang = 'de') {
-  return { q: '', cats: [], filters: [], sort: null, cols: null, lang, m: null };
+  return { q: '', cats: [], filters: [], sort: null, cols: null, flat: false, lang, m: null };
 }
 
 /**
@@ -60,6 +61,8 @@ export function parseSearch(search, props, kategorien = null) {
     keys.filter(k => !propMap.has(k)).forEach(k => fehler.push(`cols=${k}`));
   }
 
+  state.flat = params.get('flat') === '1';
+
   const m = params.get('m');
   if (m && /^\d+$/.test(m)) state.m = Number(m);
 
@@ -75,6 +78,7 @@ export function buildSearch(state, props) {
   state.filters.forEach(f => pairs.push(['f', serializeFilter(f, propMap.get(f.kw))]));
   if (state.sort) pairs.push(['sort', (state.sort.dir === 'desc' ? '-' : '') + state.sort.key]);
   if (state.cols !== null) pairs.push(['cols', state.cols.join(',')]);
+  if (state.flat) pairs.push(['flat', '1']);
   pairs.push(['lang', state.lang]);
   if (state.m) pairs.push(['m', String(state.m)]);
   // Doppelpunkt, Komma und Schrägstrich bleiben lesbar; der Rest wird kodiert.
