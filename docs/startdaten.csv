@@ -1,0 +1,62 @@
+name,staerke_mm,gewicht_kg_m2,waermewert,waermewert_einheit,kategorie,vermerk,notiz
+Evazote,4,0.19,0.0401,W/(m·K),Schaum und Dämmung,,
+Polsterstoff,1,0.24,,,Textil,,
+Styrodur,10,0.30,0.27,W/(m²K),Schaum und Dämmung,ungeprüft,Wärmewert passt nicht zur Wärmeleitfähigkeit von XPS; Größe unklar
+Reimo X-Trem Isolator,10,0.30,0.028,W/(m·K),Schaum und Dämmung,,
+Polsterstoff gesteppt,4,0.35,,,Textil,,Stärke nur in der zweiten Forenliste genannt
+GFK-Platte,0.2,0.40,0.013,W/(m²K),Kunststoff,ungeprüft,Wärmewert stand im Forum bei einer verworfenen 10-mm-Zeile; Größe unklar
+Schaumstoff,10,0.41,,,Schaum und Dämmung,,
+Carbon-Platte,0.3,0.44,,,Kunststoff,,
+Schafwolle-Dämmplatte,20,0.48,,,Schaum und Dämmung,,
+Aluminiumblech,0.2,0.496,,,Metall,ungeprüft,Rechnerisch 0.54 kg/m² bei 2700 kg/m³
+Evazote,10,0.50,0.04,W/(m·K),Schaum und Dämmung,,
+Flugzeugsperrholz Birke,1,0.70,,,Sperrholz,,
+Hohlkammerplatte Polycarbonat,4,0.75,,,Kunststoff,,
+Hohlkammerplatte Polypropylen,4,0.80,,,Kunststoff,,
+COSMO Classic Quick Tape,25,0.90,,,"Stäbe, Leisten und Sonstiges",ungeprüft,25 mm ist vermutlich die Bandbreite und nicht die Stärke
+Polyester-Flachbahn,1,1.00,,,Kunststoff,,
+Smart-X,5,1.00,,,Verbundplatte,,
+Schafwolle Jurtefilz,8,1.00,,,Textil,,
+Triplex,5,1.00,,,Verbundplatte,,
+Pappelsperrholz,3,1.20,,,Sperrholz,,
+Aluminiumblech,0.5,1.35,,,Metall,,
+Aluminiumblech,0.6,1.62,,,Metall,,
+Aluminiumblech,0.7,1.89,,,Metall,,
+Pappelsperrholz,4,1.95,,,Sperrholz,,
+Smart-X,10,2.00,,,Verbundplatte,,
+Triplex,10,2.00,,,Verbundplatte,,
+Aluminiumblech,0.8,2.16,,,Metall,,
+Rotholz Sperrholz WBP,3.6,2.20,,,Sperrholz,,
+Polycarbonat UV klar,2,2.40,,,Kunststoff,,
+Sperrholz Kiefer,4,2.40,,,Sperrholz,,
+Okoume Sperrholz,6,2.52,,,Sperrholz,,
+Aluminiumblech,1,2.70,,,Metall,,
+Siebdruckplatte Pappel,4,2.84,,,Sperrholz,,
+Pappelsperrholz,6,2.88,,,Sperrholz,,
+Luxboard,4,3.00,,,Verbundplatte,,
+Rotholz Sperrholz WBP,5.5,3.30,,,Sperrholz,,
+Gabun Sperrholz,8,3.36,,,Sperrholz,,
+Stadurlon,20,3.50,,,Verbundplatte,ungeprüft,Leichter als die 16-mm-Platte; möglicherweise andere Deckschichten
+Sperrholz Kiefer,6,3.60,,,Sperrholz,,
+Dibond,3,3.80,,,Verbundplatte,,
+Smart-X,19,3.80,,,Verbundplatte,,
+MonoPan,12,3.80,,,Verbundplatte,,
+MonoPan,15,3.90,,,Verbundplatte,,
+MonoPan,17,4.00,,,Verbundplatte,,
+Aluminiumblech,1.5,4.05,,,Metall,,
+Stadurlon,16,4.07,,,Verbundplatte,ungeprüft,Schwerer als die 20-mm-Platte; möglicherweise andere Deckschichten
+MonoPan,20,4.20,,,Verbundplatte,,
+Siebdruckplatte,6.5,4.40,,,Sperrholz,,
+MonoPan,25,4.50,,,Verbundplatte,,
+Siebdruckplatte Pappel,8,4.58,,,Sperrholz,,
+Paulownia Leimholzplatte,18,4.70,,,Holz,,Plattenmaß 2200 × 600 mm
+Luxboard,10,4.78,,,Verbundplatte,,Deckschichten 1 mm und 0.5 mm
+Pappelsperrholz,10,4.80,,,Sperrholz,,
+Alucore,10,5.00,,,Verbundplatte,,
+Siebdruckplatte,8,5.20,,,Sperrholz,,
+PVC Hartschaumplatte,10,5.50,,,Kunststoff,,
+Siebdruckplatte,9,6.40,,,Sperrholz,,
+OSB-Platte,12,7.80,,,Holz,,
+Siebdruckplatte,12,8.20,,,Sperrholz,,
+OSB-Platte,15,9.75,,,Holz,,
+Vollholz Kiefer,20,11.00,3.3,W/(m²K),Holz,ungeprüft,Wärmewert passt nicht zur Wärmeleitfähigkeit von Kiefer; Größe unklar
