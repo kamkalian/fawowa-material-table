@@ -221,11 +221,11 @@ test('Migration: frühere Icon-Vorschläge werden einmal ersetzt, spätere Wahl 
   alt.exec(`CREATE TABLE kategorie (id INTEGER PRIMARY KEY, slug TEXT NOT NULL UNIQUE, name_de TEXT NOT NULL, name_en TEXT, icon TEXT, reihenfolge INTEGER NOT NULL DEFAULT 0);
     INSERT INTO kategorie (slug, name_de, icon) VALUES ('holz', 'Holz', 'mat-holz'), ('metall', 'Metall', 'mat-metall'), ('kunststoff', 'Kunststoff', 'mat-kunststoff'),
       ('schaum-daemmung', 'Schaum', 'gem'), ('verbundplatte', 'Verbundplatte', 'mat-verbund'), ('textil', 'Textil', 'mat-textil'),
-      ('staebe-leisten', 'Stäbe', 'mat-staebe'), ('sperrholz', 'Sperrholz', 'mat-sperrholz');
+      ('staebe-leisten', 'Stäbe', 'mat-staebe'), ('sperrholz', 'Sperrholz', 'mat-sperrholz'), ('eigene', 'Eigene', 'mat-textil');
     PRAGMA user_version = 3;`);
   alt.close();
 
-  // Version 4 stellt die Linien-Icons wieder als Standard ein (die farbigen waren der Vorschlag der Version 3)
+  // Die farbigen Icons ("mat-…") gibt es nicht mehr: Standard-Symbole, bei fremden Kategorien der Kreis
   let db = openDb(pfad);
   const icon = (slug) => db.prepare('SELECT icon FROM kategorie WHERE slug = ?').get(slug).icon;
   assert.equal(icon('holz'), 'wood-logs');
@@ -236,12 +236,13 @@ test('Migration: frühere Icon-Vorschläge werden einmal ersetzt, spätere Wahl 
   assert.equal(icon('staebe-leisten'), 'ruler');
   assert.equal(icon('sperrholz'), 'layers');
   assert.equal(icon('schaum-daemmung'), 'gem');     // eigene Wahl bleibt
+  assert.equal(icon('eigene'), 'circle');           // Kategorie ohne Vorschlag: neutraler Kreis
 
-  // Wer danach wieder ein farbiges Icon wählt, behält es beim nächsten Start
-  db.prepare("UPDATE kategorie SET icon = 'mat-holz' WHERE slug = 'holz'").run();
+  // Wer danach ein anderes Symbol wählt, behält es beim nächsten Start
+  db.prepare("UPDATE kategorie SET icon = 'tree-pine' WHERE slug = 'holz'").run();
   db.close();
   db = openDb(pfad);
-  assert.equal(icon('holz'), 'mat-holz');
+  assert.equal(icon('holz'), 'tree-pine');
   db.close();
 
   for (const endung of ['', '-wal', '-shm']) rmSync(`${pfad}${endung}`, { force: true });
