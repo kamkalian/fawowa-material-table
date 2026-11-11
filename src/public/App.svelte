@@ -9,6 +9,7 @@
   import MaterialTable from './components/MaterialTable.svelte';
   import FilterDialog from './components/FilterDialog.svelte';
   import DetailView from './components/DetailView.svelte';
+  import ReportDialog from './components/ReportDialog.svelte';
 
   let status = $state('loading'); // loading | ready | error
   let materials = $state([]);
@@ -17,6 +18,7 @@
   let state = $state(emptyState());
   let ignored = $state(0);
   let dialog = $state(null); // null | { index } (index -1 = neuer Filter)
+  let report = $state(null); // null | { mode: 'fehler', material } | { mode: 'vorschlag' }
 
   let lang = $derived(state.lang);
   let propMap = $derived(new Map(props.map(p => [p.kurzwort, p])));
@@ -182,6 +184,7 @@
       onsearch={(v) => update({ q: v }, 'replace')}
       onaddfilter={() => (dialog = { index: -1 })}
       oncolumns={(keys) => update({ cols: keys })}
+      onsuggest={() => (report = { mode: 'vorschlag' })}
       onlang={setLang}
       ontheme={toggleTheme}
     />
@@ -210,6 +213,7 @@
       sort={state.sort}
       onsort={onSort}
       onopen={(id) => update({ m: id })}
+      onreport={(m) => (report = { mode: 'fehler', material: m })}
     />
   {/if}
 </main>
@@ -226,7 +230,20 @@
 {/if}
 
 {#if selected}
-  <DetailView {lang} material={selected} {props} onclose={() => update({ m: null })} />
+  <DetailView
+    {lang}
+    material={selected}
+    {props}
+    blockiert={!!report}
+    onclose={() => update({ m: null })}
+    onreport={(m) => (report = { mode: 'fehler', material: m })}
+  />
+{/if}
+
+{#if report}
+  {#key report}
+    <ReportDialog {lang} mode={report.mode} material={report.material ?? null} {props} {kategorien} onclose={() => (report = null)} />
+  {/key}
 {/if}
 
 <style>

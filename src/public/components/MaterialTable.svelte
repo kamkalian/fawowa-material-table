@@ -2,9 +2,10 @@
   import { t, pick } from '../lib/i18n.js';
   import { displayName, categoryName, formatValue, vermerkText } from '../lib/filter.js';
   import CategoryIcon from '../../shared/CategoryIcon.svelte';
+  import Flag from '@lucide/svelte/icons/flag';
 
   // rows: sichtbare Materialien, columns: sichtbare Eigenschaften, sort: {key, dir} oder null
-  let { lang, rows, columns, sort, onsort, onopen } = $props();
+  let { lang, rows, columns, sort, onsort, onopen, onreport } = $props();
 
   function sortIcon(key) {
     if (!sort || sort.key !== key) return '↕';
@@ -38,11 +39,12 @@
             </button>
           </th>
         {/each}
+        <th class="melden"><span class="sr-only">{t(lang, 'reportRow')}</span></th>
       </tr>
     </thead>
     <tbody>
       {#if !rows.length}
-        <tr class="empty-row"><td colspan={columns.length + 2}>{t(lang, 'noResults')}</td></tr>
+        <tr class="empty-row"><td colspan={columns.length + 3}>{t(lang, 'noResults')}</td></tr>
       {/if}
       {#each rows as m (m.id)}
         <tr class="clickable" onclick={() => onopen(m.id)}>
@@ -69,6 +71,12 @@
               {/if}
             </td>
           {/each}
+          <td class="melden">
+            <button class="melden-btn" title={t(lang, 'reportRow')} aria-label="{t(lang, 'reportRow')}: {displayName(m, lang)}"
+              onclick={(e) => { e.stopPropagation(); onreport(m); }}>
+              <Flag size={15} />
+            </button>
+          </td>
         </tr>
       {/each}
     </tbody>
@@ -84,6 +92,14 @@
     text-transform: inherit; letter-spacing: inherit;
   }
   .th-btn:hover { color: var(--fg); }
+  .melden { width: 1%; text-align: right; }
+  .melden-btn {
+    background: none; border: none; color: var(--fg-muted); cursor: pointer; padding: .25rem;
+    border-radius: var(--radius-sm); display: inline-flex; opacity: .6;
+  }
+  tr:hover .melden-btn, .melden-btn:focus-visible { opacity: 1; }
+  .melden-btn:hover { color: var(--amber); }
+  .sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
   .sort-icon { font-size: .625rem; opacity: .5; margin-left: .2rem; }
   .sort-icon.active { color: var(--primary); opacity: 1; }
   td { white-space: nowrap; }

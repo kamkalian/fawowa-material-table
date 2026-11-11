@@ -4,10 +4,11 @@
   import CategoryIcon from '../../shared/CategoryIcon.svelte';
 
   // material: das geöffnete Material, props: alle Eigenschaften
-  let { lang, material, props, onclose } = $props();
+  // blockiert: ein anderes Fenster (Meldeformular) liegt darüber, dann schließt Escape nur dieses
+  let { lang, material, props, onclose, onreport, blockiert = false } = $props();
 
   function onKey(e) {
-    if (e.key === 'Escape') onclose();
+    if (e.key === 'Escape' && !blockiert) onclose();
   }
 
   function isLink(s) {
@@ -75,7 +76,7 @@
     {/if}
 
     <div class="detail-actions">
-      <button class="btn btn-outline" disabled title={t(lang, 'detailReportSoon')}>{t(lang, 'detailReport')}</button>
+      <button class="btn btn-outline" onclick={() => onreport(material)}>{t(lang, 'detailReport')}</button>
     </div>
   </div>
 </div>

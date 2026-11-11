@@ -2,7 +2,7 @@
   import { t, pick } from '../lib/i18n.js';
 
   // props: Eigenschaften, sichtbare Spalten, Zustand, Callbacks
-  let { lang, q, props, visibleKeys, onsearch, onaddfilter, oncolumns, onlang, ontheme } = $props();
+  let { lang, q, props, visibleKeys, onsearch, onaddfilter, oncolumns, onsuggest, onlang, ontheme } = $props();
 
   let columnsOpen = $state(false);
 
@@ -50,6 +50,11 @@
       </div>
     {/if}
   </div>
+
+  <button class="btn btn-outline" onclick={onsuggest}>
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>
+    {t(lang, 'suggest')}
+  </button>
 
   <div class="toolbar-right">
     <div class="lang-switch" role="group" aria-label={t(lang, 'langSwitch')}>
