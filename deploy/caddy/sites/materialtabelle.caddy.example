@@ -1,0 +1,24 @@
+# Vorlage für die Materialdatenbank. Auf dem Server kopieren nach sites/materialtabelle.caddy
+# und die Adresse anpassen.
+#
+# Mit Domain (Zertifikat von Let's Encrypt, automatisch):
+#   material.example.com {
+#
+# Nur mit IP-Adresse (Zertifikat von Caddys eigener Stelle: der Browser zeigt eine Warnung):
+#   203.0.113.10 {
+#       tls internal
+
+material.example.com {
+	encode zstd gzip
+
+	header {
+		X-Content-Type-Options nosniff
+		X-Frame-Options DENY
+		Referrer-Policy strict-origin-when-cross-origin
+		Strict-Transport-Security "max-age=31536000"
+		-Server
+	}
+
+	# "fawowa" ist der Dienstname aus docker-compose.yml der Anwendung
+	reverse_proxy fawowa:3456
+}

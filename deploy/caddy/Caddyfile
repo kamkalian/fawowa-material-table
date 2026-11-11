@@ -1,0 +1,5 @@
+# Zentrale Caddy-Konfiguration. Jede Anwendung hat ihre eigene Datei in sites/.
+# Vor dem Neuladen lässt sich alles prüfen:
+#   docker compose exec caddy caddy validate --config /etc/caddy/Caddyfile
+
+import /etc/caddy/sites/*.caddy

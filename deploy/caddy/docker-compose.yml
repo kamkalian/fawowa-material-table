@@ -1,0 +1,42 @@
+# Caddy als zentraler Reverse Proxy für alle Anwendungen auf dem Server.
+# Liegt auf dem Server unter /srv/caddy. Alle Anwendungen hängen im Netzwerk "caddy-net" und
+# veröffentlichen selbst keine Ports; nur Caddy ist von außen erreichbar (80/443).
+#
+# Neue Anwendung anbinden: eine Datei sites/<name>.caddy anlegen (Vorlage: sites/*.example)
+# und Caddy neu laden: docker compose exec caddy caddy reload --config /etc/caddy/Caddyfile
+
+services:
+  caddy:
+    image: caddy:2
+    container_name: caddy
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+      - "443:443/udp"
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - ./sites:/etc/caddy/sites:ro
+      - caddy_data:/data      # Zertifikate; nicht löschen, sonst gibt es Neuausstellungen
+      - caddy_config:/config
+    cap_drop:
+      - ALL
+    cap_add:
+      - NET_BIND_SERVICE
+    security_opt:
+      - no-new-privileges:true
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+    networks:
+      - caddy-net
+
+networks:
+  caddy-net:
+    external: true   # einmalig anlegen: docker network create caddy-net
+
+volumes:
+  caddy_data:
+  caddy_config:

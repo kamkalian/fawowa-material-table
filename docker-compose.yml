@@ -1,15 +1,37 @@
+# Materialdatenbank. Läuft hinter dem Caddy-Container (siehe deploy/caddy) im Netzwerk "caddy-net".
+# Es wird absichtlich kein Port nach außen veröffentlicht: Docker würde die Firewall (ufw) umgehen.
+# Erreichbar ist die Anwendung nur über Caddy.
+
 services:
   fawowa:
     build: .
+    image: fawowa-material-table:latest
     container_name: fawowa-material-table
-    ports:
-      - "3456:3456"
-    volumes:
-      - ./data:/app/data
     restart: unless-stopped
+    # Benutzer-ID, der die Datei data/material.db gehört (auf dem Server: Benutzer "deploy", siehe .env)
+    user: "${APP_UID:-1000}:${APP_GID:-1000}"
+    # Admin-Passwort-Hash (ADMIN_PASSWORD_HASH) steht in .env, siehe .env.example
+    env_file:
+      - path: .env
+        required: false
     environment:
       - NODE_ENV=production
       - PORT=3456
+    volumes:
+      - ./data:/app/data
+    # Zusätzliche Härtung: kein Schreibzugriff außer auf die Daten, keine Zusatzrechte
+    read_only: true
+    tmpfs:
+      - /tmp
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
     networks:
       - caddy-net
 
