@@ -1,66 +1,22 @@
-# Dependencies
+# Abhängigkeiten und Build
 node_modules/
-
-# Build output
 dist/
 
-# Data files (user-specific, not in repo)
-data/materials.json
-data/donations.json
-data/donations-cache.json
+# Datenbank und Zugangsdaten gehören nicht ins Repo
 data/material.db
 data/material.db-*
-
-# Environment
 .env
-.env.local
+.env.*
+# Die Vorlage für die Umgebungsvariablen darf eingecheckt werden
+!.env.example
 
-# Editor
+# Tests und Werkzeuge
+/coverage
+npm-debug.log*
+
+# Editor und System
 *.swp
 *.swo
 .DS_Store
-
-# dependencies
-/node_modules
-/.pnp
-.pnp.*
-.yarn/*
-!.yarn/patches
-!.yarn/plugins
-!.yarn/releases
-!.yarn/versions
-
-# testing
-/coverage
-
-# next.js
-/.next/
-/out/
-
-# production
-/build
-
-# misc
-.DS_Store
 *.pem
-
-# debug
-npm-debug.log*
-yarn-debug.log*
-yarn-error.log*
-.pnpm-debug.log*
-
-# env files (can opt-in for committing if needed)
-.env*
-
-# vercel
-.vercel
-
-# typescript
-*.tsbuildinfo
-next-env.d.ts
-
-public/materials.csv
-
-# Die Vorlage für die Umgebungsvariablen darf eingecheckt werden
-!.env.example
+.claude/

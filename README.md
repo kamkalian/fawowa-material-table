@@ -1,36 +1,44 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Materialdatenbank
 
-## Getting Started
+Öffentliche Material-Datenbank für den Fahrradwohnwagen-Bau: Besucher finden und vergleichen Baustoffe in einer
+filterbaren Tabelle, Besucher können Fehler melden und neue Materialien vorschlagen, und ein Admin-Bereich dient
+der Datenpflege. Oberfläche in Deutsch und Englisch.
 
-First, run the development server:
+Aufbau und Entscheidungen stehen in [docs/PLAN.md](docs/PLAN.md).
+
+## Technik
+
+- Node.js mit Express, Daten in SQLite (`data/material.db`, über `better-sqlite3`)
+- Oberfläche mit Svelte und Vite (öffentliche Tabelle unter `/`, Admin-Bereich unter `/admin`)
+- Betrieb als Docker-Container hinter Caddy, siehe [deploy/README.md](deploy/README.md)
+
+## Entwickeln
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+npm install
+node scripts/import-startdaten.js     # einmalig: Startdaten aus docs/startdaten.csv einspielen
+node scripts/admin-passwort.js        # Admin-Passwort festlegen (schreibt den Hash in .env)
+npm run dev                           # API auf :3456, Oberfläche auf :5173
+npm test                              # automatische Tests
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Admin-Bereich in der Entwicklung: <http://localhost:5173/admin.html>
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Aufbau
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+```
+server.js                  Einstieg: öffentliche API, Meldungen, Admin-API
+lib/                       Datenbank, Admin-Funktionen, Anmeldung, Meldungen und Spam-Schutz
+src/public/                öffentliche Tabelle, Filter, Meldeformulare
+src/admin/                 Admin-Bereich
+src/shared/                gemeinsame Teile (Kategorie-Icons)
+scripts/                   Startdaten einspielen, Admin-Passwort festlegen
+tests/                     automatische Tests
+deploy/                    Docker, Caddy und Skript zum Ausliefern
+docs/                      Plan und Startdaten
+```
 
-## Learn More
+## Sicherheit
 
-To learn more about Next.js, take a look at the following resources:
-
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+- Das Admin-Passwort steht nur als Hash in `.env` (`ADMIN_PASSWORD_HASH`), nie im Repo.
+- Meldungen von Besuchern erscheinen erst öffentlich, wenn sie im Admin-Bereich übernommen wurden.
