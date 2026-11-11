@@ -1,0 +1,69 @@
+/* Gemeinsame Stile für den Admin-Bereich: Listen, Formulare, Hinweise */
+
+/* Der Admin-Bereich nutzt die volle Fensterbreite */
+#admin .container,
+#admin .header-inner { max-width: none; }
+
+.page-kopf { display: flex; flex-wrap: wrap; gap: .5rem; align-items: center; margin-bottom: 1rem; }
+.page-kopf .suche { flex: 1 1 220px; max-width: 340px; }
+.page-kopf .zaehler { color: var(--fg-muted); font-size: .8125rem; margin-left: auto; }
+
+.meldung-fehler { color: var(--danger); font-size: .8125rem; margin: 0 0 .75rem; }
+.meldung-ok { color: var(--primary); font-size: .8125rem; margin: 0 0 .75rem; }
+.leer { color: var(--fg-muted); text-align: center; padding: 2rem 1rem; }
+
+/* Liste */
+.liste { list-style: none; display: flex; flex-direction: column; border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden; background: var(--bg-card); }
+.liste > li + li { border-top: 1px solid var(--border); }
+.eintrag-zeile { display: flex; align-items: center; }
+.eintrag {
+  /* Knöpfe füllen ihre Zeile nicht von selbst, daher die feste Breite */
+  width: 100%; flex: 1; min-width: 0; display: flex; align-items: center; gap: .875rem;
+  padding: .75rem 1rem; background: none; border: none; color: var(--fg); font: inherit;
+  text-align: left; cursor: pointer;
+}
+.eintrag:hover { background: var(--bg-hover); }
+.eintrag:focus-visible { outline: 2px solid var(--primary); outline-offset: -2px; }
+.eintrag .haupt { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: .125rem; }
+.eintrag .titel { font-size: .9375rem; font-weight: 500; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.eintrag .unter { font-size: .75rem; color: var(--fg-muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.eintrag .rechts { display: flex; align-items: center; gap: .5rem; flex-shrink: 0; color: var(--fg-muted); font-size: .75rem; }
+.eintrag.entwurf .titel { color: var(--fg-muted); }
+.reihenfolge { display: flex; flex-direction: column; padding: 0 .5rem; }
+
+/* Formulare */
+.formular { display: flex; flex-direction: column; gap: 1.25rem; }
+.abschnitt { display: flex; flex-direction: column; gap: .75rem; }
+.abschnitt > h3 { font-size: .75rem; color: var(--fg-muted); text-transform: uppercase; letter-spacing: .05em; font-weight: 600; margin: 0; }
+.felder { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: .75rem; }
+.feld { display: flex; flex-direction: column; gap: .25rem; font-size: .8125rem; min-width: 0; }
+.feld > span, .feld > legend { color: var(--fg-muted); font-size: .75rem; }
+.feld-voll { grid-column: 1 / -1; }
+fieldset.feld { border: none; padding: 0; margin: 0; }
+.hinweis { color: var(--fg-muted); font-size: .75rem; }
+.haken { display: flex; gap: .5rem; align-items: center; font-size: .8125rem; }
+
+.fusszeile { display: flex; flex-wrap: wrap; gap: .5rem; align-items: center; padding-top: 1rem; border-top: 1px solid var(--border); }
+.fusszeile .abstand { flex: 1; }
+.gefahr { color: var(--danger); }
+
+/* Auswahl per Knopf (Kategorie, Status) */
+.pillen { display: flex; flex-wrap: wrap; gap: .375rem; }
+.pille {
+  display: inline-flex; align-items: center; gap: .4rem; padding: .35rem .7rem;
+  background: var(--bg-input); border: 1px solid var(--border); border-radius: 999px;
+  color: var(--fg); font: inherit; font-size: .8125rem; cursor: pointer;
+}
+.pille:hover { border-color: var(--primary); }
+.pille.aktiv { border-color: var(--primary); background: var(--primary-bg); color: var(--primary); }
+
+/* Werte-Raster im Materialformular */
+.werte { display: flex; flex-direction: column; gap: .5rem; }
+.wert-zeile { display: grid; grid-template-columns: minmax(110px, 1fr) minmax(120px, 2fr) 90px auto; gap: .5rem; align-items: center; }
+.wert-zeile .name { font-size: .8125rem; }
+.wert-zeile .name small { color: var(--fg-muted); }
+@media (max-width: 640px) {
+  .wert-zeile { grid-template-columns: 1fr 1fr; }
+  .wert-zeile .name { grid-column: 1 / -1; }
+}
+.link-zeile { display: grid; grid-template-columns: 1fr 2fr auto; gap: .5rem; align-items: center; }
