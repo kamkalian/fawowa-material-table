@@ -88,8 +88,15 @@ in die `.env` auf dem Server übernehmen und dort neu starten (`docker compose u
 
 ## Domain und HTTPS
 
+Jede Anwendung bekommt eine eigene Subdomain (Beispiel: die Materialdatenbank unter `materials.<DOMAIN>`).
+Die Hauptdomain ist für die spätere Hauptseite vorgesehen; bis dahin leitet ihre Site-Datei per `redir ... temporary`
+auf die Materialdatenbank weiter.
+
 - Mit Domain: DNS-A-Eintrag auf die Server-IP setzen, in der Site-Datei die Domain als Adresse eintragen
   (ohne `tls internal`). Caddy holt das Zertifikat bei Let's Encrypt selbst.
+- Cloudflare: Eintrag vom Typ A, Name = Subdomain, Inhalt = Server-IP, Proxy-Status **Nur DNS** (graue Wolke).
+  So spricht Let's Encrypt direkt mit Caddy. Soll der Proxy (orange Wolke) an sein, dann SSL/TLS-Modus
+  „Full (strict)“ wählen.
 - Nur mit IP-Adresse: `tls internal`. Caddy stellt dann ein eigenes Zertifikat aus, der Browser zeigt eine Warnung.
   Der Admin-Bereich braucht HTTPS, weil das Sitzungs-Cookie als `Secure` gesetzt wird.
 
