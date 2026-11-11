@@ -3,7 +3,7 @@
 // Beispiel:
 //   ?q=sperrholz&cat=holz,metall&f=gewicht:bis:3&f=staerke:4..10&f=wasserfest:ja&sort=gewicht&cols=staerke,gewicht&lang=de&m=12
 //
-// cat: Kurznamen der gewählten Kategorien (mehrere möglich, ohne Angabe gelten alle).
+// cat: Kurznamen der gewählten Kategorien (nur eine; ohne Angabe gelten alle).
 // flat=1: Materialien mit gleichem Namen nicht zu Gruppen zusammenfassen (Standard ist gruppiert).
 //
 // Filter (Teil nach "f="):
@@ -33,7 +33,7 @@ export function parseSearch(search, props, kategorien = null) {
 
   for (const slug of (params.get('cat') || '').split(',').map(s => s.trim()).filter(Boolean)) {
     if (kategorien && !kategorien.includes(slug)) fehler.push(`cat=${slug}`);
-    else if (!state.cats.includes(slug)) state.cats.push(slug);
+    else if (!state.cats.length) state.cats.push(slug); // nur eine Kategorie; weitere Angaben werden ignoriert
   }
 
   for (const raw of params.getAll('f')) {

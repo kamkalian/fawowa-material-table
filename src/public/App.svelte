@@ -108,7 +108,7 @@
   }
 
   function toggleCategory(slug) {
-    const cats = state.cats.includes(slug) ? state.cats.filter(c => c !== slug) : [...state.cats, slug];
+    const cats = state.cats.includes(slug) ? [] : [slug]; // immer nur eine Kategorie aktiv
     update({ cats });
   }
 

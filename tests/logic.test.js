@@ -95,8 +95,8 @@ test('Suche trifft Name (de und en) und Hersteller, ohne Groß-/Kleinschreibung'
 test('Kategorien: aus der Adresse lesen, filtern, wieder schreiben', () => {
   const { state, fehler } = parseSearch('?cat=sperrholz,schaum&lang=de', props, ['sperrholz', 'schaum', 'metall']);
   assert.deepEqual(fehler, []);
-  assert.deepEqual(state.cats, ['sperrholz', 'schaum']);
-  assert.equal(buildSearch(state, props), '?cat=sperrholz,schaum&lang=de');
+  assert.deepEqual(state.cats, ['sperrholz']); // nur die erste Kategorie
+  assert.equal(buildSearch(state, props), '?cat=sperrholz&lang=de'); // nur eine Kategorie
 
   const ids = (cats, q = '') => filterMaterials(materials, { ...emptyState(), cats, q }).map(m => m.id);
   assert.deepEqual(ids([]), [1, 2, 3, 4]);          // keine Auswahl: alle
