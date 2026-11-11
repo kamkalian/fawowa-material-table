@@ -207,7 +207,7 @@ test('Migration: Datenbank ohne icon-Spalte bekommt die Spalte und Standard-Icon
   alt.close();
   const db = openDb(pfad);
   const icons = Object.fromEntries(db.prepare('SELECT slug, icon FROM kategorie').all().map(r => [r.slug, r.icon]));
-  assert.equal(icons.holz, 'mat-holz');
+  assert.equal(icons.holz, 'wood-logs');
   assert.equal(icons.eigene, null);
   db.close();
   rmSync(pfad, { force: true });
@@ -219,24 +219,29 @@ test('Migration: frühere Icon-Vorschläge werden einmal ersetzt, spätere Wahl 
   const pfad = join(tmpdir(), `migration-icons-${Date.now()}.db`);
   const alt = new Database(pfad);
   alt.exec(`CREATE TABLE kategorie (id INTEGER PRIMARY KEY, slug TEXT NOT NULL UNIQUE, name_de TEXT NOT NULL, name_en TEXT, icon TEXT, reihenfolge INTEGER NOT NULL DEFAULT 0);
-    INSERT INTO kategorie (slug, name_de, icon) VALUES ('holz', 'Holz', 'tree-pine'), ('metall', 'Metall', 'gem'), ('kunststoff', 'Kunststoff', 'plastic-bottle'),
-      ('verbundplatte', 'Verbundplatte', 'sandwich-panel'), ('textil', 'Textil', 'shirt');
-    PRAGMA user_version = 2;`);
+    INSERT INTO kategorie (slug, name_de, icon) VALUES ('holz', 'Holz', 'mat-holz'), ('metall', 'Metall', 'mat-metall'), ('kunststoff', 'Kunststoff', 'mat-kunststoff'),
+      ('schaum-daemmung', 'Schaum', 'gem'), ('verbundplatte', 'Verbundplatte', 'mat-verbund'), ('textil', 'Textil', 'mat-textil'),
+      ('staebe-leisten', 'Stäbe', 'mat-staebe'), ('sperrholz', 'Sperrholz', 'mat-sperrholz');
+    PRAGMA user_version = 3;`);
   alt.close();
 
+  // Version 4 stellt die Linien-Icons wieder als Standard ein (die farbigen waren der Vorschlag der Version 3)
   let db = openDb(pfad);
   const icon = (slug) => db.prepare('SELECT icon FROM kategorie WHERE slug = ?').get(slug).icon;
-  assert.equal(icon('holz'), 'mat-holz');           // alter Vorschlag ersetzt
-  assert.equal(icon('metall'), 'gem');              // eigene Wahl bleibt
-  assert.equal(icon('kunststoff'), 'mat-kunststoff');
-  assert.equal(icon('verbundplatte'), 'mat-verbund');
-  assert.equal(icon('textil'), 'mat-textil');
+  assert.equal(icon('holz'), 'wood-logs');
+  assert.equal(icon('metall'), 'metal-beam');
+  assert.equal(icon('kunststoff'), 'plastic-bottle');
+  assert.equal(icon('verbundplatte'), 'sandwich-panel');
+  assert.equal(icon('textil'), 'shirt');
+  assert.equal(icon('staebe-leisten'), 'ruler');
+  assert.equal(icon('sperrholz'), 'layers');
+  assert.equal(icon('schaum-daemmung'), 'gem');     // eigene Wahl bleibt
 
-  // Wer danach wieder das alte Icon wählt, behält es beim nächsten Start
-  db.prepare("UPDATE kategorie SET icon = 'tree-pine' WHERE slug = 'holz'").run();
+  // Wer danach wieder ein farbiges Icon wählt, behält es beim nächsten Start
+  db.prepare("UPDATE kategorie SET icon = 'mat-holz' WHERE slug = 'holz'").run();
   db.close();
   db = openDb(pfad);
-  assert.equal(icon('holz'), 'tree-pine');
+  assert.equal(icon('holz'), 'mat-holz');
   db.close();
 
   for (const endung of ['', '-wal', '-shm']) rmSync(`${pfad}${endung}`, { force: true });

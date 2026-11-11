@@ -1,11 +1,13 @@
 <script>
-  import { MATERIAL_ICONS, SYMBOL_ICONS } from '../../lib/icons.js';
+  import { LINIEN_ICONS, MATERIAL_ICONS, SYMBOL_ICONS } from '../../lib/icons.js';
   import CategoryIcon from '../shared/CategoryIcon.svelte';
 
   let { value, onchange } = $props();
 
+  // [Titel, Namen, Größe]; die farbigen Icons sind größer dargestellt
   const GRUPPEN = [
-    ['Materialien', MATERIAL_ICONS, 34],
+    ['Material-Icons (Linien)', LINIEN_ICONS, 28],
+    ['Material-Icons (farbig)', MATERIAL_ICONS, 34],
     ['Symbole', SYMBOL_ICONS, 22]
   ];
 </script>
@@ -14,7 +16,7 @@
   {#each GRUPPEN as [titel, namen, groesse] (titel)}
     <div class="gruppe">
       <span class="gruppen-titel">{titel}</span>
-      <div class="raster" class:gross={titel === 'Materialien'}>
+      <div class="raster" class:gross={groesse > 22}>
         {#each namen as name (name)}
           <button
             type="button"

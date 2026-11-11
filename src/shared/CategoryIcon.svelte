@@ -146,14 +146,45 @@
       </g>`
   };
 
+  // --- Linien-Icons (Zeichenfläche 24 × 24, einfarbig in der Akzentfarbe) ---
+  const LINIEN = {
+    // Holzstapel: drei Stämme mit Jahresringen von der Stirnseite
+    'wood-logs': `
+      <circle cx="7.5" cy="16" r="4.5"/><circle cx="16.5" cy="16" r="4.5"/><circle cx="12" cy="8" r="4.5"/>
+      <circle cx="7.5" cy="16" r="1.5"/><circle cx="16.5" cy="16" r="1.5"/><circle cx="12" cy="8" r="1.5"/>`,
+    // Baumscheibe mit Jahresringen und Riss
+    'tree-rings': `
+      <circle cx="12" cy="12" r="9.5"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2.5"/><path d="M14.5 12h7"/>`,
+    // Stahlträger (I-Profil)
+    'metal-beam': `<path d="M4 4h16v3.5h-6.25v9H20V20H4v-3.5h6.25v-9H4z"/>`,
+    // Sechskantmutter
+    'metal-nut': `<path d="M12 2.5l8 4.5v10l-8 4.5-8-4.5V7z"/><circle cx="12" cy="12" r="3.5"/>`,
+    // Kunststoffflasche mit Deckel und Etikett
+    'plastic-bottle': `
+      <path d="M9.5 2.5h5V5h-5z"/>
+      <path d="M10 5v1.8c0 1.6-2.5 2-2.5 4.2v8.5a2 2 0 0 0 2 2h5a2 2 0 0 0 2-2V11c0-2.2-2.5-2.6-2.5-4.2V5"/>
+      <path d="M7.5 13h9"/><path d="M7.5 17h9"/>`,
+    // Schaum als Blasen
+    'foam-bubbles': `
+      <circle cx="8" cy="8.5" r="4"/><circle cx="17" cy="7.5" r="2.5"/><circle cx="16" cy="16" r="4.5"/><circle cx="6.5" cy="18" r="2"/>`,
+    // Verbundplatte: Platte mit sichtbaren Schichten an der Kante
+    'sandwich-panel': `
+      <path d="M12 3l9 4-9 4-9-4z"/><path d="M3 7v9l9 4 9-4V7"/><path d="M12 11v9"/>
+      <path d="M3 10l9 4 9-4" stroke-width="1.5"/><path d="M3 13l9 4 9-4" stroke-width="1.5"/>`
+  };
+
   let { name = null, size = 16, title = '' } = $props();
   let Symbol = $derived(SYMBOLE[name] ?? Circle);
   let farbig = $derived(FARBIG[name] ?? null);
+  let linie = $derived(LINIEN[name] ?? null);
 </script>
 
 <span class="cat-icon" class:farbig={!!farbig} role={title ? 'img' : undefined} aria-label={title || undefined} aria-hidden={title ? undefined : 'true'} {title}>
   {#if farbig}
     <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 32 32" aria-hidden="true">{@html farbig}</svg>
+  {:else if linie}
+    <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">{@html linie}</svg>
   {:else}
     <Symbol {size} strokeWidth={2} />
   {/if}
