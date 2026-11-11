@@ -4,7 +4,8 @@
   import CategoryIcon from '../shared/CategoryIcon.svelte';
 
   // material: bestehendes Material oder null zum Anlegen
-  let { material, props, kategorien, onsaved, onclose, onduplicate, ondelete } = $props();
+  // vorlage: Vorbelegung beim Anlegen (z. B. aus dem Vorschlag eines Besuchers), Form wie der Entwurf unten
+  let { material, props, kategorien, onsaved, onclose, onduplicate, ondelete, vorlage = null } = $props();
 
   const neu = material === null;
 
@@ -23,16 +24,20 @@
 
   function startEntwurf() {
     const m = material;
+    const v = vorlage ?? {};
     return {
-      name_de: m?.name.de ?? '',
-      name_en: m?.name.en ?? '',
-      hersteller: m?.hersteller ?? '',
-      kategorie_id: m?.kategorie.id ?? kategorien[0]?.id ?? null,
-      status: m?.status ?? 'entwurf',
-      notiz_de: m?.notiz.de ?? '',
-      notiz_en: m?.notiz.en ?? '',
-      werte: Object.fromEntries(props.map(p => [p.kurzwort, wertEntwurf(p, m?.werte[p.kurzwort])])),
-      links: (m?.links ?? []).map(l => ({ beschriftung: l.beschriftung, url: l.url }))
+      name_de: m?.name.de ?? v.name_de ?? '',
+      name_en: m?.name.en ?? v.name_en ?? '',
+      hersteller: m?.hersteller ?? v.hersteller ?? '',
+      kategorie_id: m?.kategorie.id ?? v.kategorie_id ?? kategorien[0]?.id ?? null,
+      status: m?.status ?? v.status ?? 'entwurf',
+      notiz_de: m?.notiz.de ?? v.notiz_de ?? '',
+      notiz_en: m?.notiz.en ?? v.notiz_en ?? '',
+      werte: Object.fromEntries(props.map(p => [
+        p.kurzwort,
+        { ...wertEntwurf(p, m?.werte[p.kurzwort]), ...(v.werte?.[p.kurzwort] ?? {}) }
+      ])),
+      links: (m?.links ?? v.links ?? []).map(l => ({ beschriftung: l.beschriftung, url: l.url }))
     };
   }
 
@@ -87,7 +92,7 @@
       }
 
       const links = entwurf.links.filter(l => l.beschriftung.trim() || l.url.trim());
-      if (geaendert(links, start.links) && (links.length || !neu)) {
+      if (neu ? links.length > 0 : geaendert(links, start.links)) {
         await api('PUT', `/materialien/${id}/links`, { links });
       }
       onsaved(id);
@@ -99,7 +104,7 @@
   }
 </script>
 
-<Dialog titel={neu ? 'Neues Material' : 'Material bearbeiten'} {onclose}>
+<Dialog titel={neu ? (vorlage ? 'Vorschlag prüfen und anlegen' : 'Neues Material') : 'Material bearbeiten'} {onclose}>
   <form class="formular" onsubmit={speichern}>
     <section class="abschnitt">
       <h3>Grunddaten</h3>

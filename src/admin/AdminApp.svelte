@@ -6,11 +6,14 @@
   import Eigenschaften from './Eigenschaften.svelte';
   import Kategorien from './Kategorien.svelte';
   import Protokoll from './Protokoll.svelte';
+  import Meldungen from './Meldungen.svelte';
 
   let angemeldet = $state(null); // null = prüfe noch
   let tab = $state('materialien');
+  let offen = $state(0); // Zahl der offenen Meldungen für die Navigation
 
   const TABS = [
+    ['meldungen', 'Meldungen'],
     ['materialien', 'Materialien'],
     ['eigenschaften', 'Eigenschaften'],
     ['kategorien', 'Kategorien'],
@@ -24,6 +27,13 @@
       .then(d => (angemeldet = d.angemeldet))
       .catch(() => (angemeldet = false));
     return () => window.removeEventListener('admin-abgemeldet', abgemeldet);
+  });
+
+  // Zähler nach der Anmeldung laden und beim Wechsel der Reiter auffrischen
+  $effect(() => {
+    if (angemeldet && tab) {
+      api('GET', '/meldungen/zaehler').then(d => (offen = d.offen)).catch(() => {});
+    }
   });
 
   async function abmelden() {
@@ -54,11 +64,14 @@
       {#each TABS as [key, label] (key)}
         <button class="tab" class:active={tab === key} role="tab" aria-selected={tab === key} onclick={() => (tab = key)}>
           {label}
+          {#if key === 'meldungen' && offen > 0}<span class="zaehler" aria-label="{offen} offen">{offen}</span>{/if}
         </button>
       {/each}
     </nav>
 
-    {#if tab === 'materialien'}
+    {#if tab === 'meldungen'}
+      <Meldungen onzaehler={(n) => (offen = n)} />
+    {:else if tab === 'materialien'}
       <Materialien />
     {:else if tab === 'eigenschaften'}
       <Eigenschaften />
@@ -79,4 +92,8 @@
     padding: .5rem .875rem; font: inherit; font-size: .875rem; cursor: pointer;
   }
   .tab.active { color: var(--primary); border-bottom-color: var(--primary); }
+  .zaehler {
+    display: inline-block; min-width: 1.25rem; padding: 0 .4rem; margin-left: .35rem; border-radius: 999px;
+    background: var(--danger); color: #fff; font-size: .6875rem; font-weight: 600; line-height: 1.25rem; text-align: center;
+  }
 </style>
