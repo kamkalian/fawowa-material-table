@@ -73,6 +73,9 @@ gebaut, der laufende Container bleibt unberührt.
 
 ## Admin-Zugang
 
+Der Admin-Bereich liegt unter `https://<DOMAIN>/wunderkammer` (Standard; mit `ADMIN_PATH` in der `.env` änderbar,
+dann den Container neu erstellen). `/admin` gibt es nicht. Auf der öffentlichen Tabelle führt ein dezenter Link „Verwaltung“ dorthin.
+
 Das Passwort steht nur als Hash in `/srv/apps/materialtabelle/.env` (`ADMIN_PASSWORD_HASH`).
 Ändern: lokal `node scripts/admin-passwort.js` ausführen, die erzeugte Zeile `ADMIN_PASSWORD_HASH=...`
 in die `.env` auf dem Server übernehmen und dort neu starten (`docker compose up -d --force-recreate`).

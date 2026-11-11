@@ -9,7 +9,7 @@ Aufbau und Entscheidungen stehen in [docs/PLAN.md](docs/PLAN.md).
 ## Technik
 
 - Node.js mit Express, Daten in SQLite (`data/material.db`, über `better-sqlite3`)
-- Oberfläche mit Svelte und Vite (öffentliche Tabelle unter `/`, Admin-Bereich unter `/admin`)
+- Oberfläche mit Svelte und Vite (öffentliche Tabelle unter `/`, Admin-Bereich unter dem Fantasienamen `/wunderkammer`)
 - Betrieb als Docker-Container hinter Caddy, siehe [deploy/README.md](deploy/README.md)
 
 ## Entwickeln
@@ -22,7 +22,8 @@ npm run dev                           # API auf :3456, Oberfläche auf :5173
 npm test                              # automatische Tests
 ```
 
-Admin-Bereich in der Entwicklung: <http://localhost:5173/admin.html>
+Admin-Bereich in der Entwicklung: <http://localhost:5173/wunderkammer>. Die Adresse ist kein Geheimnis (die öffentliche
+Seite verlinkt dezent darauf), der Schutz ist der Login. Ändern mit `ADMIN_PATH` in der `.env`; `/admin` gibt es bewusst nicht.
 
 ## Aufbau
 

@@ -165,7 +165,7 @@ Schutz vor Spam, ohne Captcha:
 
 ## Admin-Bereich
 
-Der Admin-Bereich liegt unter `/admin` hinter einem Login und hat drei Teile.
+Der Admin-Bereich liegt unter einem Fantasienamen (Standard `/wunderkammer`, änderbar mit `ADMIN_PATH`) hinter einem Login und hat drei Teile. Die öffentliche Tabelle verlinkt am Seitenende dezent darauf.
 
 **Materialien**
 

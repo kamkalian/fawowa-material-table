@@ -15,6 +15,7 @@
   let materials = $state([]);
   let props = $state([]);
   let kategorien = $state([]);
+  let adminPfad = $state(null); // Adresse des Admin-Bereichs für den dezenten Link am Seitenende
   let state = $state(emptyState());
   let ignored = $state(0);
   let dialog = $state(null); // null | { index } (index -1 = neuer Filter)
@@ -126,6 +127,12 @@
       return;
     }
 
+    // Ohne diese Angabe fehlt nur der Link zur Verwaltung, die Seite funktioniert trotzdem
+    try {
+      const res = await fetch('/api/v2/einstellungen');
+      if (res.ok) adminPfad = (await res.json()).adminPfad ?? null;
+    } catch { /* ignorieren */ }
+
     // Sprache: Adresse hat Vorrang, dann der Browser-Speicher, sonst Deutsch
     const urlHasLang = new URLSearchParams(location.search).has('lang');
     let saved = null;
@@ -215,6 +222,12 @@
       onopen={(id) => update({ m: id })}
       onreport={(m) => (report = { mode: 'fehler', material: m })}
     />
+
+    {#if adminPfad}
+      <footer class="fuss">
+        <a class="verwaltung" href={adminPfad} rel="nofollow">{t(lang, 'adminLink')}</a>
+      </footer>
+    {/if}
   {/if}
 </main>
 
@@ -249,6 +262,9 @@
 <style>
   .page { padding-top: 1.5rem; padding-bottom: 2rem; }
   .muted { color: var(--fg-muted); }
+  .fuss { margin-top: 1.5rem; text-align: right; }
+  .verwaltung { color: var(--fg-muted); font-size: .6875rem; opacity: .45; text-decoration: none; }
+  .verwaltung:hover, .verwaltung:focus-visible { opacity: 1; text-decoration: underline; }
   .error { color: var(--danger); }
   .hint {
     display: flex; gap: .5rem; align-items: center; flex-wrap: wrap;
