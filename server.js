@@ -7,6 +7,7 @@ import { registerAdminRoutes } from './lib/admin-routes.js';
 import { registerMeldungRoutes } from './lib/meldungen-routes.js';
 import { adminPfad } from './lib/pfade.js';
 import { pruefeAlleLinks } from './lib/linkpruefung.js';
+import { ladeUnterstuetzung, oeffentlicheAngaben, verarbeiteWebhook } from './lib/unterstuetzung.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
@@ -63,8 +64,20 @@ app.get('/api/v2/materialien/:id', (req, res) => {
 });
 
 // Einstellungen, die die Oberfläche braucht (Adresse des Admin-Bereichs für den dezenten Link)
+const UNTERSTUETZUNG = ladeUnterstuetzung();
+// Angaben zum Betreiber für die Datenschutzerklärung; in der .env steht \n für einen Zeilenumbruch
+const BETREIBER = (process.env.OPERATOR || '').replace(/\\n/g, '\n').trim().slice(0, 600) || null;
+
 app.get('/api/v2/einstellungen', (req, res) => {
-  res.json({ adminPfad: ADMIN_PFAD });
+  res.json({ adminPfad: ADMIN_PFAD, unterstuetzung: oeffentlicheAngaben(db, UNTERSTUETZUNG), betreiber: BETREIBER });
+});
+
+// Ko-fi meldet hier neue Zuwendungen (nur mit KOFI_VERIFICATION_TOKEN in der .env). Gespeichert wird nur der Betrag.
+app.post('/api/v2/kofi', express.urlencoded({ extended: false, limit: '20kb' }), (req, res) => {
+  if (!UNTERSTUETZUNG?.webhook) return res.status(404).json({ error: 'Not found' });
+  const ergebnis = verarbeiteWebhook(db, req.body, { token: process.env.KOFI_VERIFICATION_TOKEN?.trim(), waehrung: UNTERSTUETZUNG.waehrung });
+  if (ergebnis === 'ungueltig') return res.status(403).json({ error: 'Forbidden' });
+  res.json({ ok: true });
 });
 
 // Fehlermeldungen und Vorschläge von Besuchern (ohne Konto, mit Spam-Schutz)

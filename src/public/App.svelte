@@ -11,11 +11,13 @@
   import FilterDialog from './components/FilterDialog.svelte';
   import DetailView from './components/DetailView.svelte';
   import ReportDialog from './components/ReportDialog.svelte';
+  import Support from './components/Support.svelte';
 
   let status = $state('loading'); // loading | ready | error
   let materials = $state([]);
   let props = $state([]);
   let kategorien = $state([]);
+  let unterstuetzung = $state(null); // Angaben für den Bereich „Projekt unterstützen“ (aus der .env des Servers), sonst null
   let adminPfad = $state(null); // Adresse des Admin-Bereichs für den dezenten Link am Seitenende
   let state = $state(emptyState());
   let ignored = $state(0);
@@ -138,7 +140,11 @@
     // Ohne diese Angabe fehlt nur der Link zur Verwaltung, die Seite funktioniert trotzdem
     try {
       const res = await fetch('/api/v2/einstellungen');
-      if (res.ok) adminPfad = (await res.json()).adminPfad ?? null;
+      if (res.ok) {
+        const einst = await res.json();
+        adminPfad = einst.adminPfad ?? null;
+        unterstuetzung = einst.unterstuetzung ?? null;
+      }
     } catch { /* ignorieren */ }
 
     // Sprache: Adresse hat Vorrang, dann der Browser-Speicher, sonst Deutsch
@@ -243,13 +249,15 @@
     />
 
     <footer class="fuss">
-      <p class="spende">
-        <span>{t(lang, 'supportText')}</span>
-        <a class="btn btn-outline btn-sm" href="https://ko-fi.com/fawowa" target="_blank" rel="noopener noreferrer"><Icon name="ui-cup" size={14} /> {t(lang, 'supportButton')}</a>
-      </p>
-      {#if adminPfad}
-        <a class="verwaltung" href={adminPfad} rel="nofollow">{t(lang, 'adminLink')}</a>
+      {#if unterstuetzung}
+        <Support {lang} angaben={unterstuetzung} />
       {/if}
+      <p class="fuss-links">
+        <a href={'/datenschutz' + (lang === 'en' ? '?lang=en' : '')}>{t(lang, 'privacyLink')}</a>
+        {#if adminPfad}
+          <a class="verwaltung" href={adminPfad} rel="nofollow">{t(lang, 'adminLink')}</a>
+        {/if}
+      </p>
     </footer>
   {/if}
 </main>
@@ -285,10 +293,11 @@
 <style>
   .page { padding-top: 1.5rem; padding-bottom: 2rem; }
   .muted { color: var(--fg-muted); }
-  .fuss { margin-top: 2rem; padding-top: 1.25rem; border-top: 1px solid var(--border); display: flex; flex-wrap: wrap; gap: .75rem 1.5rem; align-items: center; justify-content: space-between; }
-  .spende { display: flex; flex-wrap: wrap; gap: .5rem .75rem; align-items: center; font-size: .8125rem; color: var(--fg-muted); }
-  .verwaltung { color: var(--fg-muted); font-size: .6875rem; opacity: .45; text-decoration: none; }
-  .verwaltung:hover, .verwaltung:focus-visible { opacity: 1; text-decoration: underline; }
+  .fuss { margin-top: 2rem; padding-top: 1.25rem; border-top: 1px solid var(--border); display: flex; flex-wrap: wrap; gap: 1rem 1.5rem; align-items: flex-end; justify-content: space-between; }
+  .fuss-links { display: flex; gap: 1rem; margin-left: auto; font-size: .75rem; }
+  .fuss-links a { color: var(--fg-muted); text-decoration: none; }
+  .fuss-links a:hover, .fuss-links a:focus-visible { color: var(--fg); text-decoration: underline; }
+  .verwaltung { opacity: .55; }
   .error { color: var(--danger); }
   .hint {
     display: flex; gap: .5rem; align-items: center; flex-wrap: wrap;

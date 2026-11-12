@@ -45,7 +45,7 @@ Stand des bestehenden Repos (24 Commits, Version 0.2.0):
 | Tabelle | Filter nach Eigenschaften, Seitenblättern, helles und dunkles Design |
 | Meldungen | Formular für neue Materialien; Fehlermeldungen zu bestehenden Einträgen fehlen |
 | Admin | Eigene Seite, Zugang über einen Schlüssel in `data/editor-key.txt` |
-| Extras | Link-Prüfung mit Status-Punkten, Spenden-Fußzeile mit Ko-fi |
+| Extras | Link-Prüfung mit Status-Punkten, Fußzeile „Projekt unterstützen“ mit Ko-fi |
 | Altlasten | Reste der früheren Next.js-Version in `src/app`, `src/components`, `src/types` |
 
 Sicherheit: `data/editor-key.txt` liegt im öffentlichen Repo. Der Schlüssel muss geändert und die Datei aus dem Repo entfernt werden.
@@ -226,7 +226,8 @@ Phase 4 kommt nach Phase 3, weil das Übernehmen von Meldungen die Bearbeitungsf
   mit einem Klick (nach Korrektur) übernommen, Vorschläge öffnen das Materialformular vorbefüllt. Erledigte Meldungen bleiben im Archiv.
 - [x] Phase 5: Feinschliff (Handy-Ansicht mit wischbarer Kategorie-Leiste, Link-Prüfung, Ko-fi-Fußzeile). Offen nur: Hinweis im Forum (macht der Betreiber)
   - Link-Prüfung: Der Server prüft alle Links täglich (und eine Minute nach dem Start); im Admin-Bereich gibt es „Links prüfen“. Ergebnis je Link: erreichbar, unklar (403/429) oder nicht erreichbar, als Punkt in der Detailansicht. Adressen im lokalen Netz werden nie abgefragt.
-  - Ko-fi: Fußzeile mit Link auf https://ko-fi.com/fawowa (ohne Fortschrittsbalken und Webhook des alten Tools).
+  - Projekt unterstützen: Bereich in der Fußzeile, vollständig über die .env eingestellt (SUPPORT_URL, SUPPORT_GOAL, SUPPORT_RAISED, Texte). Der Fortschrittsbalken zählt von Hand eingetragene Beträge und, mit KOFI_VERIFICATION_TOKEN, per Ko-fi-Webhook (`POST /api/v2/kofi`) gemeldete Beträge; gespeichert werden nur Betrag und Transaktionsnummer.
+  - Datenschutzerklärung unter `/datenschutz` (Deutsch und Englisch, in `src/public/Datenschutz.svelte`): keine Cookies für Besucher, keine Zugriffsprotokolle, Browser-Speicher nur für Sprache und Design, Hinweis zu Ko-fi. Der Verantwortliche kommt aus OPERATOR in der .env.
 
 ## Icon-Stil „Feinstrich“
 
