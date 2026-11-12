@@ -19,7 +19,9 @@ export async function api(method, pfad, body) {
     if (res.status === 404 && !daten.error) {
       throw new Error('Der Server kennt diese Funktion nicht (404). Vermutlich läuft noch eine ältere Version: bitte den Server beenden und neu starten.');
     }
-    throw new Error(daten.error || `Fehler ${res.status}`);
+    const fehler = new Error(daten.error || `Fehler ${res.status}`);
+    fehler.details = daten.details ?? null;
+    throw fehler;
   }
   return daten;
 }

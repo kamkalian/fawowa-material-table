@@ -1,8 +1,8 @@
 import { test, after } from 'node:test';
 import assert from 'node:assert/strict';
 import express from 'express';
-import { openDb, createKategorie, createEigenschaft } from '../lib/db.js';
-import { anlegenMaterial, setzeWert, FehlerEingabe, listProtokoll } from '../lib/admin.js';
+import { neuerSpeicher } from './hilfen.js';
+import { anlegenMaterial, setzeWert, FehlerEingabe } from '../lib/admin.js';
 import {
   legeMeldungAn, listeMeldungen, zaehleOffene, uebernehmeFehler, schliesseAb, lehneAb
 } from '../lib/meldungen.js';
@@ -10,11 +10,7 @@ import { erzeugeToken, pruefeToken, Begrenzung, MIN_MS, MAX_MS } from '../lib/sp
 import { registerMeldungRoutes } from '../lib/meldungen-routes.js';
 
 function neueDb() {
-  const db = openDb(':memory:');
-  const kat = createKategorie(db, { slug: 'holz', name_de: 'Holz', name_en: 'Wood', reihenfolge: 1 });
-  createEigenschaft(db, { kurzwort: 'staerke', name_de: 'Stärke', typ: 'zahl', standard_einheit: 'mm', reihenfolge: 1 });
-  createEigenschaft(db, { kurzwort: 'gewicht', name_de: 'Gewicht', typ: 'zahl', standard_einheit: 'kg/m²', reihenfolge: 2 });
-  createEigenschaft(db, { kurzwort: 'wasserfest', name_de: 'Wasserfest', typ: 'ja_nein', reihenfolge: 3 });
+  const { s: db, kat } = neuerSpeicher();
   const material = anlegenMaterial(db, { name_de: 'Pappel', kategorie_id: kat, status: 'veroeffentlicht' });
   setzeWert(db, material, 'gewicht', { zahl: 2.5 });
   const entwurf = anlegenMaterial(db, { name_de: 'Geheim', kategorie_id: kat, status: 'entwurf' });
@@ -59,7 +55,7 @@ test('Fehlermeldung: Pflichtangaben, Material muss veröffentlicht sein, Eigensc
   const id = legeMeldungAn(db, { art: 'fehler', material_id: material, eigenschaft: 'gewicht', neuer_wert: '2,8', einheit: 'kg/m²', kommentar: 'Laut Datenblatt', kontakt: 'a@b.de' });
   assert.ok(id > 0);
   assert.equal(zaehleOffene(db), 1);
-  assert.equal(db.prepare('SELECT COUNT(*) n FROM wert WHERE eigenschaft_id = (SELECT id FROM eigenschaft WHERE kurzwort = ?)').get('gewicht').n, 1); // nichts verändert
+  assert.equal(db.material(material).werte.gewicht.zahl, 2.5); // nichts verändert
 });
 
 test('Fehlermeldung nur mit Kommentar reicht', () => {
@@ -99,7 +95,7 @@ test('Längen, Links und Steuerzeichen werden geprüft', () => {
 
 // --- Bearbeiten ---
 
-test('Übernehmen setzt den Wert, schließt die Meldung ab und protokolliert; doppelt geht nicht', () => {
+test('Übernehmen setzt den Wert, schließt die Meldung ab; doppelt geht nicht', () => {
   const { db, material } = neueDb();
   const id = legeMeldungAn(db, { art: 'fehler', material_id: material, eigenschaft: 'gewicht', neuer_wert: '2,8', kommentar: 'Datenblatt' });
   const liste = listeMeldungen(db);
@@ -107,12 +103,10 @@ test('Übernehmen setzt den Wert, schließt die Meldung ab und protokolliert; do
   assert.equal(liste[0].eigenschaft.kurzwort, 'gewicht');
 
   uebernehmeFehler(db, id, { zahl: '2,8', einheit: 'kg/m²' });
-  const w = db.prepare("SELECT zahl FROM wert WHERE material_id = ? AND eigenschaft_id = (SELECT id FROM eigenschaft WHERE kurzwort = 'gewicht')").get(material);
-  assert.equal(w.zahl, 2.8);
+  assert.equal(db.material(material).werte.gewicht.zahl, 2.8);
   assert.equal(zaehleOffene(db), 0);
   assert.equal(listeMeldungen(db).length, 0);
   assert.equal(listeMeldungen(db, { archiv: true })[0].status, 'uebernommen');
-  assert.ok(listProtokoll(db).some(e => e.feld === `meldung.${id}.uebernommen`));
   assert.throws(() => uebernehmeFehler(db, id, { zahl: '3' }), /schon erledigt/);
 });
 
@@ -133,7 +127,7 @@ test('Vorschlag abschließen verknüpft das neue Material; Ablehnen merkt die No
   const v = legeMeldungAn(db, { art: 'vorschlag', name: 'Birke', werte: [{ eigenschaft: 'staerke', wert: '4' }] });
   const neu = anlegenMaterial(db, { name_de: 'Birke', kategorie_id: kat });
   schliesseAb(db, v, neu);
-  assert.equal(db.prepare('SELECT material_id FROM meldung WHERE id = ?').get(v).material_id, neu);
+  assert.equal(listeMeldungen(db, { archiv: true }).find(m => m.id === v).material_id, neu);
   assert.throws(() => schliesseAb(db, v), /schon erledigt/);
 
   const spam = legeMeldungAn(db, { art: 'fehler', material_id: material, kommentar: 'Kauft bei mir' });

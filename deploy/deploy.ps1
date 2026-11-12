@@ -40,7 +40,7 @@ try {
   # Nur die ausdrücklich genannten Dateien und Ordner kommen ins Archiv; data/, .env, .git und tests/ gehören nicht dazu.
   Invoke-Nativ { tar -czf $archiv --exclude=node_modules `
     Dockerfile docker-compose.yml .dockerignore package.json package-lock.json `
-    server.js vite.config.js index.html admin.html src lib scripts docs/startdaten.csv }
+    server.js vite.config.js index.html admin.html src lib scripts }
   if ($LASTEXITCODE -ne 0) { throw 'tar ist fehlgeschlagen.' }
 } finally { Pop-Location }
 

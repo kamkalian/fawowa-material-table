@@ -1,11 +1,6 @@
 # ---- Build-Stufe: Abhängigkeiten installieren und Oberfläche bauen ----
-# Debian statt Alpine: better-sqlite3 liefert dafür fertige Binärdateien; die Werkzeuge sind nur
-# als Rückfall nötig, falls doch kompiliert werden muss. Sie landen nicht im fertigen Image.
+# Keine nativen Module mehr: der Build braucht keine Compiler.
 FROM node:22-bookworm-slim AS build
-
-RUN apt-get update \
- && apt-get install -y --no-install-recommends python3 make g++ \
- && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app
 
@@ -23,6 +18,11 @@ RUN npm prune --omit=dev
 # ---- Laufzeit-Stufe ----
 FROM node:22-bookworm-slim
 
+# git und ssh: die Daten liegen in einem Git-Repository (Abgleich über SSH mit einem Deploy-Key)
+RUN apt-get update \
+ && apt-get install -y --no-install-recommends git openssh-client \
+ && rm -rf /var/lib/apt/lists/*
+
 WORKDIR /app
 
 ENV NODE_ENV=production
@@ -33,10 +33,8 @@ COPY --from=build /app/dist ./dist
 COPY package.json server.js ./
 COPY lib/ ./lib/
 COPY scripts/ ./scripts/
-# Startdaten, falls die Datenbank neu aufgebaut werden soll
-COPY docs/startdaten.csv ./docs/startdaten.csv
 
-# Die Datenbank liegt im Volume ./data; sie gehört dem unprivilegierten Benutzer "node" (uid 1000)
+# Die Daten (Git-Arbeitsverzeichnis, lokale Dateien, SSH-Schlüssel) liegen im Volume ./data; es gehört dem unprivilegierten Benutzer "node" (uid 1000)
 RUN mkdir -p /app/data && chown -R node:node /app/data
 USER node
 

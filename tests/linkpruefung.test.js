@@ -1,7 +1,8 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { pruefeUrl, istPrivateAdresse, pruefeAlleLinks } from '../lib/linkpruefung.js';
-import { openDb } from '../lib/db.js';
+import { neuerSpeicher } from './hilfen.js';
+import { anlegenMaterial, setzeLinks } from '../lib/admin.js';
 
 const oeffentlich = async () => ['93.184.216.34'];
 const antwort = (status, location) => ({ status, headers: { get: (n) => (n === 'location' ? location ?? null : null) } });
@@ -44,28 +45,41 @@ test('Link-Prüfung: Umleitung ins lokale Netz, falsches Schema, Endlosschleife 
   assert.equal(await pruefeUrl('kein link', { fetchFn: mitStatus(antwort(200)).fetchFn, aufloesen }), 'kaputt');
 });
 
-test('Link-Prüfung: Ergebnisse werden in der Datenbank gespeichert', async () => {
-  const db = openDb(':memory:');
-  const k = db.prepare("INSERT INTO kategorie (slug, name_de) VALUES ('t', 'T')").run().lastInsertRowid;
-  const m = db.prepare("INSERT INTO material (name_de, kategorie_id, status) VALUES ('M', ?, 'veroeffentlicht')").run(k).lastInsertRowid;
-  const insert = db.prepare('INSERT INTO link (material_id, beschriftung, url) VALUES (?, ?, ?)');
-  insert.run(m, 'gut', 'https://example.org/gut');
-  insert.run(m, 'weg', 'https://example.org/weg');
+function speicherMitLinks(links) {
+  const { s: speicher, kat } = neuerSpeicher();
+  const m = anlegenMaterial(speicher, { name_de: 'M', kategorie_id: kat, status: 'veroeffentlicht' });
+  setzeLinks(speicher, m, links);
+  return speicher;
+}
+
+test('Link-Prüfung: Ergebnisse werden je Adresse lokal gespeichert und erscheinen in der Übersicht', async () => {
+  const { listeLinks, zaehleKaputte } = await import('../lib/linkpruefung.js');
+  const speicher = speicherMitLinks([{ beschriftung: 'gut', url: 'https://example.org/gut' }, { beschriftung: 'weg', url: 'https://example.org/weg' }]);
   const fetchFn = async (url) => antwort(String(url).endsWith('gut') ? 200 : 404);
-  assert.deepEqual(await pruefeAlleLinks(db, { fetchFn, aufloesen: oeffentlich }), { ok: 1, unklar: 0, kaputt: 1 });
-  assert.deepEqual(db.prepare('SELECT beschriftung, status FROM link ORDER BY id').all().map(l => [l.beschriftung, l.status]), [['gut', 'ok'], ['weg', 'kaputt']]);
+  assert.deepEqual(await pruefeAlleLinks(speicher, { fetchFn, aufloesen: oeffentlich }), { ok: 1, unklar: 0, kaputt: 1 });
+  assert.deepEqual(listeLinks(speicher).map(l => [l.beschriftung, l.status]), [['weg', 'kaputt'], ['gut', 'ok']]);
+  assert.equal(zaehleKaputte(speicher), 1);
 });
 
-test('Link-Übersicht: kaputte zuerst, dann unklare, ungeprüfte und erreichbare; Zähler zählt nur kaputte', async () => {
-  const { listeLinks, zaehleKaputte } = await import('../lib/linkpruefung.js');
-  const db = openDb(':memory:');
-  const k = db.prepare("INSERT INTO kategorie (slug, name_de) VALUES ('t', 'T')").run().lastInsertRowid;
-  const m = db.prepare("INSERT INTO material (name_de, kategorie_id, status) VALUES ('M', ?, 'veroeffentlicht')").run(k).lastInsertRowid;
-  const insert = db.prepare('INSERT INTO link (material_id, beschriftung, url, status) VALUES (?, ?, ?, ?)');
-  insert.run(m, 'a', 'https://a.example', 'ok');
-  insert.run(m, 'b', 'https://b.example', null);
-  insert.run(m, 'c', 'https://c.example', 'kaputt');
-  insert.run(m, 'd', 'https://d.example', 'unklar');
-  assert.deepEqual(listeLinks(db).map(l => l.beschriftung), ['c', 'd', 'b', 'a']);
-  assert.equal(zaehleKaputte(db), 1);
+test('Link-Übersicht: kaputte zuerst, dann unklare, ungeprüfte und erreichbare', async () => {
+  const { listeLinks } = await import('../lib/linkpruefung.js');
+  const speicher = speicherMitLinks(['a', 'b', 'c', 'd'].map(x => ({ beschriftung: x, url: `https://${x}.example` })));
+  speicher.lokal.schreibe('linkstatus', {
+    'https://a.example': { status: 'ok', geprueft_am: '2026-01-01 10:00:00' },
+    'https://c.example': { status: 'kaputt', geprueft_am: '2026-01-01 10:00:00' },
+    'https://d.example': { status: 'unklar', geprueft_am: '2026-01-01 10:00:00' }
+  });
+  assert.deepEqual(listeLinks(speicher).map(l => l.beschriftung), ['c', 'd', 'b', 'a']);
+});
+
+test('Link-Status bleibt beim Ändern der Links erhalten, nicht mehr vorhandene Adressen fallen nach der nächsten Prüfung weg', async () => {
+  const speicher = speicherMitLinks([{ beschriftung: 'x', url: 'https://example.org/x' }]);
+  const fetchFn = async () => antwort(200);
+  await pruefeAlleLinks(speicher, { fetchFn, aufloesen: oeffentlich });
+  const m = speicher.materialien[0];
+  setzeLinks(speicher, m.id, [{ beschriftung: 'umbenannt', url: 'https://example.org/x' }]);
+  assert.equal(speicher.lokal.lies('linkstatus', {})['https://example.org/x'].status, 'ok');
+  setzeLinks(speicher, m.id, [{ beschriftung: 'neu', url: 'https://example.org/y' }]);
+  await pruefeAlleLinks(speicher, { fetchFn, aufloesen: oeffentlich });
+  assert.deepEqual(Object.keys(speicher.lokal.lies('linkstatus', {})), ['https://example.org/y']);
 });

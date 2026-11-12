@@ -2,7 +2,9 @@ import express from 'express';
 import { existsSync } from 'fs';
 import { join, dirname } from 'path';
 import { fileURLToPath } from 'url';
-import { openDb, listKategorien, listEigenschaften, listMaterialien, getMaterial } from './lib/db.js';
+import { listKategorien, listEigenschaften, listMaterialien, getMaterial } from './lib/daten.js';
+import { Speicher } from './lib/speicher.js';
+import { Git } from './lib/git.js';
 import { registerAdminRoutes } from './lib/admin-routes.js';
 import { registerMeldungRoutes } from './lib/meldungen-routes.js';
 import { adminPfad } from './lib/pfade.js';
@@ -36,28 +38,59 @@ if (PRODUCTION) {
   app.use(express.static(join(__dirname, 'dist')));
 }
 
-const db = openDb();
+// --- Daten: Dateien im Git-Verzeichnis (siehe lib/speicher.js) ---
+const DATEN_DIR = process.env.DATEN_DIR || join(__dirname, 'data', 'repo');
+const LOKAL_DIR = process.env.LOKAL_DIR || join(__dirname, 'data', 'lokal');
+
+let git = null;
+try {
+  git = new Git({
+    verzeichnis: DATEN_DIR,
+    remote: process.env.DATEN_REPO,
+    zweig: process.env.DATEN_ZWEIG || 'main',
+    schluessel: process.env.DATEN_SCHLUESSEL,
+    bekannteHosts: process.env.DATEN_KNOWN_HOSTS,
+    autor: { name: process.env.GIT_AUTOR_NAME, email: process.env.GIT_AUTOR_EMAIL }
+  });
+  git.bereitstellen();
+} catch (e) {
+  if (process.env.DATEN_REPO) {
+    console.error('Das Daten-Repository konnte nicht eingerichtet werden:', e.message);
+    process.exit(1);
+  }
+  console.warn('git ist nicht verfügbar, die Daten werden ohne Versionsverwaltung gespeichert:', e.message);
+  git = null;
+}
+
+const speicher = new Speicher({ verzeichnis: DATEN_DIR, git, lokal: LOKAL_DIR });
+const geladen = speicher.laden();
+if (geladen.fehler.length) {
+  console.error(`Beim Laden der Daten gab es ${geladen.fehler.length} Fehler (betroffene Dateien werden übersprungen):`);
+  for (const f of geladen.fehler) console.error(`  ${f.datei}: ${f.text}`);
+}
+console.log(`Daten geladen: ${speicher.materialien.length} Materialien aus ${DATEN_DIR}`);
+git?.sendenPlanen(5000); // Änderungen, die noch nicht im Repo sind, werden nach dem Start gesendet
 
 // --- Öffentliche API (nur lesend, veröffentlichte Daten) ---
 
 app.get('/api/v2/kategorien', (req, res) => {
-  try { res.json(listKategorien(db)); }
+  try { res.json(listKategorien(speicher)); }
   catch (e) { res.status(500).json({ error: 'Failed to read categories' }); }
 });
 
 app.get('/api/v2/eigenschaften', (req, res) => {
-  try { res.json(listEigenschaften(db)); }
+  try { res.json(listEigenschaften(speicher)); }
   catch (e) { res.status(500).json({ error: 'Failed to read properties' }); }
 });
 
 app.get('/api/v2/materialien', (req, res) => {
-  try { res.json(listMaterialien(db)); }
+  try { res.json(listMaterialien(speicher)); }
   catch (e) { res.status(500).json({ error: 'Failed to read materials' }); }
 });
 
 app.get('/api/v2/materialien/:id', (req, res) => {
   try {
-    const m = getMaterial(db, req.params.id);
+    const m = getMaterial(speicher, req.params.id);
     if (!m) return res.status(404).json({ error: 'Not found' });
     res.json(m);
   } catch (e) { res.status(500).json({ error: 'Failed to read material' }); }
@@ -69,22 +102,22 @@ const UNTERSTUETZUNG = ladeUnterstuetzung();
 const BETREIBER = (process.env.OPERATOR || '').replace(/\\n/g, '\n').trim().slice(0, 600) || null;
 
 app.get('/api/v2/einstellungen', (req, res) => {
-  res.json({ adminPfad: ADMIN_PFAD, unterstuetzung: oeffentlicheAngaben(db, UNTERSTUETZUNG), betreiber: BETREIBER });
+  res.json({ adminPfad: ADMIN_PFAD, unterstuetzung: oeffentlicheAngaben(speicher, UNTERSTUETZUNG), betreiber: BETREIBER });
 });
 
 // Ko-fi meldet hier neue Zuwendungen (nur mit KOFI_VERIFICATION_TOKEN in der .env). Gespeichert wird nur der Betrag.
 app.post('/api/v2/kofi', express.urlencoded({ extended: false, limit: '20kb' }), (req, res) => {
   if (!UNTERSTUETZUNG?.webhook) return res.status(404).json({ error: 'Not found' });
-  const ergebnis = verarbeiteWebhook(db, req.body, { token: process.env.KOFI_VERIFICATION_TOKEN?.trim(), waehrung: UNTERSTUETZUNG.waehrung });
+  const ergebnis = verarbeiteWebhook(speicher, req.body, { token: process.env.KOFI_VERIFICATION_TOKEN?.trim(), waehrung: UNTERSTUETZUNG.waehrung });
   if (ergebnis === 'ungueltig') return res.status(403).json({ error: 'Forbidden' });
   res.json({ ok: true });
 });
 
 // Fehlermeldungen und Vorschläge von Besuchern (ohne Konto, mit Spam-Schutz)
-registerMeldungRoutes(app, db);
+registerMeldungRoutes(app, speicher);
 
 // --- Admin-Bereich: Login und Bearbeiten ---
-registerAdminRoutes(app, db);
+registerAdminRoutes(app, speicher);
 
 // Admin-Oberfläche: im Betrieb unter ADMIN_PFAD, in der Entwicklung liefert Vite sie unter demselben Pfad aus
 app.get(ADMIN_PFAD, (req, res, next) => {
@@ -110,7 +143,7 @@ const server = app.listen(PORT, () => {
 
 // Im Betrieb prüft der Server die Links täglich (erste Prüfung kurz nach dem Start)
 if (PRODUCTION) {
-  const pruefen = () => pruefeAlleLinks(db).catch(e => console.error('Link-Prüfung fehlgeschlagen:', e.message));
+  const pruefen = () => pruefeAlleLinks(speicher).catch(e => console.error('Link-Prüfung fehlgeschlagen:', e.message));
   setTimeout(pruefen, 60 * 1000).unref();
   setInterval(pruefen, 24 * 60 * 60 * 1000).unref();
 }

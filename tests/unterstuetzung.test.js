@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { ladeUnterstuetzung, oeffentlicheAngaben, verarbeiteWebhook } from '../lib/unterstuetzung.js';
-import { openDb } from '../lib/db.js';
+import { neuerSpeicher } from './hilfen.js';
 
 test('Unterstützen: ohne gültige https-Adresse gibt es keinen Bereich', () => {
   assert.equal(ladeUnterstuetzung({}), null);
@@ -21,7 +21,7 @@ test('Unterstützen: Einstellungen aus der .env, Zahlen mit Komma, Standardwerte
 });
 
 test('Unterstützen: Webhook prüft den Token, zählt jede Nachricht einmal und ignoriert andere Währungen', () => {
-  const db = openDb(':memory:');
+  const { s: db } = neuerSpeicher();
   const einst = ladeUnterstuetzung({ SUPPORT_URL: 'https://ko-fi.com/x', SUPPORT_GOAL: '100', SUPPORT_RAISED: '10', KOFI_VERIFICATION_TOKEN: 'geheim' });
   const opt = { token: 'geheim', waehrung: 'EUR' };
   const body = (d) => ({ data: JSON.stringify({ verification_token: 'geheim', message_id: 'a1', amount: '5.00', currency: 'EUR', from_name: 'Anna', email: 'a@b.de', ...d }) });
@@ -37,6 +37,6 @@ test('Unterstützen: Webhook prüft den Token, zählt jede Nachricht einmal und 
 
   assert.equal(oeffentlicheAngaben(db, einst).erreicht, 17.5); // 10 von Hand + 5 + 2,5
   assert.equal(oeffentlicheAngaben(db, null), null);
-  // keine Namen oder Adressen in der Datenbank
-  assert.deepEqual(Object.keys(db.prepare('SELECT * FROM unterstuetzung').get()).sort(), ['betrag', 'erhalten_am', 'nachricht_id', 'waehrung']);
+  // keine Namen oder Adressen gespeichert
+  assert.deepEqual(Object.keys(db.lokal.lies('unterstuetzung', [])[0]).sort(), ['betrag', 'erhalten_am', 'nachricht_id', 'waehrung']);
 });

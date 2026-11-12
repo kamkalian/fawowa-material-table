@@ -9,11 +9,10 @@
     "dev:web": "npx vite --port 5173",
     "build": "vite build",
     "test": "node --test tests/",
-    "import:startdaten": "node scripts/import-startdaten.js",
-    "start": "NODE_ENV=production node server.js"
+    "start": "NODE_ENV=production node server.js",
+    "db-zu-dateien": "node scripts/db-zu-dateien.js"
   },
   "dependencies": {
-    "better-sqlite3": "^13.0.3",
     "express": "^4.21.0"
   },
   "devDependencies": {

@@ -21,7 +21,7 @@
     ['eigenschaften', 'Eigenschaften'],
     ['kategorien', 'Kategorien'],
     ['links', 'Links'],
-    ['protokoll', 'Protokoll']
+    ['protokoll', 'Protokoll und Repo']
   ];
 
   onMount(() => {

@@ -56,7 +56,7 @@ erreichbar (Port 80 und 443), alle Anwendungen hängen im internen Docker-Netzwe
    `sites/materialtabelle.caddy` kopieren und die Domain eintragen, dann `docker compose up -d`.
 8. **Anwendung**: `.env` in `/srv/apps/materialtabelle` anlegen (Vorlage `.env.example`: `ADMIN_PASSWORD_HASH`,
    `APP_UID`, `APP_GID` = Ausgabe von `id -u` und `id -g` des Admin-Benutzers). Danach mit dem Skript unten ausliefern.
-   Eine vorhandene Datenbank wird als `data/material.db` abgelegt (sonst `docker compose run --rm fawowa node scripts/import-startdaten.js`).
+   Die Daten kommen aus dem Daten-Repo: `DATEN_REPO` und den Deploy-Key einrichten (Abschnitt „Daten-Repository“ unten).
 
 ## Die Materialdatenbank aktualisieren
 
@@ -68,7 +68,7 @@ $env:FAWOWA_SERVER = '<SERVER-IP>'; $env:FAWOWA_USER = '<BENUTZER>'
 ```
 
 Das Skript überträgt den Quellcode, baut das Image auf dem Server und startet den Container neu.
-Die Daten (`data/material.db`), die `.env` und die Zertifikate bleiben unverändert. Mit `-NurBauen` wird nur
+Die Daten (`data/`), die `.env` und die Zertifikate bleiben unverändert. Mit `-NurBauen` wird nur
 gebaut, der laufende Container bleibt unberührt.
 
 ## Admin-Zugang
@@ -103,15 +103,26 @@ auf die Materialdatenbank weiter.
 - Nur mit IP-Adresse: `tls internal`. Caddy stellt dann ein eigenes Zertifikat aus, der Browser zeigt eine Warnung.
   Der Admin-Bereich braucht HTTPS, weil das Sitzungs-Cookie als `Secure` gesetzt wird.
 
+## Daten-Repository
+
+Die Materialdaten liegen als Dateien in einem eigenen Git-Repository (Beschreibung: [docs/DATEN.md](../docs/DATEN.md)).
+Der Server klont es beim ersten Start nach `data/repo` und committet und sendet jede Änderung aus dem Admin-Bereich.
+Dafür braucht er einen Deploy-Key mit Schreibrecht, nur für dieses eine Repo:
+
+1. Auf dem Server: `mkdir -p data/schluessel && ssh-keygen -t ed25519 -N '' -C materialdatenbank -f data/schluessel/deploy_key`
+2. Den Inhalt von `data/schluessel/deploy_key.pub` bei GitHub im Daten-Repo unter Settings > Deploy keys eintragen,
+   mit Haken bei „Allow write access“.
+3. Die Schlüssel von GitHub in `data/schluessel/known_hosts` ablegen (`ssh-keyscan github.com` und den Fingerabdruck mit
+   https://docs.github.com/de/authentication/keeping-your-account-and-data-secure/githubs-ssh-key-fingerprints vergleichen).
+4. In der `.env`: `DATEN_REPO=git@github.com:<KONTO>/<REPO>.git`, `DATEN_SCHLUESSEL=/app/data/schluessel/deploy_key`,
+   `DATEN_KNOWN_HOSTS=/app/data/schluessel/known_hosts`. Der Schlüssel muss dem Benutzer aus `APP_UID` gehören (`chmod 600`).
+
 ## Sicherung
 
-Alles Wichtige steht in `/srv/apps/materialtabelle/data/` (Datenbank `material.db`) und `/srv/apps/materialtabelle/.env`.
-Zusätzlich die Zertifikate im Docker-Volume `caddy_caddy_data`. Konsistente Kopie der Datenbank, auch während der
-Betrieb läuft:
-
-```bash
-docker compose exec fawowa node -e "const D=require('better-sqlite3');new D('data/material.db').exec(\"VACUUM INTO '/app/data/sicherung.db'\")"
-```
+Die Materialdaten sind durch das Repo gesichert (jede Änderung wird nach wenigen Sekunden gesendet; ungesendete Änderungen
+zeigt der Admin-Bereich unter „Protokoll und Repo“ an). Nicht im Repo, weil sie Kontaktangaben enthalten oder flüchtig sind:
+`data/lokal/` (Meldungen, Link-Status, Ko-fi-Beträge). Außerdem sichern: `.env`, `data/schluessel/` und die Zertifikate im
+Docker-Volume `caddy_caddy_data`.
 
 ## Nützliche Befehle
 

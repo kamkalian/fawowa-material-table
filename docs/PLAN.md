@@ -232,6 +232,14 @@ Phase 4 kommt nach Phase 3, weil das Übernehmen von Meldungen die Bearbeitungsf
   - Datenschutzerklärung unter `/datenschutz` (Deutsch und Englisch, in `src/public/Datenschutz.svelte`): keine Cookies für Besucher, keine Zugriffsprotokolle, Browser-Speicher nur für Sprache und Design, Hinweis zu Ko-fi. Der Verantwortliche kommt aus OPERATOR in der .env.
   - Impressum unter `/impressum` (§ 5 DDG, Angaben aus OPERATOR) mit Hinweis, dass die Materialangaben ohne Gewähr sind.
 
+## Datenhaltung ohne Datenbank
+
+SQLite ist entfernt. Die Materialdaten liegen als JSON-Dateien in einem eigenen, öffentlichen Git-Repository (eine Datei je Material),
+der Server hält sie im Speicher, committet jede Änderung mit lesbarem Text und sendet sie ins Repo. „Aus dem Repo laden“ im
+Admin-Bereich holt neue Commits und prüft jede Datei, bevor sie gelten. Meldungen (mit Kontaktangaben), Link-Status und
+Ko-fi-Beträge liegen lokal in `data/lokal/`. Format und Regeln: [DATEN.md](DATEN.md). Die Suche und Filter laufen weiterhin
+im Browser und sind davon nicht betroffen.
+
 ## Icon-Stil „Feinstrich“
 
 Alle Icons (Kategorien und Bedienelemente) sind selbst gezeichnet und stehen in `src/shared/Icon.svelte`. Regeln:

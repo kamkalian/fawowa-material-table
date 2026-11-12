@@ -8,7 +8,7 @@ services:
     image: fawowa-material-table:latest
     container_name: fawowa-material-table
     restart: unless-stopped
-    # Benutzer-ID, der die Datei data/material.db gehört (auf dem Server: Benutzer "deploy", siehe .env)
+    # Benutzer-ID, dem der Ordner data/ gehört (auf dem Server: Benutzer "anja", siehe .env)
     user: "${APP_UID:-1000}:${APP_GID:-1000}"
     # Admin-Passwort-Hash (ADMIN_PASSWORD_HASH) steht in .env, siehe .env.example
     env_file:

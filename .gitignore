@@ -2,9 +2,8 @@
 node_modules/
 dist/
 
-# Datenbank und Zugangsdaten gehören nicht ins Repo
-data/material.db
-data/material.db-*
+# Daten (eigenes Repository), lokale Dateien und Schlüssel gehören nicht in dieses Repo
+/data/
 .env
 .env.*
 # Die Vorlage für die Umgebungsvariablen darf eingecheckt werden

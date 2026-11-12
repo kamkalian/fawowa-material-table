@@ -8,7 +8,8 @@ Aufbau und Entscheidungen stehen in [docs/PLAN.md](docs/PLAN.md).
 
 ## Technik
 
-- Node.js mit Express, Daten in SQLite (`data/material.db`, über `better-sqlite3`)
+- Node.js mit Express. Die Daten liegen als JSON-Dateien in einem Git-Repository (eine Datei je Material), jede Änderung
+  im Admin-Bereich wird als Commit festgehalten und ins Repo gesendet. Keine Datenbank. Siehe [docs/DATEN.md](docs/DATEN.md).
 - Oberfläche mit Svelte und Vite (öffentliche Tabelle unter `/`, Admin-Bereich unter dem Fantasienamen `/wunderkammer`)
 - Betrieb als Docker-Container hinter Caddy, siehe [deploy/README.md](deploy/README.md)
 
@@ -16,7 +17,7 @@ Aufbau und Entscheidungen stehen in [docs/PLAN.md](docs/PLAN.md).
 
 ```bash
 npm install
-node scripts/import-startdaten.js     # einmalig: Startdaten aus docs/startdaten.csv einspielen
+# Daten: DATEN_REPO in der .env setzen (klont das Daten-Repo nach data/repo) oder ohne Angabe lokal mit leerem Start
 node scripts/admin-passwort.js        # Admin-Passwort festlegen (schreibt den Hash in .env)
 npm run dev                           # API auf :3456, Oberfläche auf :5173
 npm test                              # automatische Tests
@@ -29,14 +30,14 @@ Seite verlinkt dezent darauf), der Schutz ist der Login. Ändern mit `ADMIN_PATH
 
 ```
 server.js                  Einstieg: öffentliche API, Meldungen, Admin-API
-lib/                       Datenbank, Admin-Funktionen, Anmeldung, Meldungen und Spam-Schutz
+lib/                       Datenspeicher (Dateien + Git), Admin-Funktionen, Anmeldung, Meldungen und Spam-Schutz
 src/public/                öffentliche Tabelle, Filter, Meldeformulare
 src/admin/                 Admin-Bereich
 src/shared/                gemeinsame Teile (Kategorie-Icons)
-scripts/                   Startdaten einspielen, Admin-Passwort festlegen
+scripts/                   Admin-Passwort festlegen, einmalige Umstellung von SQLite auf Dateien
 tests/                     automatische Tests
 deploy/                    Docker, Caddy und Skript zum Ausliefern
-docs/                      Plan und Startdaten
+docs/                      Plan und Beschreibung der Daten
 ```
 
 ## Sicherheit
