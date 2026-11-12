@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 import { readFileSync, existsSync } from 'fs';
 import { join } from 'path';
 import { neuerSpeicher } from './hilfen.js';
+import { serialisiere } from '../lib/speicher.js';
 import { ICON_NAMEN, ICON_NACH_SLUG } from '../lib/icons.js';
 import { hashPasswort, pruefePasswort, anmelden, sitzungGueltig, _intern } from '../lib/auth.js';
 import {
@@ -195,3 +196,33 @@ test('Alle Icon-Namen haben eine Komponente und bekannte Kategorien ein Standard
   for (const icon of Object.values(ICON_NACH_SLUG)) assert.ok(ICON_NAMEN.includes(icon), `Vorschlag nicht in der Liste: ${icon}`);
 });
 
+
+test('Mehrfachauswahl: mehrere Auswahlen je Wert, Datei mit Liste, Umschalten nur ohne Mehrfachwerte', () => {
+  const { db, kat } = neueDb();
+  const e = anlegenEigenschaft(db, { kurzwort: 'material', name_de: 'Material', typ: 'auswahl', mehrfach: true });
+  setzeOptionen(db, e, [{ de: 'GFK' }, { de: 'Schaum' }, { de: 'Holz' }]);
+  const [gfk, schaum, holz] = db.eigenschaft('material').optionen.map(o => o.id);
+  const id = anlegenMaterial(db, { name_de: 'Verbund', kategorie_id: kat });
+
+  setzeWert(db, id, 'material', { option_ids: [gfk, schaum, gfk] });
+  assert.deepEqual(db.material(id).werte.material.option_ids, [gfk, schaum]);
+  assert.throws(() => setzeWert(db, id, 'material', { option_ids: [9999] }), FehlerEingabe);
+
+  // Entfernt man eine Option, bleibt der Rest erhalten
+  setzeOptionen(db, e, [{ id: gfk, de: 'GFK' }, { id: holz, de: 'Holz' }]);
+  assert.deepEqual(db.material(id).werte.material.option_ids, [gfk]);
+  setzeWert(db, id, 'material', { option_ids: [gfk, holz] });
+
+  // Schreiben und wieder lesen
+  const dateien = serialisiere(db);
+  const datei = JSON.parse([...dateien].find(([p]) => p.startsWith('materialien/'))[1]);
+  assert.deepEqual(datei.werte.material, { optionen: ['GFK', 'Holz'] });
+
+  // Bei einfachen Auswahlen sind mehrere nicht erlaubt; zurückstellen geht erst mit höchstens einer
+  assert.throws(() => setzeWert(db, id, 'brand', { option_ids: [1, 2] }), FehlerEingabe);
+  assert.throws(() => aendereEigenschaft(db, e, { mehrfach: false }), FehlerEingabe);
+  setzeWert(db, id, 'material', { option_ids: [holz] });
+  aendereEigenschaft(db, e, { mehrfach: false });
+  assert.equal(db.eigenschaft('material').mehrfach, false);
+  assert.throws(() => aendereEigenschaft(db, db.eigenschaft('wasserfest').id, { mehrfach: true }), FehlerEingabe);
+});

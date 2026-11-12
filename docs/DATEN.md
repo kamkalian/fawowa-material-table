@@ -34,7 +34,8 @@ Nicht im Repo (liegt lokal in `data/lokal/`): `meldungen.json` (enthält Kontakt
 ```
 
 `typ`: `zahl`, `text`, `auswahl` oder `ja_nein`. `kurzwort` steht in Adressen (Filter, Sortierung) und ist später nicht
-änderbar. `optionen` gibt es nur bei `auswahl`.
+änderbar. `optionen` gibt es nur bei `auswahl`. Mit `"mehrfach": true` darf ein Material mehrere davon haben (z. B. die
+Materialien einer Verbundplatte).
 
 ## materialien/*.json
 
@@ -53,6 +54,7 @@ Nicht im Repo (liegt lokal in `data/lokal/`): `meldungen.json` (enthält Kontakt
     "staerke":    { "zahl": 4, "einheit": "mm", "vermerk_de": "ungeprüft", "vermerk_en": "unverified" },
     "wasserfest": { "ja_nein": true },
     "brand":      { "option": "B1" },
+    "material":   { "optionen": ["GFK", "Schaum"] },
     "notiz":      { "text": "…" }
   },
   "links": [{ "beschriftung": "Datenblatt", "url": "https://example.org/blatt.pdf" }]
@@ -64,7 +66,7 @@ Nicht im Repo (liegt lokal in `data/lokal/`): `meldungen.json` (enthält Kontakt
 - `kategorie`: der `slug` einer Kategorie. `status`: `entwurf` oder `veroeffentlicht`. Entwürfe sind im Repo sichtbar,
   auf der öffentlichen Seite nicht.
 - `werte`: je Eigenschaft (Schlüssel = `kurzwort`) genau die Felder, die zum Typ passen: `zahl` (+ `einheit`), `text`,
-  `ja_nein`, `option` (der deutsche Text der Auswahl). `vermerk_de` / `vermerk_en` markieren einen Wert, z. B. als „ungeprüft“.
+  `ja_nein`, `option` (der deutsche Text der Auswahl) bzw. bei Mehrfachauswahl `optionen` (Liste dieser Texte). `vermerk_de` / `vermerk_en` markieren einen Wert, z. B. als „ungeprüft“.
 - Dateiname: `<name>-<id>.json`. Beim Umbenennen eines Materials bleibt der Dateiname gleich.
 
 ## Prüfung

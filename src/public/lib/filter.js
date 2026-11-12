@@ -27,7 +27,7 @@ function matchesFilter(m, f) {
     case 'ist': return typeof w.wert === 'number' && w.einheit === f.unit && w.wert === f.a;
     case 'von': return typeof w.wert === 'number' && w.einheit === f.unit && w.wert >= f.a && w.wert <= f.b;
     case 'enthaelt': return typeof w.wert === 'string' && w.wert.toLowerCase().includes(f.text.toLowerCase());
-    case 'in': return f.ids.includes(w.optionId);
+    case 'in': return (w.optionIds ?? [w.optionId]).some(id => f.ids.includes(id)); // bei Mehrfachauswahl genügt eine
     default: return w.wert === f.ja;
   }
 }
@@ -45,6 +45,11 @@ export function filterMaterials(materials, state) {
 
 // --- Sortieren ---
 
+/** Auswahl als Text: eine Liste (Mehrfachauswahl) wird mit Komma verbunden */
+function alsText(wert, lang) {
+  return Array.isArray(wert) ? wert.map(o => pick(o, lang)).join(', ') : pick(wert, lang);
+}
+
 function sortValue(m, key, propMap, lang) {
   if (key === 'name') return displayName(m, lang);
   if (key === 'kategorie') return categoryName(m, lang);
@@ -52,7 +57,7 @@ function sortValue(m, key, propMap, lang) {
   if (!w || w.wert === null || w.wert === undefined) return null;
   const typ = propMap.get(key)?.typ;
   if (typ === 'ja_nein') return w.wert ? 1 : 0;
-  if (typ === 'auswahl') return pick(w.wert, lang);
+  if (typ === 'auswahl') return alsText(w.wert, lang);
   return w.wert;
 }
 
@@ -76,6 +81,7 @@ export function sortMaterials(rows, sort, props, lang) {
 
 // --- Anzeige ---
 
+// formatValue steht unten; alsText oben dient beiden
 export function formatNumber(n, lang) {
   return n.toLocaleString(lang === 'en' ? 'en-US' : 'de-DE', { maximumFractionDigits: 4 });
 }
@@ -85,7 +91,7 @@ export function formatValue(prop, w, lang) {
   switch (prop.typ) {
     case 'zahl': return `${formatNumber(w.wert, lang)}${w.einheit ? ` ${w.einheit}` : ''}`;
     case 'ja_nein': return t(lang, w.wert ? 'yes' : 'no');
-    case 'auswahl': return pick(w.wert, lang);
+    case 'auswahl': return alsText(w.wert, lang);
     default: return String(w.wert);
   }
 }

@@ -106,7 +106,7 @@ test('Prüfung: ein gültiger Satz Dateien wird ohne Fehler gelesen', () => {
   const r = liesVerzeichnis(ordner);
   assert.deepEqual(r.fehler, []);
   assert.equal(r.daten.materialien.length, 1);
-  assert.equal(r.daten.materialien[0].werte.brand.option_id, 1);
+  assert.equal(r.daten.materialien[0].werte.brand.option_ids[0], 1);
 });
 
 test('Prüfung: jeder Fehler nennt Datei und Problem', () => {
@@ -271,4 +271,26 @@ test('Abgleich: gleichzeitige Änderungen hier und im Repo werden nicht automati
 test('Abgleich ohne Repo meldet das klar', async () => {
   const { s } = neuerSpeicher({ mitGit: true });
   await assert.rejects(ladeAusRepo(s), /kein Repository/i);
+});
+
+test('Prüfung: Mehrfachauswahl liest eine Liste, einfache Auswahl bleibt ein Feld', () => {
+  const ordner = tempOrdner();
+  const eig = [
+    { id: 1, kurzwort: 'material', name_de: 'Material', typ: 'auswahl', mehrfach: true, optionen: [{ id: 1, de: 'GFK' }, { id: 2, de: 'Schaum' }] },
+    { id: 2, kurzwort: 'brand', name_de: 'Brand', typ: 'auswahl', optionen: [{ id: 1, de: 'B1' }] }
+  ];
+  const m = (werte) => ({ id: 1, name_de: 'A', kategorie: 'holz', werte });
+  const liest = (werte) => {
+    const o = tempOrdner();
+    dateienSchreiben(o, { 'kategorien.json': GRUND['kategorien.json'], 'eigenschaften.json': eig, 'materialien/a-1.json': m(werte) });
+    return liesVerzeichnis(o);
+  };
+  const gut = liest({ material: { optionen: ['GFK', 'Schaum'] } });
+  assert.deepEqual(gut.fehler, []);
+  assert.deepEqual(gut.daten.materialien[0].werte.material.option_ids, [1, 2]);
+  assert.match(liest({ material: { option: 'GFK' } }).fehler[0].text, /optionen/);
+  assert.match(liest({ brand: { optionen: ['B1'] } }).fehler[0].text, /option/);
+  assert.match(liest({ material: { optionen: ['GFK', 'GFK'] } }).fehler[0].text, /doppelt/);
+  assert.match(liest({ material: { optionen: ['Gold'] } }).fehler[0].text, /gibt es bei dieser/);
+  assert.match(liest({ material: { optionen: 'GFK' } }).fehler[0].text, /Liste/);
 });

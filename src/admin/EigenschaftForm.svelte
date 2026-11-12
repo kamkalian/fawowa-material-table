@@ -23,6 +23,7 @@
       standard_einheit: e?.einheit ?? '',
       standard_sichtbar: e?.standardSichtbar ?? false,
       filterbar: e?.filterbar ?? true,
+      mehrfach: e?.mehrfach ?? false,
       optionen: (e?.optionen ?? []).map(o => ({ id: o.id, de: o.de, en: o.en ?? '' }))
     };
   }
@@ -49,12 +50,13 @@
         name_en: entwurf.name_en,
         standard_einheit: entwurf.typ === 'zahl' ? entwurf.standard_einheit : '',
         standard_sichtbar: entwurf.standard_sichtbar,
-        filterbar: entwurf.filterbar
+        filterbar: entwurf.filterbar,
+        mehrfach: entwurf.typ === 'auswahl' && entwurf.mehrfach
       };
       let id = eigenschaft?.id;
       if (neu) {
         id = (await api('POST', '/eigenschaften', { ...felder, kurzwort: entwurf.kurzwort.trim(), typ: entwurf.typ })).id;
-      } else if (['name_de', 'name_en', 'standard_einheit', 'standard_sichtbar', 'filterbar'].some(f => geaendert(entwurf[f], start[f]))) {
+      } else if (['name_de', 'name_en', 'standard_einheit', 'standard_sichtbar', 'filterbar', 'mehrfach'].some(f => geaendert(entwurf[f], start[f]))) {
         await api('PATCH', `/eigenschaften/${id}`, felder);
       }
       if (entwurf.typ === 'auswahl' && (neu ? entwurf.optionen.length : geaendert(entwurf.optionen, start.optionen))) {
@@ -132,6 +134,7 @@
     {#if entwurf.typ === 'auswahl'}
       <section class="abschnitt">
         <h3>Auswahlmöglichkeiten</h3>
+        <label class="haken"><input type="checkbox" bind:checked={entwurf.mehrfach} /> Mehrfachauswahl (ein Material kann mehrere davon haben, z. B. bei Verbundplatten)</label>
         {#each entwurf.optionen as o, i (i)}
           <div class="option-zeile">
             <input class="input" placeholder="Deutsch" bind:value={o.de} aria-label="Deutsch" />

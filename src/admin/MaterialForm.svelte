@@ -13,6 +13,7 @@
     return {
       text: p.typ === 'zahl' ? (w ? String(w.wert) : '') : p.typ === 'text' ? (w?.wert ?? '') : '',
       option_id: w?.optionId ?? '',
+      option_ids: w?.optionIds ?? [],
       ja_nein: w ? (w.wert ? 'ja' : 'nein') : '',
       einheit: w?.einheit ?? '',
       ungeprueft: !!w?.vermerk,
@@ -52,7 +53,9 @@
     };
     if (p.typ === 'zahl') return { ...body, zahl: w.text.trim(), einheit: w.einheit.trim() || null };
     if (p.typ === 'text') return { ...body, text: w.text.trim() || null };
-    if (p.typ === 'auswahl') return { ...body, option_id: w.option_id === '' ? null : Number(w.option_id) };
+    if (p.typ === 'auswahl') return p.mehrfach
+      ? { ...body, option_ids: w.option_ids.map(Number) }
+      : { ...body, option_id: w.option_id === '' ? null : Number(w.option_id) };
     return { ...body, ja_nein: w.ja_nein === '' ? null : w.ja_nein === 'ja' };
   }
 
@@ -84,7 +87,7 @@
 
       for (const p of props) {
         const w = entwurf.werte[p.kurzwort];
-        if (neu ? w.text !== '' || w.option_id !== '' || w.ja_nein !== '' || w.ungeprueft : geaendert(w, start.werte[p.kurzwort])) {
+        if (neu ? w.text !== '' || w.option_id !== '' || w.option_ids.length || w.ja_nein !== '' || w.ungeprueft : geaendert(w, start.werte[p.kurzwort])) {
           await api('PUT', `/materialien/${id}/werte/${p.kurzwort}`, wertBody(p, w));
         }
       }
@@ -161,6 +164,14 @@
               <input class="input" bind:value={w.einheit} placeholder={p.einheit ?? 'Einheit'} aria-label="Einheit von {p.name.de}" />
             {:else if p.typ === 'text'}
               <input class="input" bind:value={w.text} aria-label={p.name.de} />
+              <span></span>
+            {:else if p.typ === 'auswahl' && p.mehrfach}
+              <div class="mehrfach" role="group" aria-label={p.name.de}>
+                {#each p.optionen as o (o.id)}
+                  <label class="haken"><input type="checkbox" value={o.id} bind:group={w.option_ids} /> {o.de}</label>
+                {/each}
+                {#if !p.optionen.length}<span class="leer">Noch keine Auswahlmöglichkeiten angelegt.</span>{/if}
+              </div>
               <span></span>
             {:else if p.typ === 'auswahl'}
               <select class="input" bind:value={w.option_id} aria-label={p.name.de}>

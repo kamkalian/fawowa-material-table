@@ -2,7 +2,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { parseSearch, buildSearch, emptyState } from '../src/public/lib/url.js';
 import {
-  filterMaterials, sortMaterials, filterLabel, gruppiere, alsEinzelne, gruppenWert, gruppenHatVermerk, gruppenSchluessel
+  filterMaterials, sortMaterials, filterLabel, gruppiere, alsEinzelne, gruppenWert, gruppenHatVermerk, gruppenSchluessel, formatValue
 } from '../src/public/lib/filter.js';
 
 const props = [
@@ -253,4 +253,16 @@ test('Unterstriche: ein Material, dessen Name der Gruppenname ist, steht in der 
 test('Unterstriche: Groß-/Kleinschreibung, Leerzeichen und doppelte Unterstriche stören nicht', () => {
   const rows = [mat(1, 'holz_ Kiefer', 'holz'), mat(2, 'Holz__kiefer', 'holz')];
   assert.deepEqual(ids(gruppiere(rows)), [{ k: 'holz|holz_kiefer', l: 'holz_Kiefer', n: 2, c: [1, 2] }]);
+});
+
+test('Mehrfachauswahl: Filter findet jedes Material mit einer der Auswahlen, Anzeige und Sortierung mit Komma', () => {
+  const prop = { kurzwort: 'material', name: { de: 'Material', en: 'Material' }, typ: 'auswahl', mehrfach: true, optionen: [] };
+  const verbund = { id: 1, name: { de: 'V' }, kategorie: { slug: 'k' }, werte: { material: { wert: [{ de: 'GFK', en: 'GRP' }, { de: 'Schaum', en: 'Foam' }], optionIds: [1, 2] } } };
+  const holz = { id: 2, name: { de: 'H' }, kategorie: { slug: 'k' }, werte: { material: { wert: [{ de: 'Holz', en: 'Wood' }], optionIds: [3] } } };
+  const stand = (ids) => ({ q: '', cats: [], filters: [{ kw: 'material', op: 'in', ids }] });
+  assert.deepEqual(filterMaterials([verbund, holz], stand([2])).map(m => m.id), [1]);
+  assert.deepEqual(filterMaterials([verbund, holz], stand([2, 3])).map(m => m.id), [1, 2]);
+  assert.equal(formatValue(prop, verbund.werte.material, 'de'), 'GFK, Schaum');
+  assert.equal(formatValue(prop, verbund.werte.material, 'en'), 'GRP, Foam');
+  assert.deepEqual(sortMaterials([holz, verbund], { key: 'material', dir: 'asc' }, [prop], 'de').map(m => m.id), [1, 2]);
 });
