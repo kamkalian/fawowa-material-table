@@ -11,7 +11,6 @@ import { ICON_NACH_SLUG } from '../lib/icons.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const CSV_PATH = join(__dirname, '..', 'docs', 'startdaten.csv');
-const QUELLE = 'https://fahrradwagen.com/d/536-gewichte-der-verschiedenen-baustoffe/27';
 const ERWARTETE_ANZAHL = 61;
 
 // --- Kategorien (Reihenfolge wie im Plan) ---
@@ -158,7 +157,7 @@ function main() {
         kategorie_id,
         notiz_de: z.notiz || null,
         status: 'veroeffentlicht'
-      }, werte, [{ beschriftung: 'Quelle (Forum)', url: QUELLE }]);
+      }, werte);
     }
   })();
 
