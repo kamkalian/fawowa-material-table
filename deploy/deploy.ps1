@@ -21,10 +21,10 @@ $ErrorActionPreference = 'Stop'
 
 # Windows PowerShell 5.1 macht aus jeder Zeile, die ein Programm auf stderr schreibt, einen Fehler (Docker meldet
 # damit seinen Fortschritt). Programme laufen deshalb mit 'Continue'; geprüft wird nur der Exit-Code.
-function Invoke-Nativ([scriptblock]$Befehl) {
+function Invoke-Nativ([scriptblock]$Block) {
   $vorher = $ErrorActionPreference
   $ErrorActionPreference = 'Continue'
-  try { & $Befehl } finally { $ErrorActionPreference = $vorher }
+  try { & $Block } finally { $ErrorActionPreference = $vorher }
 }
 if (-not $Server) { throw 'Bitte -Server angeben oder $env:FAWOWA_SERVER setzen.' }
 if (-not $User) { throw 'Bitte -User angeben oder $env:FAWOWA_USER setzen.' }
@@ -51,7 +51,7 @@ if ($LASTEXITCODE -ne 0) { throw 'scp ist fehlgeschlagen.' }
 $befehl = if ($NurBauen) { 'docker compose build' } else { 'docker compose up -d --build' }
 Write-Host "3/4 Entpacken und bauen ($befehl) ..."
 Invoke-Nativ { ssh @ssh "mkdir -p $Ziel/data && cd $Ziel && tar -xzf /tmp/fawowa-deploy.tar.gz && rm /tmp/fawowa-deploy.tar.gz && $befehl 2>&1" }
-if ($LASTEXITCODE -ne 0) { throw 'Bauen oder Starten auf dem Server ist fehlgeschlagen.' }
+if ($LASTEXITCODE -ne 0) { throw "Bauen oder Starten auf dem Server ist fehlgeschlagen (Exit-Code $LASTEXITCODE)." }
 
 Write-Host '4/4 Zustand prüfen ...'
 Invoke-Nativ { ssh @ssh "cd $Ziel && docker compose ps 2>&1 && docker image prune -f > /dev/null" }
