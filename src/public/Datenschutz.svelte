@@ -106,7 +106,7 @@
         {
           h: 'Wo läuft die Seite?',
           p: [
-            'Die Seite läuft auf einem Server eines Hosting-Anbieters. Dort können die oben beschriebenen technischen Verbindungsdaten kurz anfallen, wenn die Seite ausgeliefert wird.'
+            'Die Seite läuft auf einem Server der Hetzner Online GmbH, Industriestr. 25, 91710 Gunzenhausen, Deutschland. Dort können die oben beschriebenen technischen Verbindungsdaten kurz anfallen, wenn die Seite ausgeliefert wird. Hetzner ist unser Hosting-Anbieter und verarbeitet Daten nur in unserem Auftrag.'
           ]
         },
         {
@@ -175,7 +175,7 @@
         {
           h: 'Where does the site run?',
           p: [
-            'The site runs on a server of a hosting provider. The technical connection data described above may arise there briefly when the page is delivered.'
+            'The site runs on a server of Hetzner Online GmbH, Industriestr. 25, 91710 Gunzenhausen, Germany. The technical connection data described above may arise there briefly when the page is delivered. Hetzner is our hosting provider and processes data only on our behalf.'
           ]
         },
         {
