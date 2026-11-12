@@ -134,21 +134,19 @@ function main() {
       if (!kategorie_id) throw new Error(`Unbekannte Kategorie "${z.kategorie}" bei ${z.name}`);
 
       const vermerk = z.vermerk ? (VERMERK[z.vermerk] ?? { de: z.vermerk, en: null }) : null;
-      const quelle = QUELLE;
       const werte = {};
 
       const staerke = zahl(z.staerke_mm);
-      if (staerke !== null) werte.staerke = { zahl: staerke, einheit: 'mm', quelle, vermerk_de: vermerk?.de, vermerk_en: vermerk?.en };
+      if (staerke !== null) werte.staerke = { zahl: staerke, einheit: 'mm', vermerk_de: vermerk?.de, vermerk_en: vermerk?.en };
 
       const gewicht = zahl(z.gewicht_kg_m2);
-      if (gewicht !== null) werte.gewicht = { zahl: gewicht, einheit: 'kg/m²', quelle, vermerk_de: vermerk?.de, vermerk_en: vermerk?.en };
+      if (gewicht !== null) werte.gewicht = { zahl: gewicht, einheit: 'kg/m²', vermerk_de: vermerk?.de, vermerk_en: vermerk?.en };
 
       const waermewert = zahl(z.waermewert);
       if (waermewert !== null) {
         werte.waermewert = {
           zahl: waermewert,
           einheit: z.waermewert_einheit || 'W/(m·K)',
-          quelle,
           vermerk_de: vermerk?.de,
           vermerk_en: vermerk?.en
         };
@@ -160,7 +158,7 @@ function main() {
         kategorie_id,
         notiz_de: z.notiz || null,
         status: 'veroeffentlicht'
-      }, werte);
+      }, werte, [{ beschriftung: 'Quelle (Forum)', url: QUELLE }]);
     }
   })();
 

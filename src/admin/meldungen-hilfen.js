@@ -33,8 +33,8 @@ export function entwurfAusText(prop, text, einheit = '') {
 }
 
 /** Daten für PUT /materialien/:id/werte/:kw bzw. POST /meldungen/:id/uebernehmen aus einem Entwurf */
-export function wertDatenAusEntwurf(prop, entwurf, quelle = null) {
-  const basis = { quelle: quelle || null };
+export function wertDatenAusEntwurf(prop, entwurf) {
+  const basis = {};
   switch (prop.typ) {
     case 'zahl': return { ...basis, zahl: String(entwurf.text ?? '').trim(), einheit: String(entwurf.einheit ?? '').trim() || null };
     case 'ja_nein': return { ...basis, ja_nein: entwurf.ja_nein === '' ? null : entwurf.ja_nein === 'ja' };

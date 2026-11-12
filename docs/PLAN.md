@@ -84,7 +84,7 @@ Eigenschaften werden zentral definiert und nicht mehr pro Material frei eingetip
 | --- | --- | --- |
 | `material` | Name (de, optional en), Hersteller, Kategorie, Notiz (de, optional en), Status (Entwurf oder veröffentlicht) | Kategorie |
 | `eigenschaft` | Kurzwort, Name (de, en), Typ, Standard-Einheit, Reihenfolge, standardmäßig sichtbar, filterbar | – |
-| `wert` | Ein Wert eines Materials für eine Eigenschaft, mit eigener Einheit, Vermerk und optional Quelle | Material, Eigenschaft |
+| `wert` | Ein Wert eines Materials für eine Eigenschaft, mit eigener Einheit und Vermerk | Material, Eigenschaft |
 | `link` | Bezugsquelle oder Datenblatt mit Beschriftung | Material |
 | `kategorie` | Name (de, en) | – |
 | `meldung` | Fehlermeldung oder Vorschlag, mit Inhalt, Kommentar, Kontakt, Status | Material (bei Fehlern) |
@@ -120,7 +120,7 @@ Die Startseite ist die Tabelle selbst: eine Zeile pro Material, darüber eine Su
 - Materialien werden nach Namensteilen gruppiert (wie die Tabellengruppen in phpMyAdmin): Teile sind durch `_` getrennt, gleiche Anfangsteile in derselben Kategorie bilden eine Gruppe, auch verschachtelt (`Holz_Pappel_4mm`, `Holz_Pappel_10mm`, `Holz_Kiefer` → Gruppe „Holz“ mit Untergruppe „Pappel“). Gleiche Namen ohne Unterstrich bilden ebenfalls eine Gruppe. Die Kopfzeile zeigt die Anzahl und fasst die Werte zusammen (Zahlen als Bereich, z. B. „0,2–1,5 mm“). Ein Pfeil am rechten Rand der Zelle klappt die Gruppe auf. Mit dem Schalter „Gruppieren“ lässt sich das ausschalten (`flat=1` in der Adresse).
 - Leere Werte werden als Strich angezeigt und beim Sortieren ans Ende gestellt
 - Werte mit Vermerk „ungeprüft“ sind in der Tabelle erkennbar markiert
-- Klick auf eine Zeile öffnet die Detailansicht mit allen Eigenschaften, Links, Quellen und der Schaltfläche „Fehler melden“
+- Klick auf eine Zeile öffnet die Detailansicht mit allen Eigenschaften, Links und der Schaltfläche „Fehler melden“
 - Auf dem Handy bleibt die Namensspalte stehen, der Rest scrollt seitlich
 
 **Filter in der URL.** Jede Änderung an Suche, Filtern, Sortierung und Spalten schreibt sich sofort in die Adresse. Wer den Link öffnet, sieht genau dieselbe Ansicht. Vor- und Zurück-Tasten des Browsers funktionieren wie erwartet.
@@ -173,7 +173,7 @@ Der Admin-Bereich liegt unter einem Fantasienamen (Standard `/wunderkammer`, än
 
 - Dieselbe Tabelle wie öffentlich, aber mit Bearbeiten direkt in der Zelle, einschließlich Einheit und Vermerk pro Wert
 - Material anlegen, duplizieren (für eine weitere Stärke), als Entwurf verstecken, löschen
-- Links und Quellen pro Material pflegen
+- Links pro Material pflegen
 
 **Eigenschaften**
 
@@ -226,6 +226,8 @@ Phase 4 kommt nach Phase 3, weil das Übernehmen von Meldungen die Bearbeitungsf
   mit einem Klick (nach Korrektur) übernommen, Vorschläge öffnen das Materialformular vorbefüllt. Erledigte Meldungen bleiben im Archiv.
 - [x] Phase 5: Feinschliff (Handy-Ansicht mit wischbarer Kategorie-Leiste, Link-Prüfung, Ko-fi-Fußzeile). Offen nur: Hinweis im Forum (macht der Betreiber)
   - Link-Prüfung: Der Server prüft alle Links täglich (und eine Minute nach dem Start); im Admin-Bereich gibt es „Links prüfen“. Ergebnis je Link: erreichbar, unklar (403/429) oder nicht erreichbar, als Punkt in der Detailansicht. Adressen im lokalen Netz werden nie abgefragt.
+  - Übersicht im Admin-Bereich (Reiter „Links“): nicht erreichbare Links stehen oben, ein roter Zähler in der Navigation zeigt ihre Zahl, ein Klick öffnet das Material zum Korrigieren, „Jetzt prüfen“ startet eine Prüfung sofort.
+  - Quellen einzelner Werte gibt es nicht mehr; bestehende wurden beim Start der neuen Version als Links des Materials übernommen.
   - Projekt unterstützen: Bereich in der Fußzeile, vollständig über die .env eingestellt (SUPPORT_URL, SUPPORT_GOAL, SUPPORT_RAISED, Texte). Der Fortschrittsbalken zählt von Hand eingetragene Beträge und, mit KOFI_VERIFICATION_TOKEN, per Ko-fi-Webhook (`POST /api/v2/kofi`) gemeldete Beträge; gespeichert werden nur Betrag und Transaktionsnummer.
   - Datenschutzerklärung unter `/datenschutz` (Deutsch und Englisch, in `src/public/Datenschutz.svelte`): keine Cookies für Besucher, keine Zugriffsprotokolle, Browser-Speicher nur für Sprache und Design, Hinweis zu Ko-fi. Der Verantwortliche kommt aus OPERATOR in der .env.
   - Impressum unter `/impressum` (§ 5 DDG, Angaben aus OPERATOR) mit Hinweis, dass die Materialangaben ohne Gewähr sind.

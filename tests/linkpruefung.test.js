@@ -55,3 +55,17 @@ test('Link-Prüfung: Ergebnisse werden in der Datenbank gespeichert', async () =
   assert.deepEqual(await pruefeAlleLinks(db, { fetchFn, aufloesen: oeffentlich }), { ok: 1, unklar: 0, kaputt: 1 });
   assert.deepEqual(db.prepare('SELECT beschriftung, status FROM link ORDER BY id').all().map(l => [l.beschriftung, l.status]), [['gut', 'ok'], ['weg', 'kaputt']]);
 });
+
+test('Link-Übersicht: kaputte zuerst, dann unklare, ungeprüfte und erreichbare; Zähler zählt nur kaputte', async () => {
+  const { listeLinks, zaehleKaputte } = await import('../lib/linkpruefung.js');
+  const db = openDb(':memory:');
+  const k = db.prepare("INSERT INTO kategorie (slug, name_de) VALUES ('t', 'T')").run().lastInsertRowid;
+  const m = db.prepare("INSERT INTO material (name_de, kategorie_id, status) VALUES ('M', ?, 'veroeffentlicht')").run(k).lastInsertRowid;
+  const insert = db.prepare('INSERT INTO link (material_id, beschriftung, url, status) VALUES (?, ?, ?, ?)');
+  insert.run(m, 'a', 'https://a.example', 'ok');
+  insert.run(m, 'b', 'https://b.example', null);
+  insert.run(m, 'c', 'https://c.example', 'kaputt');
+  insert.run(m, 'd', 'https://d.example', 'unklar');
+  assert.deepEqual(listeLinks(db).map(l => l.beschriftung), ['c', 'd', 'b', 'a']);
+  assert.equal(zaehleKaputte(db), 1);
+});

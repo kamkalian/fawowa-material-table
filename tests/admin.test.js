@@ -261,3 +261,30 @@ test('Auswahl-Optionen: setzen und Änderungen protokollieren; Zusammenführen n
   assert.ok(listProtokoll(db).some(e => e.feld === 'eigenschaft.brand.optionen'));
   void kat;
 });
+
+test('Migration: Quellen einzelner Werte werden zu Links des Materials, die Spalte entfällt', async () => {
+  const { mkdtempSync, rmSync } = await import('node:fs');
+  const { tmpdir } = await import('node:os');
+  const { join } = await import('node:path');
+  const Database = (await import('better-sqlite3')).default;
+  const ordner = mkdtempSync(join(tmpdir(), 'mig-'));
+  try {
+    const pfad = join(ordner, 'alt.db');
+    const alt = openDb(pfad);
+    alt.exec('ALTER TABLE wert ADD COLUMN quelle TEXT'); // Zustand einer älteren Datenbank
+    const k = alt.prepare("INSERT INTO kategorie (slug, name_de) VALUES ('t', 'T')").run().lastInsertRowid;
+    const e = alt.prepare("INSERT INTO eigenschaft (kurzwort, name_de, typ) VALUES ('a', 'A', 'zahl')").run().lastInsertRowid;
+    const m = alt.prepare("INSERT INTO material (name_de, kategorie_id, status) VALUES ('M', ?, 'veroeffentlicht')").run(k).lastInsertRowid;
+    alt.prepare('INSERT INTO wert (material_id, eigenschaft_id, zahl, quelle) VALUES (?, ?, 1, ?)').run(m, e, 'https://example.org/q');
+    alt.close();
+
+    const neu = openDb(pfad);
+    assert.ok(!neu.prepare('PRAGMA table_info(wert)').all().some(c => c.name === 'quelle'));
+    assert.deepEqual(neu.prepare('SELECT beschriftung, url FROM link').all(), [{ beschriftung: 'Quelle', url: 'https://example.org/q' }]);
+    neu.close();
+    new Database(pfad).close();
+    openDb(pfad).close(); // zweiter Start ändert nichts mehr
+  } finally {
+    rmSync(ordner, { recursive: true, force: true });
+  }
+});

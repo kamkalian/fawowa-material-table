@@ -11,9 +11,6 @@
     if (e.key === 'Escape' && !blockiert) onclose();
   }
 
-  function isLink(s) {
-    return typeof s === 'string' && /^https?:\/\//.test(s);
-  }
 </script>
 
 <svelte:window onkeydown={onKey} />
@@ -53,9 +50,6 @@
                 {text}
                 {#if vermerkText(w, lang)}
                   <span class="badge badge-check" title={t(lang, 'unverifiedTitle')}>{vermerkText(w, lang)}</span>
-                {/if}
-                {#if isLink(w.quelle)}
-                  <br /><a class="small" href={w.quelle} target="_blank" rel="noopener noreferrer">{t(lang, 'detailSource')}</a>
                 {/if}
               {:else}
                 <span class="muted">{t(lang, 'empty')}</span>

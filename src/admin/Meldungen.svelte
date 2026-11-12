@@ -68,7 +68,7 @@
   function uebernehmen(m) {
     const p = props.find(q => q.kurzwort === m.eigenschaft.kurzwort);
     return aktion(
-      () => api('POST', `/meldungen/${m.id}/uebernehmen`, wertDatenAusEntwurf(p, entwuerfe[m.id], m.quelle)),
+      () => api('POST', `/meldungen/${m.id}/uebernehmen`, wertDatenAusEntwurf(p, entwuerfe[m.id])),
       'Wert übernommen.'
     );
   }

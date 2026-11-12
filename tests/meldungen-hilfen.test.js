@@ -36,12 +36,12 @@ test('Entwurf je Typ: Zahl nimmt die Standard-Einheit, Ja/Nein und Auswahl werde
   assert.equal(entwurfAusText(null, 'x').text, '');
 });
 
-test('Daten für die API aus einem Entwurf, mit Quelle', () => {
-  assert.deepEqual(wertDatenAusEntwurf(props[0], { text: ' 2,8 ', einheit: '' }, 'https://x.de'), { quelle: 'https://x.de', zahl: '2,8', einheit: null });
-  assert.deepEqual(wertDatenAusEntwurf(props[1], { ja_nein: 'nein' }), { quelle: null, ja_nein: false });
-  assert.deepEqual(wertDatenAusEntwurf(props[1], { ja_nein: '' }), { quelle: null, ja_nein: null });
-  assert.deepEqual(wertDatenAusEntwurf(props[2], { option_id: '8' }), { quelle: null, option_id: 8 });
-  assert.deepEqual(wertDatenAusEntwurf(props[3], { text: '  ' }), { quelle: null, text: null });
+test('Daten für die API aus einem Entwurf', () => {
+  assert.deepEqual(wertDatenAusEntwurf(props[0], { text: ' 2,8 ', einheit: '' }), { zahl: '2,8', einheit: null });
+  assert.deepEqual(wertDatenAusEntwurf(props[1], { ja_nein: 'nein' }), { ja_nein: false });
+  assert.deepEqual(wertDatenAusEntwurf(props[1], { ja_nein: '' }), { ja_nein: null });
+  assert.deepEqual(wertDatenAusEntwurf(props[2], { option_id: '8' }), { option_id: 8 });
+  assert.deepEqual(wertDatenAusEntwurf(props[3], { text: '  ' }), { text: null });
 });
 
 test('Vorlage aus einem Vorschlag: Name, Werte nach Typ, Quelle als Link, Start als Entwurf', () => {

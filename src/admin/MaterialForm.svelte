@@ -17,8 +17,7 @@
       einheit: w?.einheit ?? '',
       ungeprueft: !!w?.vermerk,
       vermerk_de: w?.vermerk?.de ?? '',
-      vermerk_en: w?.vermerk?.en ?? '',
-      quelle: w?.quelle ?? ''
+      vermerk_en: w?.vermerk?.en ?? ''
     };
   }
 
@@ -49,8 +48,7 @@
   function wertBody(p, w) {
     const body = {
       vermerk_de: w.ungeprueft ? (w.vermerk_de || 'ungeprüft') : null,
-      vermerk_en: w.ungeprueft ? (w.vermerk_en || 'unverified') : null,
-      quelle: w.quelle || null
+      vermerk_en: w.ungeprueft ? (w.vermerk_en || 'unverified') : null
     };
     if (p.typ === 'zahl') return { ...body, zahl: w.text.trim(), einheit: w.einheit.trim() || null };
     if (p.typ === 'text') return { ...body, text: w.text.trim() || null };
@@ -191,7 +189,7 @@
     </section>
 
     <section class="abschnitt">
-      <h3>Links und Quellen</h3>
+      <h3>Links</h3>
       {#each entwurf.links as l, i (i)}
         <div class="link-zeile">
           <input class="input" placeholder="Beschriftung" bind:value={l.beschriftung} aria-label="Beschriftung" />

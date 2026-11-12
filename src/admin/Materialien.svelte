@@ -6,26 +6,13 @@
   import CategoryIcon from '../shared/CategoryIcon.svelte';
   import MaterialForm from './MaterialForm.svelte';
 
+  // oeffneId: Material, dessen Formular nach dem Laden gleich aufgehen soll (z. B. aus der Link-Übersicht)
+  let { oeffneId = null } = $props();
   let materials = $state([]);
   let props = $state([]);
   let kategorien = $state([]);
   let geladen = $state(false);
   let fehler = $state('');
-  let linkPruefung = $state('');   // '' | 'laeuft'
-  let linkErgebnis = $state('');
-
-  async function linksPruefen() {
-    linkPruefung = 'laeuft';
-    linkErgebnis = '';
-    try {
-      const s = await api('POST', '/links/pruefen');
-      linkErgebnis = `Links geprüft: ${s.ok} erreichbar, ${s.unklar} unklar, ${s.kaputt} nicht erreichbar. Die Ergebnisse stehen in der Detailansicht der Materialien.`;
-    } catch (e) {
-      linkErgebnis = e.message;
-    } finally {
-      linkPruefung = '';
-    }
-  }
   let hinweis = $state('');
   let suche = $state('');
   let kategorieFilter = $state(null);
@@ -66,6 +53,10 @@
       props = e;
       kategorien = k;
       geladen = true;
+      if (oeffneId) {
+        const m = materials.find(x => x.id === oeffneId);
+        if (m) dialog = { material: m };
+      }
     } catch (err) {
       fehler = err.message;
     }
@@ -118,14 +109,8 @@
     <Icon name="ui-plus" size={14} />
     Material hinzufügen
   </button>
-  <button class="btn btn-outline" disabled={linkPruefung === 'laeuft'} onclick={linksPruefen}>
-    {linkPruefung === 'laeuft' ? 'Prüfe Links ...' : 'Links prüfen'}
-  </button>
   <span class="zaehler">{gefiltert.length} von {materials.length}</span>
 </div>
-{#if linkErgebnis}
-  <p class="hinweis" role="status">{linkErgebnis}</p>
-{/if}
 
 <div class="filter-zeile">
   <div class="pillen" role="group" aria-label="Nach Kategorie filtern">

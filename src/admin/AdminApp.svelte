@@ -7,16 +7,20 @@
   import Kategorien from './Kategorien.svelte';
   import Protokoll from './Protokoll.svelte';
   import Meldungen from './Meldungen.svelte';
+  import Links from './Links.svelte';
 
   let angemeldet = $state(null); // null = prüfe noch
   let tab = $state('materialien');
   let offen = $state(0); // Zahl der offenen Meldungen für die Navigation
+  let kaputt = $state(0); // Zahl der nicht erreichbaren Links für die Navigation
+  let oeffneId = $state(null); // Material, das in der Materialliste gleich geöffnet werden soll
 
   const TABS = [
     ['meldungen', 'Meldungen'],
     ['materialien', 'Materialien'],
     ['eigenschaften', 'Eigenschaften'],
     ['kategorien', 'Kategorien'],
+    ['links', 'Links'],
     ['protokoll', 'Protokoll']
   ];
 
@@ -33,6 +37,7 @@
   $effect(() => {
     if (angemeldet && tab) {
       api('GET', '/meldungen/zaehler').then(d => (offen = d.offen)).catch(() => {});
+      api('GET', '/links/zaehler').then(d => (kaputt = d.kaputt)).catch(() => {});
     }
   });
 
@@ -62,9 +67,10 @@
   {:else}
     <nav class="tabs" role="tablist">
       {#each TABS as [key, label] (key)}
-        <button class="tab" class:active={tab === key} role="tab" aria-selected={tab === key} onclick={() => (tab = key)}>
+        <button class="tab" class:active={tab === key} role="tab" aria-selected={tab === key} onclick={() => { oeffneId = null; tab = key; }}>
           {label}
           {#if key === 'meldungen' && offen > 0}<span class="zaehler" aria-label="{offen} offen">{offen}</span>{/if}
+          {#if key === 'links' && kaputt > 0}<span class="zaehler" aria-label="{kaputt} nicht erreichbar">{kaputt}</span>{/if}
         </button>
       {/each}
     </nav>
@@ -72,7 +78,9 @@
     {#if tab === 'meldungen'}
       <Meldungen onzaehler={(n) => (offen = n)} />
     {:else if tab === 'materialien'}
-      <Materialien />
+      {#key oeffneId}<Materialien {oeffneId} />{/key}
+    {:else if tab === 'links'}
+      <Links onzaehler={(n) => (kaputt = n)} onmaterial={(id) => { oeffneId = id; tab = 'materialien'; }} />
     {:else if tab === 'eigenschaften'}
       <Eigenschaften />
     {:else if tab === 'kategorien'}
