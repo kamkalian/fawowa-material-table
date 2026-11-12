@@ -31,12 +31,27 @@ test('Unterstützen: Webhook prüft den Token, zählt jede Nachricht einmal und 
   assert.equal(verarbeiteWebhook(db, {}, opt), 'ungueltig');
   assert.equal(verarbeiteWebhook(db, body({}), opt), 'gespeichert');
   assert.equal(verarbeiteWebhook(db, body({}), opt), 'doppelt');
-  assert.equal(verarbeiteWebhook(db, body({ message_id: 'a2', currency: 'USD' }), opt), 'ignoriert');
-  assert.equal(verarbeiteWebhook(db, body({ message_id: 'a3', amount: '0' }), opt), 'ignoriert');
+  assert.match(verarbeiteWebhook(db, body({ message_id: 'a2', currency: 'USD' }), opt), /^ignoriert/);
+  assert.match(verarbeiteWebhook(db, body({ message_id: 'a3', amount: '0' }), opt), /^ignoriert/);
   assert.equal(verarbeiteWebhook(db, body({ message_id: 'a4', amount: '2,50' }), opt), 'gespeichert');
 
   assert.equal(oeffentlicheAngaben(db, einst).erreicht, 17.5); // 10 von Hand + 5 + 2,5
   assert.equal(oeffentlicheAngaben(db, null), null);
   // keine Namen oder Adressen gespeichert
   assert.deepEqual(Object.keys(db.lokal.lies('unterstuetzung', [])[0]).sort(), ['betrag', 'erhalten_am', 'nachricht_id', 'waehrung']);
+});
+
+test('Unterstützen: bei zeitraum monat zählt nur der laufende Kalendermonat (Zeit in Deutschland)', () => {
+  const { s: db } = neuerSpeicher();
+  db.lokal.schreibe('unterstuetzung', [
+    { nachricht_id: 'a', betrag: 10, waehrung: 'EUR', erhalten_am: '2026-10-31 22:30:00' }, // 31.10. 23:30 in Deutschland: noch Oktober
+    { nachricht_id: 'b', betrag: 5, waehrung: 'EUR', erhalten_am: '2026-10-31 23:30:00' },  // 1.11. 00:30: November
+    { nachricht_id: 'c', betrag: 2.5, waehrung: 'EUR', erhalten_am: '2026-11-12 08:00:00' }
+  ]);
+  const alle = ladeUnterstuetzung({ SUPPORT_URL: 'https://ko-fi.com/x', SUPPORT_GOAL: '35' });
+  const monat = ladeUnterstuetzung({ SUPPORT_URL: 'https://ko-fi.com/x', SUPPORT_GOAL: '35', SUPPORT_PERIOD: 'monat' });
+  assert.equal(alle.zeitraum, 'gesamt');
+  assert.equal(oeffentlicheAngaben(db, alle, new Date('2026-11-15T12:00:00Z')).erreicht, 17.5);
+  assert.equal(oeffentlicheAngaben(db, monat, new Date('2026-11-15T12:00:00Z')).erreicht, 7.5);
+  assert.equal(oeffentlicheAngaben(db, monat, new Date('2026-12-01T12:00:00Z')).erreicht, 0); // neuer Monat, Balken leer
 });
