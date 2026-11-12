@@ -253,6 +253,7 @@
         <Support {lang} angaben={unterstuetzung} />
       {/if}
       <p class="fuss-links">
+        <a href={'/impressum' + (lang === 'en' ? '?lang=en' : '')}>{t(lang, 'imprintLink')}</a>
         <a href={'/datenschutz' + (lang === 'en' ? '?lang=en' : '')}>{t(lang, 'privacyLink')}</a>
         {#if adminPfad}
           <a class="verwaltung" href={adminPfad} rel="nofollow">{t(lang, 'adminLink')}</a>

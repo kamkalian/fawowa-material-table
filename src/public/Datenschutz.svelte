@@ -1,20 +1,11 @@
 <script>
   import { onMount } from 'svelte';
-  import Icon from '../shared/Icon.svelte';
+  import { startSprache, speichereSprache, wechsleDesign } from './lib/seite.js';
+  import SeitenKopf from './components/SeitenKopf.svelte';
   import { t } from './lib/i18n.js';
 
   // Datenschutzerklärung in einfacher Sprache. Die Angaben zum Betreiber und zum Bereich "Projekt unterstützen"
   // kommen vom Server (.env), damit der Text zur tatsächlichen Einrichtung passt.
-
-  function startSprache() {
-    const aus = new URLSearchParams(location.search).get('lang');
-    if (aus === 'de' || aus === 'en') return aus;
-    try {
-      const gespeichert = localStorage.getItem('lang');
-      if (gespeichert === 'de' || gespeichert === 'en') return gespeichert;
-    } catch { /* Speicher nicht verfügbar */ }
-    return 'de';
-  }
 
   let lang = $state(startSprache());
   let betreiber = $state(null);
@@ -35,18 +26,6 @@
     document.documentElement.lang = lang;
     document.title = (lang === 'de' ? 'Datenschutzerklärung' : 'Privacy policy') + ' – ' + t(lang, 'title');
   });
-
-  function setLang(l) {
-    lang = l;
-    history.replaceState(null, '', location.pathname + (l === 'en' ? '?lang=en' : ''));
-    try { localStorage.setItem('lang', l); } catch { /* ignorieren */ }
-  }
-
-  function toggleTheme() {
-    const next = document.documentElement.dataset.theme === 'light' ? 'dark' : 'light';
-    document.documentElement.dataset.theme = next;
-    try { localStorage.setItem('theme', next); } catch { /* ignorieren */ }
-  }
 
   const TEXTE = {
     de: {
@@ -106,7 +85,7 @@
         {
           h: 'Wo läuft die Seite?',
           p: [
-            'Die Seite läuft auf einem Server der Hetzner Online GmbH, Industriestr. 25, 91710 Gunzenhausen, Deutschland. Dort können die oben beschriebenen technischen Verbindungsdaten kurz anfallen, wenn die Seite ausgeliefert wird. Hetzner ist unser Hosting-Anbieter und verarbeitet Daten nur in unserem Auftrag.'
+            'Die Seite läuft auf einem Server der Hetzner Online GmbH, Industriestr. 25, 91710 Gunzenhausen, Deutschland. Dort können die oben beschriebenen technischen Verbindungsdaten kurz anfallen, wenn die Seite ausgeliefert wird. Hetzner ist unser Hosting-Anbieter.'
           ]
         },
         {
@@ -175,7 +154,7 @@
         {
           h: 'Where does the site run?',
           p: [
-            'The site runs on a server of Hetzner Online GmbH, Industriestr. 25, 91710 Gunzenhausen, Germany. The technical connection data described above may arise there briefly when the page is delivered. Hetzner is our hosting provider and processes data only on our behalf.'
+            'The site runs on a server of Hetzner Online GmbH, Industriestr. 25, 91710 Gunzenhausen, Germany. The technical connection data described above may arise there briefly when the page is delivered. Hetzner is our hosting provider.'
           ]
         },
         {
@@ -193,23 +172,13 @@
   let abschnitte = $derived(inhalt.abschnitte.filter(a => !a.nurMitUnterstuetzung || unterstuetzung));
 </script>
 
-<header class="header">
-  <div class="header-inner">
-    <div>
-      <h1 class="glow-text">{inhalt.titel}</h1>
-      <p class="header-sub"><a href={'/' + (lang === 'en' ? '?lang=en' : '')}>{t(lang, 'backToTable')}</a></p>
-    </div>
-    <div class="header-tools">
-      <div class="lang-switch" role="group" aria-label={t(lang, 'langSwitch')}>
-        <button class="btn btn-sm {lang === 'de' ? 'btn-primary' : 'btn-ghost'}" aria-pressed={lang === 'de'} onclick={() => setLang('de')}>DE</button>
-        <button class="btn btn-sm {lang === 'en' ? 'btn-primary' : 'btn-ghost'}" aria-pressed={lang === 'en'} onclick={() => setLang('en')}>EN</button>
-      </div>
-      <button class="btn btn-ghost btn-icon" title={t(lang, 'themeToggle')} aria-label={t(lang, 'themeToggle')} onclick={toggleTheme}>
-        <Icon name="ui-moon" size={16} />
-      </button>
-    </div>
-  </div>
-</header>
+<SeitenKopf
+  {lang}
+  titel={inhalt.titel}
+  links={[{ href: '/' + (lang === 'en' ? '?lang=en' : ''), text: t(lang, 'backToTable') }, { href: '/impressum' + (lang === 'en' ? '?lang=en' : ''), text: t(lang, 'imprintLink') }]}
+  onlang={(l) => { lang = l; speichereSprache(l); }}
+  ontheme={wechsleDesign}
+/>
 
 <main class="container seite">
 <div class="text">

@@ -228,6 +228,7 @@ Phase 4 kommt nach Phase 3, weil das Übernehmen von Meldungen die Bearbeitungsf
   - Link-Prüfung: Der Server prüft alle Links täglich (und eine Minute nach dem Start); im Admin-Bereich gibt es „Links prüfen“. Ergebnis je Link: erreichbar, unklar (403/429) oder nicht erreichbar, als Punkt in der Detailansicht. Adressen im lokalen Netz werden nie abgefragt.
   - Projekt unterstützen: Bereich in der Fußzeile, vollständig über die .env eingestellt (SUPPORT_URL, SUPPORT_GOAL, SUPPORT_RAISED, Texte). Der Fortschrittsbalken zählt von Hand eingetragene Beträge und, mit KOFI_VERIFICATION_TOKEN, per Ko-fi-Webhook (`POST /api/v2/kofi`) gemeldete Beträge; gespeichert werden nur Betrag und Transaktionsnummer.
   - Datenschutzerklärung unter `/datenschutz` (Deutsch und Englisch, in `src/public/Datenschutz.svelte`): keine Cookies für Besucher, keine Zugriffsprotokolle, Browser-Speicher nur für Sprache und Design, Hinweis zu Ko-fi. Der Verantwortliche kommt aus OPERATOR in der .env.
+  - Impressum unter `/impressum` (§ 5 DDG, Angaben aus OPERATOR) mit Hinweis, dass die Materialangaben ohne Gewähr sind.
 
 ## Icon-Stil „Feinstrich“
 
