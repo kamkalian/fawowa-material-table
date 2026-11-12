@@ -34,4 +34,9 @@
   .name { font-weight: 500; }
   .anzahl { color: var(--fg-muted); font-size: .75rem; }
   .kat.aktiv .anzahl { color: var(--primary); }
+  /* Auf dem Handy eine Zeile zum Wischen statt vieler Zeilen */
+  @media (max-width: 640px) {
+    .kategorien { flex-wrap: nowrap; overflow-x: auto; padding-bottom: .375rem; scrollbar-width: thin; }
+    .kat { flex-shrink: 0; white-space: nowrap; }
+  }
 </style>

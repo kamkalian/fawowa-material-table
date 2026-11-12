@@ -70,7 +70,13 @@
       <h3>{t(lang, 'detailLinks')}</h3>
       <ul class="links">
         {#each material.links as l (l.url)}
-          <li><a href={l.url} target="_blank" rel="noopener noreferrer">{l.beschriftung}</a></li>
+          <li>
+            {#if l.status}
+              <span class="punkt {l.status}" title={t(lang, l.status === 'ok' ? 'linkOk' : l.status === 'unklar' ? 'linkUnklar' : 'linkKaputt')} role="img"
+                aria-label={t(lang, l.status === 'ok' ? 'linkOk' : l.status === 'unklar' ? 'linkUnklar' : 'linkKaputt')}></span>
+            {/if}
+            <a href={l.url} target="_blank" rel="noopener noreferrer">{l.beschriftung}</a>
+          </li>
         {/each}
       </ul>
     {/if}
@@ -94,6 +100,11 @@
   .props th { font-weight: 500; color: var(--fg-muted); width: 45%; }
   .links { list-style: none; font-size: .8125rem; display: flex; flex-direction: column; gap: .25rem; }
   .links a, .small { color: var(--primary); }
+  .links li { display: flex; align-items: center; gap: .5rem; }
+  .punkt { width: .5rem; height: .5rem; border-radius: 50%; flex-shrink: 0; background: var(--fg-muted); }
+  .punkt.ok { background: var(--primary); }
+  .punkt.unklar { background: var(--amber); }
+  .punkt.kaputt { background: var(--danger); }
   .small { font-size: .75rem; }
   .detail-actions { margin-top: 1.25rem; }
   .badge { margin-left: .375rem; vertical-align: middle; }

@@ -6,6 +6,7 @@ import { openDb, listKategorien, listEigenschaften, listMaterialien, getMaterial
 import { registerAdminRoutes } from './lib/admin-routes.js';
 import { registerMeldungRoutes } from './lib/meldungen-routes.js';
 import { adminPfad } from './lib/pfade.js';
+import { pruefeAlleLinks } from './lib/linkpruefung.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
@@ -93,6 +94,13 @@ app.get('*', (req, res) => {
 const server = app.listen(PORT, () => {
   console.log(`API server running on http://localhost:${PORT} (Admin-Bereich: ${ADMIN_PFAD})`);
 });
+
+// Im Betrieb prüft der Server die Links täglich (erste Prüfung kurz nach dem Start)
+if (PRODUCTION) {
+  const pruefen = () => pruefeAlleLinks(db).catch(e => console.error('Link-Prüfung fehlgeschlagen:', e.message));
+  setTimeout(pruefen, 60 * 1000).unref();
+  setInterval(pruefen, 24 * 60 * 60 * 1000).unref();
+}
 
 server.on('error', (err) => {
   if (err.code === 'EADDRINUSE') {

@@ -224,7 +224,9 @@ Phase 4 kommt nach Phase 3, weil das Übernehmen von Meldungen die Bearbeitungsf
 - [x] Phase 4: Meldungen. Ablauf: Besucher senden über Formulare (ohne Konto), Spam-Schutz mit verstecktem Feld, Mindestzeit
   und höchstens fünf Meldungen pro Stunde und Adresse; im Admin-Bereich liegen sie im Eingang mit Zähler. Fehlermeldungen werden
   mit einem Klick (nach Korrektur) übernommen, Vorschläge öffnen das Materialformular vorbefüllt. Erledigte Meldungen bleiben im Archiv.
-- [ ] Phase 5: Feinschliff und Start (Handy-Ansicht, Design, Link-Prüfung, Ko-fi-Fußzeile, Hinweis im Forum)
+- [x] Phase 5: Feinschliff (Handy-Ansicht mit wischbarer Kategorie-Leiste, Link-Prüfung, Ko-fi-Fußzeile). Offen nur: Hinweis im Forum (macht der Betreiber)
+  - Link-Prüfung: Der Server prüft alle Links täglich (und eine Minute nach dem Start); im Admin-Bereich gibt es „Links prüfen“. Ergebnis je Link: erreichbar, unklar (403/429) oder nicht erreichbar, als Punkt in der Detailansicht. Adressen im lokalen Netz werden nie abgefragt.
+  - Ko-fi: Fußzeile mit Link auf https://ko-fi.com/fawowa (ohne Fortschrittsbalken und Webhook des alten Tools).
 
 ## Icon-Stil „Feinstrich“
 

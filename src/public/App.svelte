@@ -242,11 +242,15 @@
       onreport={(m) => (report = { mode: 'fehler', material: m })}
     />
 
-    {#if adminPfad}
-      <footer class="fuss">
+    <footer class="fuss">
+      <p class="spende">
+        <span>{t(lang, 'supportText')}</span>
+        <a class="btn btn-outline btn-sm" href="https://ko-fi.com/fawowa" target="_blank" rel="noopener noreferrer"><Icon name="ui-cup" size={14} /> {t(lang, 'supportButton')}</a>
+      </p>
+      {#if adminPfad}
         <a class="verwaltung" href={adminPfad} rel="nofollow">{t(lang, 'adminLink')}</a>
-      </footer>
-    {/if}
+      {/if}
+    </footer>
   {/if}
 </main>
 
@@ -281,7 +285,8 @@
 <style>
   .page { padding-top: 1.5rem; padding-bottom: 2rem; }
   .muted { color: var(--fg-muted); }
-  .fuss { margin-top: 1.5rem; text-align: right; }
+  .fuss { margin-top: 2rem; padding-top: 1.25rem; border-top: 1px solid var(--border); display: flex; flex-wrap: wrap; gap: .75rem 1.5rem; align-items: center; justify-content: space-between; }
+  .spende { display: flex; flex-wrap: wrap; gap: .5rem .75rem; align-items: center; font-size: .8125rem; color: var(--fg-muted); }
   .verwaltung { color: var(--fg-muted); font-size: .6875rem; opacity: .45; text-decoration: none; }
   .verwaltung:hover, .verwaltung:focus-visible { opacity: 1; text-decoration: underline; }
   .error { color: var(--danger); }

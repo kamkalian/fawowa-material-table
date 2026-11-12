@@ -187,6 +187,8 @@
     font-size: .6875rem; font-weight: 500; color: var(--fg-muted); border: 1px solid var(--border);
     border-radius: 999px; padding: 0 .4rem; line-height: 1.3;
   }
+  @media (max-width: 640px) { .gruppen-btn { min-width: 8rem; } }
+
   /* Inhalt einer aufgeklappten Gruppe: je Ebene eingerückt, mit Linie am linken Rand */
   tr.mitglied td { background: var(--bg-hover); }
   tr.mitglied td.sticky {
