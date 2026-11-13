@@ -34,107 +34,137 @@
   <h2 id="unterstuetzen-titel">{t(lang, 'supportTitle')}</h2>
   <p class="text">{text}</p>
 
-  <h3 class="kopf-abschnitt">{t(lang, 'supportWays')}</h3>
+  <div class="spalten">
+    <div class="links">
+      <h3>{t(lang, 'supportWays')}</h3>
 
-  <div class="weg">
-    <h4>{t(lang, 'supportKnowTitle')}</h4>
-    <p class="text">{t(lang, 'supportKnowText')}</p>
-    {#if onsuggest}
-      <button class="btn btn-outline btn-sm" type="button" onclick={onsuggest}>{t(lang, 'suggest')}</button>
-    {/if}
-  </div>
+      <div class="weg">
+        <h4>{t(lang, 'supportKnowTitle')}</h4>
+        <p class="text">{t(lang, 'supportKnowText')}</p>
+        {#if onsuggest}
+          <button class="btn btn-outline btn-sm" type="button" onclick={onsuggest}>{t(lang, 'suggest')}</button>
+        {/if}
+      </div>
 
-  <div class="weg">
-    <h4>{t(lang, 'supportMoneyTitle')}</h4>
-    <p class="text">{t(lang, 'supportMoneyText')}</p>
-    <div class="wege">
-      {#if angaben.wege.kofi}
-        <a class="btn btn-outline btn-sm" href={angaben.wege.kofi} target="_blank" rel="noopener noreferrer">
-          <Icon name="ui-cup" size={14} /> {t(lang, 'supportKofi')}
-        </a>
-      {/if}
-      {#if angaben.wege.paypal}
-        <a class="btn btn-outline btn-sm" href={angaben.wege.paypal} target="_blank" rel="noopener noreferrer">
-          <Icon name="ui-cup" size={14} /> {t(lang, 'supportPaypal')}
-        </a>
-      {/if}
+      <div class="weg">
+        <h4>{t(lang, 'supportMoneyTitle')}</h4>
+        <p class="text">{t(lang, 'supportMoneyText')}</p>
+        <p class="text">{t(lang, 'supportFees')}</p>
+        <div class="wege">
+          {#if angaben.wege.kofi}
+            <a class="btn btn-outline btn-sm" href={angaben.wege.kofi} target="_blank" rel="noopener noreferrer">
+              <Icon name="ui-cup" size={14} /> {t(lang, 'supportKofi')}
+            </a>
+          {/if}
+          {#if angaben.wege.paypal}
+            <a class="btn btn-outline btn-sm" href={angaben.wege.paypal} target="_blank" rel="noopener noreferrer">
+              <Icon name="ui-cup" size={14} /> {t(lang, 'supportPaypal')}
+            </a>
+          {/if}
+        </div>
+
+        {#if bank}
+          <div class="bank">
+            <h5>{t(lang, 'supportBank')}</h5>
+            <dl>
+              <dt>{t(lang, 'supportHolder')}</dt><dd>{bank.inhaber}</dd>
+              <dt>IBAN</dt>
+              <dd>
+                <span class="iban">{bank.iban}</span>
+                <button class="btn btn-ghost btn-sm" type="button" onclick={() => kopiere(bank.iban)}>
+                  {kopiert ? t(lang, 'supportCopied') : t(lang, 'supportCopy')}
+                </button>
+              </dd>
+              {#if bank.bic}<dt>{t(lang, 'supportBic')}</dt><dd>{bank.bic}</dd>{/if}
+              {#if bank.zweck}<dt>{t(lang, 'supportReference')}</dt><dd>{bank.zweck}</dd>{/if}
+            </dl>
+          </div>
+        {/if}
+      </div>
     </div>
 
-    {#if bank}
-      <div class="bank">
-        <h5>{t(lang, 'supportBank')}</h5>
-        <dl>
-          <dt>{t(lang, 'supportHolder')}</dt><dd>{bank.inhaber}</dd>
-          <dt>IBAN</dt>
-          <dd>
-            <span class="iban">{bank.iban}</span>
-            <button class="btn btn-ghost btn-sm" type="button" onclick={() => kopiere(bank.iban)}>
-              {kopiert ? t(lang, 'supportCopied') : t(lang, 'supportCopy')}
-            </button>
-          </dd>
-          {#if bank.bic}<dt>{t(lang, 'supportBic')}</dt><dd>{bank.bic}</dd>{/if}
-          {#if bank.zweck}<dt>{t(lang, 'supportReference')}</dt><dd>{bank.zweck}</dd>{/if}
-        </dl>
-      </div>
-    {/if}
+    <div class="rechts">
+      {#if angaben.ziel > 0}
+        <div class="stand-block">
+          <p class="betrag">{stand}</p>
+          {#if zielText}<p class="ziel">{zielText}</p>{/if}
+          <div class="balken" role="progressbar" aria-valuemin="0" aria-valuemax={angaben.ziel}
+            aria-valuenow={Math.min(angaben.erreicht, angaben.ziel)} aria-label={zielText || stand}>
+            <div class="fuellung" style:width="{anteil}%"></div>
+          </div>
+        </div>
+      {/if}
 
-    {#if angaben.ziel > 0}
-      <div class="balken" role="progressbar" aria-valuemin="0" aria-valuemax={angaben.ziel}
-        aria-valuenow={Math.min(angaben.erreicht, angaben.ziel)} aria-label={zielText || stand}>
-        <div class="fuellung" style:width="{anteil}%"></div>
-      </div>
-      <p class="stand">{stand}{zielText ? ` · ${zielText}` : ''}</p>
-    {/if}
-  </div>
-
-  {#if angaben.unterstuetzer?.length}
-    <div class="danke">
-      <h3>{t(lang, 'supportThanks')}</h3>
-      <ul>
-        {#each angaben.unterstuetzer as u (u.name)}
-          <li class="unterstuetzer">
-            {#each u.abzeichen ?? [] as id (id)}
-              <span class="medaille" title={abzeichenName(id)}><Icon name={'badge-' + id} size={16} /></span>
+      {#if angaben.unterstuetzer?.length}
+        <div class="danke">
+          <h3>{t(lang, 'supportThanks')}</h3>
+          <ul class="kacheln">
+            {#each angaben.unterstuetzer as u (u.name)}
+              <li class="kachel">
+                <span class="name">{u.name}</span>
+                {#if u.abzeichen?.length}
+                  <span class="abzeichen">
+                    {#each u.abzeichen as id (id)}
+                      <span class="medaille" title={abzeichenName(id)}><Icon name={'badge-' + id} size={26} /></span>
+                    {/each}
+                  </span>
+                {/if}
+              </li>
             {/each}
-            <span class="name">{u.name}</span>
-          </li>
-        {/each}
-      </ul>
-      {#if vergeben.length}
-        <ul class="legende">
-          {#each vergeben as a (a.id)}
-            <li><span class="medaille"><Icon name={'badge-' + a.id} size={14} /></span> <strong>{lang === 'en' ? a.en : a.de}:</strong> {sprache(a, 'text')}</li>
-          {/each}
-        </ul>
+          </ul>
+          {#if vergeben.length}
+            <ul class="legende">
+              {#each vergeben as a (a.id)}
+                <li><span class="medaille"><Icon name={'badge-' + a.id} size={16} /></span> <span><strong>{lang === 'en' ? a.en : a.de}:</strong> {sprache(a, 'text')}</span></li>
+              {/each}
+            </ul>
+          {/if}
+          <p class="notiz">{t(lang, 'supportThanksNote')}</p>
+        </div>
       {/if}
-      <p class="stand">{t(lang, 'supportThanksNote')}</p>
     </div>
-  {/if}
+  </div>
 </section>
 
 <style>
-  .unterstuetzen { margin-top: 2rem; padding: 1.25rem; border: 1px solid var(--border); border-radius: var(--radius); display: flex; flex-direction: column; align-items: flex-start; gap: .75rem; max-width: 40rem; }
-  h2 { font-size: 1rem; font-weight: 600; margin: 0; }
-  h3 { font-size: .8125rem; font-weight: 600; margin: 0 0 .35rem; }
-  .kopf-abschnitt { margin: .5rem 0 0; }
-  .weg { display: flex; flex-direction: column; align-items: flex-start; gap: .5rem; width: 100%; padding-top: .75rem; border-top: 1px solid var(--border); }
-  h4 { font-size: .875rem; font-weight: 600; margin: 0; }
+  .unterstuetzen { margin-top: 2rem; padding: 1.5rem; border: 1px solid var(--border); border-radius: var(--radius); display: flex; flex-direction: column; gap: .75rem; }
+  h2 { font-size: 1.125rem; font-weight: 600; margin: 0; }
+  h3 { font-size: .875rem; font-weight: 600; margin: 0 0 .5rem; }
+  h4 { font-size: .9375rem; font-weight: 600; margin: 0; }
   h5 { font-size: .8125rem; font-weight: 600; margin: 0 0 .35rem; }
-  .text { font-size: .8125rem; color: var(--fg-muted); }
-  .balken { width: 100%; height: .5rem; background: var(--bg-hover); border: 1px solid var(--border); border-radius: 999px; overflow: hidden; }
-  .fuellung { height: 100%; background: var(--primary); border-radius: 999px; transition: width .4s; }
-  .stand { font-size: .75rem; color: var(--fg-muted); margin: 0; }
-  .balken + .stand { margin-top: -.35rem; }
+  .text { font-size: .875rem; color: var(--fg-muted); margin: 0; max-width: 60ch; }
+
+  /* Zwei Spalten: links die Erklärung und Wege, rechts Stand und Unterstützer. Auf kleinen Bildschirmen untereinander. */
+  .spalten { display: grid; grid-template-columns: 1fr; gap: 1.5rem; margin-top: .5rem; }
+  @media (min-width: 760px) {
+    .spalten { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 2rem; }
+    .rechts { border-left: 1px solid var(--border); padding-left: 2rem; }
+  }
+  .links, .rechts { display: flex; flex-direction: column; gap: 1rem; min-width: 0; }
+  .links > h3 { margin-bottom: 0; }
+  .weg { display: flex; flex-direction: column; align-items: flex-start; gap: .5rem; }
+  .weg + .weg { padding-top: 1rem; border-top: 1px solid var(--border); }
   .wege { display: flex; flex-wrap: wrap; gap: .5rem; }
-  .bank { font-size: .8125rem; }
+
+  .bank { font-size: .875rem; }
   dl { display: grid; grid-template-columns: max-content 1fr; gap: .15rem .75rem; margin: 0; }
   dt { color: var(--fg-muted); }
   dd { margin: 0; word-break: break-word; }
   .iban { font-family: var(--mono, ui-monospace, monospace); letter-spacing: .02em; }
-  .danke ul { list-style: none; margin: 0 0 .5rem; padding: 0; display: flex; flex-wrap: wrap; gap: .4rem .5rem; }
-  .unterstuetzer { display: inline-flex; align-items: center; gap: .35rem; padding: .2rem .65rem; border: 1px solid var(--border); border-radius: 999px; font-size: .8125rem; }
+
+  .stand-block { display: flex; flex-direction: column; gap: .35rem; }
+  .betrag { font-size: 1.5rem; font-weight: 600; margin: 0; line-height: 1.2; }
+  .ziel { font-size: .8125rem; color: var(--fg-muted); margin: 0; }
+  .balken { width: 100%; height: 1rem; background: var(--bg-hover); border: 1px solid var(--border); border-radius: 999px; overflow: hidden; margin-top: .25rem; }
+  .fuellung { height: 100%; background: var(--primary); border-radius: 999px; transition: width .4s; }
+
+  .kacheln { list-style: none; margin: 0 0 .75rem; padding: 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(8.5rem, 1fr)); gap: .6rem; }
+  .kachel { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: .4rem; padding: .75rem .5rem; min-height: 5rem; border: 1px solid var(--border); border-radius: var(--radius); background: var(--bg-hover); text-align: center; }
+  .name { font-size: 1rem; font-weight: 600; overflow-wrap: anywhere; }
+  .abzeichen { display: flex; flex-wrap: wrap; justify-content: center; gap: .35rem; }
   .medaille { display: inline-flex; color: var(--primary); }
-  .danke ul.legende { display: flex; flex-direction: column; gap: .2rem; margin: .5rem 0; font-size: .75rem; color: var(--fg-muted); }
-  .legende li { display: flex; align-items: center; gap: .35rem; }
+  .legende { list-style: none; margin: 0 0 .5rem; padding: 0; display: flex; flex-direction: column; gap: .35rem; font-size: .8125rem; color: var(--fg-muted); }
+  .legende li { display: flex; align-items: flex-start; gap: .5rem; }
   .legende strong { color: var(--fg); font-weight: 600; }
+  .notiz { font-size: .75rem; color: var(--fg-muted); margin: 0; }
 </style>
