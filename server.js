@@ -9,7 +9,7 @@ import { registerAdminRoutes } from './lib/admin-routes.js';
 import { registerMeldungRoutes } from './lib/meldungen-routes.js';
 import { adminPfad } from './lib/pfade.js';
 import { pruefeAlleLinks } from './lib/linkpruefung.js';
-import { ladeUnterstuetzung, ladePoweredBy, oeffentlicheAngaben, verarbeiteWebhook } from './lib/unterstuetzung.js';
+import { ladeUnterstuetzung, ladePoweredBy, oeffentlicheAngaben, verarbeiteWebhook, uebernehmeLokaleUnterstuetzer } from './lib/unterstuetzung.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
@@ -69,6 +69,13 @@ if (geladen.fehler.length) {
   for (const f of geladen.fehler) console.error(`  ${f.datei}: ${f.text}`);
 }
 console.log(`Daten geladen: ${speicher.materialien.length} Materialien aus ${DATEN_DIR}`);
+// Unterstützer lagen früher nur lokal: einmalig ins Daten-Repo übernehmen (die Beträge bleiben lokal)
+try {
+  const uebernommen = uebernehmeLokaleUnterstuetzer(speicher);
+  if (uebernommen) console.log(`${uebernommen} Unterstützer ins Daten-Repo übernommen`);
+} catch (e) {
+  console.error('Unterstützer konnten nicht ins Daten-Repo übernommen werden:', e.message);
+}
 git?.sendenPlanen(5000); // Änderungen, die noch nicht im Repo sind, werden nach dem Start gesendet
 
 // --- Öffentliche API (nur lesend, veröffentlichte Daten) ---

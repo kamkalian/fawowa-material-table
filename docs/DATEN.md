@@ -9,10 +9,11 @@ Dateien lassen sich auch direkt im Repo ändern; im Admin-Bereich („Protokoll 
 kategorien.json                  Liste der Kategorien (Reihenfolge = Reihenfolge der Liste)
 eigenschaften.json               Liste der Eigenschaften mit Auswahlmöglichkeiten (Reihenfolge = Reihenfolge der Liste)
 materialien/<name>-<id>.json     eine Datei je Material
+unterstuetzer.json               Liste der Unterstützer (Name, Abzeichen), nur Personen, die der Anzeige zugestimmt haben; keine Beträge
 ```
 
 Nicht im Repo (liegt lokal in `data/lokal/`): `meldungen.json` (enthält Kontaktangaben von Besuchern), `linkstatus.json`
-(Ergebnis der Link-Prüfung), `unterstuetzung.json` (über Ko-fi gemeldete Beträge).
+(Ergebnis der Link-Prüfung), `unterstuetzung.json` (alle Geldeingänge mit Beträgen, auch die über Ko-fi gemeldeten).
 
 ## kategorien.json
 
@@ -69,10 +70,28 @@ Materialien einer Verbundplatte).
   `ja_nein`, `option` (der deutsche Text der Auswahl) bzw. bei Mehrfachauswahl `optionen` (Liste dieser Texte). `vermerk_de` / `vermerk_en` markieren einen Wert, z. B. als „ungeprüft“.
 - Dateiname: `<name>-<id>.json`. Beim Umbenennen eines Materials bleibt der Dateiname gleich.
 
+## unterstuetzer.json
+
+```json
+[
+  { "id": 1, "name": "Ida", "abzeichen": ["ideengeber", "datenpfleger"], "zustimmung_am": "2026-11-12 08:00:00", "zustimmung_art": "manuell" }
+]
+```
+
+- Das Repo ist öffentlich: Hier stehen nur Name und Abzeichen von Personen, die der Anzeige ausdrücklich zugestimmt haben, nie Beträge.
+  Die Geldeingänge liegen lokal auf dem Server und verweisen über die `id` auf die Person.
+- `abzeichen`: Liste aus `starthelfer`, `kaffee`, `wiederkehrend`, `grosszuegig`, `ideengeber`, `datenpfleger`, `botschafter`
+  (siehe `lib/abzeichen.js`). Mehrere sind möglich.
+- `zustimmung_art`: `manuell` (vom Betreiber eingetragen) oder `kofi-oeffentlich` (Beitrag bei Ko-fi als öffentlich markiert).
+- `id` und `zustimmung_am` dürfen bei von Hand ergänzten Einträgen fehlen. Die Datei entfällt, wenn es keine Unterstützer gibt.
+- Wer aus der Liste entfernt wird, steht weiter im Verlauf (alte Commits). Soll ein Name auch dort verschwinden, muss der Verlauf
+  des Repos umgeschrieben werden.
+
 ## Prüfung
 
 Beim Laden aus dem Repo wird jede Datei geprüft: gültiges JSON, Pflichtfelder, bekannte Kategorie und Eigenschaften,
-Werte passend zum Typ, vorhandene Auswahlen, Links mit `http://` oder `https://`, keine doppelten IDs. Bei einem Fehler
+Werte passend zum Typ, vorhandene Auswahlen, Links mit `http://` oder `https://`, keine doppelten IDs, bei Unterstützern
+Name und bekannte Abzeichen. Bei einem Fehler
 wird nichts übernommen; der bisherige Stand bleibt aktiv und der Admin-Bereich nennt Datei und Problem. Hat der Server
 beim Start Fehler in den Dateien, sind Änderungen gesperrt, damit nichts überschrieben wird, bis alles korrigiert ist.
 

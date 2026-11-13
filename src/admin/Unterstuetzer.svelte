@@ -1,6 +1,8 @@
 <script>
   import { onMount } from 'svelte';
   import { api } from './api.js';
+  import Icon from '../shared/Icon.svelte';
+  import { ABZEICHEN } from '../../lib/abzeichen.js';
 
   // Geldeingänge und Unterstützer. Alles liegt lokal auf dem Server (nicht im Daten-Repo). Beträge sieht nur der Admin-Bereich.
   let d = $state(null);
@@ -9,7 +11,6 @@
   let laeuft = $state(false);
 
   const WEGE = { ueberweisung: 'Überweisung', paypal: 'PayPal', kofi: 'Ko-fi', sonstige: 'Sonstiges' };
-  const STUFEN = { bronze: 'Bronze', silber: 'Silber', gold: 'Gold', platin: 'Platin' };
   const heute = () => new Date().toISOString().slice(0, 10);
 
   let neu = $state({ betrag: '', datum: heute(), quelle: 'ueberweisung', unterstuetzer_id: '', name: '', zustimmung: false });
@@ -61,6 +62,32 @@
     ausfuehren(() => api('PATCH', `/unterstuetzung/unterstuetzer/${u.id}`, { name }), 'Name geändert.');
   }
 
+  // Abzeichen an- oder abwählen; gespeichert wird sofort die ganze Liste dieser Person
+  function schalteAbzeichen(u, id, an) {
+    const neu = an ? [...u.abzeichen, id] : u.abzeichen.filter(x => x !== id);
+    ausfuehren(() => api('PATCH', `/unterstuetzung/unterstuetzer/${u.id}`, { abzeichen: neu }), 'Abzeichen gespeichert.');
+  }
+
+  // Person ohne Geldeingang anlegen, z. B. jemand, der mit Ideen hilft
+  let person = $state({ name: '', zustimmung: false });
+  async function personAnlegen(e) {
+    e.preventDefault();
+    const ok = await ausfuehren(() => api('POST', '/unterstuetzung/unterstuetzer', { name: person.name.trim(), zustimmung: person.zustimmung }), 'Person angelegt. Unten kannst du Abzeichen zuordnen.');
+    if (ok) person = { name: '', zustimmung: false };
+  }
+
+  // Name zu einem anonymen Eingang nachtragen (z. B. bei Ko-fi): nur mit Zustimmung der Person
+  function nameNachtragen(e) {
+    const name = prompt('Anzeigename der Person (Name oder Pseudonym):');
+    if (!name || !name.trim()) return;
+    if (!confirm(`Hat „${name.trim()}“ der Anzeige des Namens auf der Seite ausdrücklich zugestimmt?`)) return;
+    ausfuehren(() => api('PATCH', `/unterstuetzung/eingaenge/${e.id}`, { name: name.trim(), zustimmung: true }), 'Name eingetragen.');
+  }
+
+  function anonymMachen(e) {
+    ausfuehren(() => api('PATCH', `/unterstuetzung/eingaenge/${e.id}`, { unterstuetzer_id: null }), 'Zuordnung gelöst.');
+  }
+
   function entferne(u) {
     if (!confirm(`„${u.name}“ aus der Anzeige entfernen? Die Beträge bleiben anonym im Balken, Name und Zustimmung werden gelöscht.`)) return;
     ausfuehren(() => api('DELETE', `/unterstuetzung/unterstuetzer/${u.id}`), 'Unterstützer entfernt.');
@@ -68,7 +95,6 @@
 
   const geld = (n) => new Intl.NumberFormat('de-DE', { style: 'currency', currency: d?.waehrung ?? 'EUR' }).format(n);
   const datum = (s) => new Date(s.replace(' ', 'T') + 'Z').toLocaleDateString('de-DE', { timeZone: 'Europe/Berlin' });
-  const stufenText = (s) => (d ? `Bronze ab ${d.schwellen.bronze} €, Silber ab ${d.schwellen.silber} €, Gold ab ${d.schwellen.gold} €, Platin ab ${d.schwellen.platin} €` : '');
 </script>
 
 {#if fehler}<p class="error" role="alert">{fehler}</p>{/if}
@@ -128,15 +154,35 @@
 
   <section class="abschnitt">
     <h3>Unterstützer ({d.unterstuetzer.length})</h3>
-    <p class="hinweis">Auf der Seite stehen nur Name und Abzeichen. Stufen: {stufenText()}. Gezählt wird die Summe aller Zeiten.</p>
+    <p class="hinweis">Auf der Seite stehen nur Name und die Abzeichen, die du hier auswählst (mehrere möglich). Namen und Abzeichen werden ins öffentliche Daten-Repo geschrieben (Reiter „Protokoll und Repo“) und lassen sich dort auch ändern. Beträge bleiben auf dem Server und sind nur für dich sichtbar.</p>
+    <form class="person-neu" onsubmit={personAnlegen}>
+      <input class="input" bind:value={person.name} maxlength="60" placeholder="Person ohne Geldeingang, z. B. Ideengeber" aria-label="Name der neuen Person" />
+      <label class="haken"><input type="checkbox" bind:checked={person.zustimmung} /> hat der Anzeige des Namens zugestimmt</label>
+      <button class="btn btn-outline btn-sm" disabled={laeuft || !person.name.trim() || !person.zustimmung}>Person hinzufügen</button>
+    </form>
     <div class="table-wrap">
       <table>
-        <thead><tr><th>Name</th><th>Abzeichen</th><th>Summe</th><th>Eingänge</th><th>Zustimmung</th><th></th></tr></thead>
+        <thead><tr><th>Name</th><th>Abzeichen</th><th>Summe (alle Zeiten)</th><th>Eingänge</th><th>Zustimmung</th><th></th></tr></thead>
         <tbody>
           {#each d.unterstuetzer as u (u.id)}
             <tr>
               <td>{u.name}</td>
-              <td>{u.stufe ? STUFEN[u.stufe] : '–'}</td>
+              <td>
+                <details class="abzeichen-wahl">
+                  <summary>
+                    {#each u.abzeichen as id (id)}<span class="vorschau" title={ABZEICHEN.find(a => a.id === id)?.de}><Icon name={'badge-' + id} size={18} /></span>{:else}<span class="hinweis">keine</span>{/each}
+                  </summary>
+                  <div class="wahl">
+                    {#each ABZEICHEN as a (a.id)}
+                      <label class="haken" title={a.text_de}>
+                        <input type="checkbox" checked={u.abzeichen.includes(a.id)} disabled={laeuft}
+                          onchange={(ev) => schalteAbzeichen(u, a.id, ev.currentTarget.checked)} />
+                        <span class="vorschau"><Icon name={'badge-' + a.id} size={16} /></span> {a.de}
+                      </label>
+                    {/each}
+                  </div>
+                </details>
+              </td>
               <td class="nowrap">{geld(u.gesamt)}</td>
               <td>{u.anzahl}</td>
               <td class="nowrap">{datum(u.zustimmung_am)} ({u.zustimmung_art === 'kofi-oeffentlich' ? 'Ko-fi öffentlich' : 'von Hand'})</td>
@@ -165,7 +211,14 @@
               <td class="nowrap">{geld(e.betrag)}</td>
               <td>{WEGE[e.quelle] ?? e.quelle}</td>
               <td>{e.unterstuetzer_name ?? 'anonym'}</td>
-              <td><button class="btn btn-ghost btn-sm gefahr" onclick={() => loescheEingang(e)}>Löschen</button></td>
+              <td class="nowrap">
+                {#if e.unterstuetzer_id}
+                  <button class="btn btn-ghost btn-sm" onclick={() => anonymMachen(e)}>Anonym machen</button>
+                {:else}
+                  <button class="btn btn-ghost btn-sm" onclick={() => nameNachtragen(e)}>Name eintragen</button>
+                {/if}
+                <button class="btn btn-ghost btn-sm gefahr" onclick={() => loescheEingang(e)}>Löschen</button>
+              </td>
             </tr>
           {:else}
             <tr class="empty-row"><td colspan="5">Noch keine Eingänge.</td></tr>
@@ -183,4 +236,9 @@
   .abschnitt { margin-bottom: 1.5rem; }
   .hinweis { color: var(--fg-muted); font-size: .75rem; }
   .nowrap { white-space: nowrap; }
+  .vorschau { display: inline-flex; vertical-align: middle; margin-right: .35rem; color: var(--primary); }
+  .person-neu { display: flex; flex-wrap: wrap; gap: .5rem .75rem; align-items: center; margin-bottom: .5rem; }
+  .person-neu .input { max-width: 22rem; }
+  .abzeichen-wahl summary { cursor: pointer; display: flex; gap: .35rem; align-items: center; min-height: 1.5rem; }
+  .wahl { display: flex; flex-direction: column; gap: .35rem; padding: .5rem 0; }
 </style>

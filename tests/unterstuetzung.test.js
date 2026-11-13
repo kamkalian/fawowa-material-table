@@ -1,8 +1,11 @@
 import test from 'node:test';
+import { readFileSync, readdirSync, writeFileSync } from 'node:fs';
+import { join } from 'node:path';
+import { liesVerzeichnis } from '../lib/speicher.js';
 import assert from 'node:assert/strict';
 import {
-  ladeUnterstuetzung, ladePoweredBy, oeffentlicheAngaben, verarbeiteWebhook, stufeFuer, uebersichtUnterstuetzung,
-  traegeEingangEin, aendereEingang, loescheEingang, benenneUnterstuetzer, loescheUnterstuetzer
+  ladeUnterstuetzung, ladePoweredBy, oeffentlicheAngaben, verarbeiteWebhook, uebersichtUnterstuetzung,
+  traegeEingangEin, aendereEingang, loescheEingang, aendereUnterstuetzer, loescheUnterstuetzer, legeUnterstuetzerAn, uebernehmeLokaleUnterstuetzer
 } from '../lib/unterstuetzung.js';
 import { FehlerEingabe } from '../lib/fehler.js';
 import { neuerSpeicher } from './hilfen.js';
@@ -20,26 +23,14 @@ test('Unterstützen: ohne Zahlungsweg ist der Bereich nicht aktiv, nur https gil
 });
 
 test('Unterstützen: Einstellungen aus der .env, Zahlen mit Komma, Schwellen und Standardwerte', () => {
-  const e = ladeUnterstuetzung({ SUPPORT_URL: 'https://ko-fi.com/x', SUPPORT_GOAL: '120,5', SUPPORT_BADGE_GOLD: '75' });
+  const e = ladeUnterstuetzung({ SUPPORT_URL: 'https://ko-fi.com/x', SUPPORT_GOAL: '120,5' });
   assert.equal(e.ziel, 120.5);
   assert.equal(e.waehrung, 'EUR');
   assert.equal(e.webhook, false);
-  assert.deepEqual(e.schwellen, { bronze: 1, silber: 10, gold: 75, platin: 150 });
   assert.equal(ladeUnterstuetzung({ SUPPORT_URL: 'https://x.de', SUPPORT_GOAL: 'abc' }).ziel, 0);
   assert.deepEqual(ladePoweredBy({ POWERED_BY: 'Kurm Industries', POWERED_BY_URL: 'https://kurm-industries.de' }), { name: 'Kurm Industries', url: 'https://kurm-industries.de' });
   assert.deepEqual(ladePoweredBy({ POWERED_BY: 'Kurm Industries', POWERED_BY_URL: 'http://x' }), { name: 'Kurm Industries', url: null });
   assert.equal(ladePoweredBy({}), null);
-});
-
-test('Abzeichen: die höchste erreichte Stufe, ohne Betrag keine', () => {
-  const sw = { bronze: 1, silber: 10, gold: 50, platin: 150 };
-  assert.equal(stufeFuer(0, sw), null);
-  assert.equal(stufeFuer(0.5, sw), null);
-  assert.equal(stufeFuer(1, sw), 'bronze');
-  assert.equal(stufeFuer(9.99, sw), 'bronze');
-  assert.equal(stufeFuer(10, sw), 'silber');
-  assert.equal(stufeFuer(50, sw), 'gold');
-  assert.equal(stufeFuer(1000, sw), 'platin');
 });
 
 test('Webhook: prüft den Token, zählt jede Nachricht einmal und ignoriert andere Währungen', () => {
@@ -65,7 +56,7 @@ test('Webhook: prüft den Token, zählt jede Nachricht einmal und ignoriert ande
   assert.ok(!/Anna|a@b\.de/.test(datei));
 });
 
-test('Webhook: ein öffentlicher Beitrag zeigt den Namen, mehrere Beträge derselben Person addieren sich zum Abzeichen', () => {
+test('Webhook: ein öffentlicher Beitrag zeigt den Namen ohne Abzeichen, mehrere Beträge derselben Person gehören zusammen', () => {
   const { s: db } = neuerSpeicher();
   const einst = ladeUnterstuetzung({ SUPPORT_URL: 'https://ko-fi.com/x', KOFI_VERIFICATION_TOKEN: 't' });
   const opt = { token: 't', waehrung: 'EUR' };
@@ -75,9 +66,10 @@ test('Webhook: ein öffentlicher Beitrag zeigt den Namen, mehrere Beträge derse
   verarbeiteWebhook(db, body({ message_id: 'x3', amount: '200', from_name: 'Carl' }), opt, JETZT);
   verarbeiteWebhook(db, body({ message_id: 'x4', amount: '3', from_name: 'Dora', is_public: false }), opt, JETZT);
   const a = oeffentlicheAngaben(db, einst, JETZT);
-  assert.deepEqual(a.unterstuetzer, [{ name: 'Carl', stufe: 'platin' }, { name: 'Berta', stufe: 'silber' }]);
+  assert.deepEqual(a.unterstuetzer, [{ name: 'Berta', abzeichen: [] }, { name: 'Carl', abzeichen: [] }]); // kein Abzeichen von selbst, Dora nicht öffentlich
   assert.equal(a.erreicht, 214);
-  // öffentlich sind nur Name und Stufe, nie ein Betrag
+  assert.equal(uebersichtUnterstuetzung(db, einst, JETZT).unterstuetzer.find(u => u.name === 'Berta').gesamt, 11);
+  // öffentlich sind nur Name und Abzeichen, nie ein Betrag
   assert.ok(!JSON.stringify(a.unterstuetzer).match(/\d/));
 });
 
@@ -93,7 +85,7 @@ test('Von Hand eintragen: anonym, mit Zustimmung, bestehende Person ergänzen; N
   const u = uebersichtUnterstuetzung(db, einst, JETZT);
   assert.equal(u.unterstuetzer.length, 1);
   assert.equal(u.unterstuetzer[0].gesamt, 11.5);
-  assert.equal(u.unterstuetzer[0].stufe, 'silber');
+  assert.deepEqual(u.unterstuetzer[0].abzeichen, []);
   assert.equal(u.unterstuetzer[0].zustimmung_art, 'manuell');
   assert.equal(u.erreicht, 31.5);
   ein({ betrag: '1', unterstuetzer_id: u.unterstuetzer[0].id, quelle: 'paypal' });
@@ -115,9 +107,9 @@ test('Verwalten: Eingang ändern und löschen, Person umbenennen und entfernen (
   assert.equal(u.eingaenge[0].quelle, 'sonstige');
   assert.throws(() => aendereEingang(db, einst, 999, { betrag: 1 }, JETZT), FehlerEingabe);
 
-  benenneUnterstuetzer(db, u.unterstuetzer[0].id, 'Fritz M.');
+  aendereUnterstuetzer(db, u.unterstuetzer[0].id, { name: 'Fritz M.' });
   assert.equal(uebersichtUnterstuetzung(db, einst, JETZT).unterstuetzer[0].name, 'Fritz M.');
-  assert.throws(() => benenneUnterstuetzer(db, u.unterstuetzer[0].id, ''), FehlerEingabe);
+  assert.throws(() => aendereUnterstuetzer(db, u.unterstuetzer[0].id, { name: '' }), FehlerEingabe);
 
   loescheUnterstuetzer(db, u.unterstuetzer[0].id);
   u = uebersichtUnterstuetzung(db, einst, JETZT);
@@ -141,14 +133,15 @@ test('Balken: bei zeitraum monat zählt nur der laufende Kalendermonat (Zeit in 
       { id: 3, betrag: 2.5, waehrung: 'EUR', datum: '2026-11-12 08:00:00', quelle: 'paypal', unterstuetzer_id: null, nachricht_id: null }
     ]
   });
+  uebernehmeLokaleUnterstuetzer(db);
   const alle = ladeUnterstuetzung({ SUPPORT_URL: 'https://ko-fi.com/x', SUPPORT_GOAL: '35' });
   const monat = ladeUnterstuetzung({ SUPPORT_URL: 'https://ko-fi.com/x', SUPPORT_GOAL: '35', SUPPORT_PERIOD: 'monat' });
   assert.equal(alle.zeitraum, 'gesamt');
   assert.equal(oeffentlicheAngaben(db, alle, JETZT).erreicht, 17.5);
   assert.equal(oeffentlicheAngaben(db, monat, JETZT).erreicht, 7.5);
   assert.equal(oeffentlicheAngaben(db, monat, new Date('2026-12-01T12:00:00Z')).erreicht, 0); // neuer Monat, Balken leer
-  // Gerda hat insgesamt 15 € gegeben: Silber, auch wenn der Balken schon zurückgesetzt wurde
-  assert.deepEqual(oeffentlicheAngaben(db, monat, new Date('2026-12-01T12:00:00Z')).unterstuetzer, [{ name: 'Gerda', stufe: 'silber' }]);
+  // Gerda bleibt in der Liste, auch wenn der Balken schon zurückgesetzt wurde
+  assert.deepEqual(oeffentlicheAngaben(db, monat, new Date('2026-12-01T12:00:00Z')).unterstuetzer, [{ name: 'Gerda', abzeichen: [] }]);
 });
 
 test('Altes Format: eine Liste von Ko-fi-Beträgen wird übernommen', () => {
@@ -157,4 +150,129 @@ test('Altes Format: eine Liste von Ko-fi-Beträgen wird übernommen', () => {
   const einst = ladeUnterstuetzung({ SUPPORT_URL: 'https://ko-fi.com/x', SUPPORT_PERIOD: 'monat' });
   assert.equal(oeffentlicheAngaben(db, einst, JETZT).erreicht, 5);
   assert.equal(verarbeiteWebhook(db, { data: JSON.stringify({ verification_token: 't', message_id: 'alt1', amount: '5', currency: 'EUR' }) }, { token: 't', waehrung: 'EUR' }), 'doppelt');
+});
+
+test('Abzeichen: nur von Hand, mehrere je Person, nur aus der Auswahl; auch Personen ohne Geld', () => {
+  const { s: db } = neuerSpeicher();
+  const einst = ladeUnterstuetzung({ ...BANK });
+  const ein = (name) => traegeEingangEin(db, einst, { quelle: 'paypal', datum: '2026-11-10', betrag: '500', name, zustimmung: true }, JETZT);
+  ein('Zeno'); ein('Alma'); ein('Mira');
+  // auch 500 € geben von selbst kein Abzeichen
+  assert.ok(oeffentlicheAngaben(db, einst, JETZT).unterstuetzer.every(u => u.abzeichen.length === 0));
+  const id = (name) => uebersichtUnterstuetzung(db, einst, JETZT).unterstuetzer.find(u => u.name === name).id;
+  aendereUnterstuetzer(db, id('Zeno'), { abzeichen: ['grosszuegig', 'wiederkehrend', 'wiederkehrend'] });
+  aendereUnterstuetzer(db, id('Mira'), { abzeichen: ['kaffee'] });
+  // Person ohne Geldeingang, hilft mit Ideen
+  const ideen = legeUnterstuetzerAn(db, { name: 'Ida', zustimmung: true, abzeichen: ['ideengeber'] }, JETZT);
+  assert.ok(ideen > 0);
+  assert.deepEqual(oeffentlicheAngaben(db, einst, JETZT).unterstuetzer, [
+    { name: 'Mira', abzeichen: ['kaffee'] },
+    { name: 'Zeno', abzeichen: ['wiederkehrend', 'grosszuegig'] },   // Reihenfolge wie in der Auswahl, ohne Doppelte
+    { name: 'Ida', abzeichen: ['ideengeber'] },
+    { name: 'Alma', abzeichen: [] }
+  ]);
+  assert.equal(uebersichtUnterstuetzung(db, einst, JETZT).unterstuetzer.find(u => u.name === 'Ida').gesamt, 0);
+  assert.throws(() => aendereUnterstuetzer(db, id('Zeno'), { abzeichen: ['gold'] }), FehlerEingabe);
+  assert.throws(() => aendereUnterstuetzer(db, id('Zeno'), { abzeichen: 'kaffee' }), FehlerEingabe);
+  assert.throws(() => legeUnterstuetzerAn(db, { name: 'Ida', zustimmung: true }, JETZT), FehlerEingabe);   // gibt es schon
+  assert.throws(() => legeUnterstuetzerAn(db, { name: 'Neu' }, JETZT), FehlerEingabe);                    // ohne Zustimmung
+  aendereUnterstuetzer(db, id('Zeno'), { abzeichen: [] });
+  assert.deepEqual(uebersichtUnterstuetzung(db, einst, JETZT).unterstuetzer.find(u => u.name === 'Zeno').abzeichen, []);
+});
+
+test('Übernahme aus der lokalen Datei: ein Text oder ein entferntes Abzeichen wird bereinigt', () => {
+  const { s: db } = neuerSpeicher();
+  db.lokal.schreibe('unterstuetzung', {
+    unterstuetzer: [
+      { id: 1, name: 'Einzeln', abzeichen: 'kaffee', zustimmung_am: '2026-11-01 10:00:00', zustimmung_art: 'manuell' },
+      { id: 2, name: 'Alt', abzeichen: 'berg', zustimmung_am: '2026-11-01 10:00:00', zustimmung_art: 'manuell' },
+      { id: 3, name: 'Ohne', zustimmung_am: '2026-11-01 10:00:00', zustimmung_art: 'manuell' }
+    ],
+    eingaenge: []
+  });
+  uebernehmeLokaleUnterstuetzer(db);
+  const einst = ladeUnterstuetzung({ ...BANK });
+  const u = Object.fromEntries(oeffentlicheAngaben(db, einst, JETZT).unterstuetzer.map(x => [x.name, x.abzeichen]));
+  assert.deepEqual(u, { Einzeln: ['kaffee'], Alt: [], Ohne: [] });
+});
+
+test('Name nachtragen: ein anonymer Ko-fi-Eingang bekommt mit Zustimmung einen Namen, auch wieder anonym machbar', () => {
+  const { s: db } = neuerSpeicher();
+  const einst = ladeUnterstuetzung({ SUPPORT_URL: 'https://ko-fi.com/x', KOFI_VERIFICATION_TOKEN: 't' });
+  verarbeiteWebhook(db, { data: JSON.stringify({ verification_token: 't', message_id: 'k1', amount: '5', currency: 'EUR', from_name: 'Privat', is_public: false }) }, { token: 't', waehrung: 'EUR' }, JETZT);
+  const eingang = () => uebersichtUnterstuetzung(db, einst, JETZT).eingaenge[0];
+  assert.equal(eingang().unterstuetzer_id, null);
+  assert.throws(() => aendereEingang(db, einst, eingang().id, { name: 'Hanna' }), FehlerEingabe);
+  assert.throws(() => aendereEingang(db, einst, eingang().id, { name: 'Hanna', zustimmung: false }), FehlerEingabe);
+  aendereEingang(db, einst, eingang().id, { name: 'Hanna', zustimmung: true }, JETZT);
+  assert.equal(eingang().unterstuetzer_name, 'Hanna');
+  assert.deepEqual(oeffentlicheAngaben(db, einst, JETZT).unterstuetzer, [{ name: 'Hanna', abzeichen: [] }]);
+  assert.ok(!JSON.stringify(db.lokal.lies('unterstuetzung', null)).includes('Privat')); // der Ko-fi-Name wurde nie gespeichert
+  aendereEingang(db, einst, eingang().id, { unterstuetzer_id: null }, JETZT);
+  assert.equal(eingang().unterstuetzer_id, null);
+  assert.throws(() => aendereEingang(db, einst, eingang().id, { unterstuetzer_id: 99 }, JETZT), FehlerEingabe);
+});
+
+test('Repo: Unterstützer stehen mit Namen und Abzeichen im Daten-Repo, Beträge nie; jede Änderung ist ein Commit', () => {
+  const { s: db, verzeichnis } = neuerSpeicher({ mitGit: true });
+  const einst = ladeUnterstuetzung({ ...BANK });
+  traegeEingangEin(db, einst, { quelle: 'ueberweisung', datum: '2026-11-10', betrag: '123,45', name: 'Olga', zustimmung: true }, JETZT);
+  const id = legeUnterstuetzerAn(db, { name: 'Ida', zustimmung: true, abzeichen: ['ideengeber'] }, JETZT);
+  aendereUnterstuetzer(db, id, { abzeichen: ['ideengeber', 'datenpfleger'] });
+
+  const datei = JSON.parse(readFileSync(join(verzeichnis, 'unterstuetzer.json'), 'utf8'));
+  assert.deepEqual(datei.map(u => [u.name, u.abzeichen]), [['Olga', []], ['Ida', ['ideengeber', 'datenpfleger']]]);
+  assert.ok(!JSON.stringify(datei).includes('123') && !readdirSync(verzeichnis).some(f => f.includes('eingang')));   // kein Betrag im Repo
+  const betreffe = db.git.verlauf(10).map(c => c.betreff);
+  assert.ok(betreffe.some(b => b.includes('Unterstützer »Ida«: Abzeichen ideengeber → ideengeber, datenpfleger')), betreffe.join(' | '));
+  assert.ok(betreffe.some(b => b.includes('Unterstützer »Olga« angelegt')));
+  // lokal liegen nur die Eingänge
+  assert.ok(!JSON.stringify(db.lokal.lies('unterstuetzung', null)).includes('Olga'));
+
+  // neu laden aus den Dateien: dasselbe
+  const r = liesVerzeichnis(verzeichnis);
+  assert.deepEqual(r.fehler, []);
+  assert.deepEqual(r.daten.unterstuetzer.map(u => u.name), ['Olga', 'Ida']);
+});
+
+test('Repo: Änderungen von Hand im Repo sind nach dem Laden sichtbar; Fehler werden benannt', () => {
+  const { s: db, verzeichnis } = neuerSpeicher({ mitGit: true });
+  const einst = ladeUnterstuetzung({ ...BANK });
+  legeUnterstuetzerAn(db, { name: 'Ida', zustimmung: true }, JETZT);
+  const pfad = join(verzeichnis, 'unterstuetzer.json');
+
+  // jemand ändert die Datei im Repo: Abzeichen ergänzt, neue Person ohne ID
+  writeFileSync(pfad, JSON.stringify([{ id: 1, name: 'Ida', abzeichen: ['botschafter'] }, { name: 'Neu' }]));
+  const r = liesVerzeichnis(verzeichnis);
+  assert.deepEqual(r.fehler, []);
+  assert.equal(r.ergaenzt, true);
+  db.ersetze(r.daten);
+  assert.deepEqual(oeffentlicheAngaben(db, einst, JETZT).unterstuetzer, [{ name: 'Ida', abzeichen: ['botschafter'] }, { name: 'Neu', abzeichen: [] }]);
+  assert.equal(r.daten.unterstuetzer.find(u => u.name === 'Neu').id, 2);
+
+  for (const [inhalt, muster] of [
+    ['{ kein json', /Kein gültiges JSON/],
+    ['{}', /Liste/],
+    [JSON.stringify([{ abzeichen: [] }]), /name/],
+    [JSON.stringify([{ name: 'A' }, { name: 'a' }]), /doppelt/],
+    [JSON.stringify([{ name: 'A', abzeichen: ['gold'] }]), /abzeichen/],
+    [JSON.stringify([{ id: 4, name: 'A' }, { id: 4, name: 'B' }]), /doppelt/],
+    [JSON.stringify([{ name: 'A', zustimmung_art: 'egal' }]), /zustimmung_art/]
+  ]) {
+    writeFileSync(pfad, inhalt);
+    const f = liesVerzeichnis(verzeichnis).fehler;
+    assert.ok(f.length && f.every(x => x.datei === 'unterstuetzer.json') && muster.test(f[0].text), `${inhalt}: ${JSON.stringify(f)}`);
+  }
+});
+
+test('Repo: Eingänge einer im Repo gelöschten Person bleiben anonym, die ID wird nicht wiederverwendet', () => {
+  const { s: db } = neuerSpeicher();
+  const einst = ladeUnterstuetzung({ ...BANK });
+  traegeEingangEin(db, einst, { quelle: 'paypal', datum: '2026-11-10', betrag: '20', name: 'Karl', zustimmung: true }, JETZT);
+  db.ersetze({ ...db, kategorien: db.kategorien, eigenschaften: db.eigenschaften, materialien: db.materialien, unterstuetzer: [] }); // wie nach dem Löschen im Repo
+  assert.equal(uebersichtUnterstuetzung(db, einst, JETZT).eingaenge[0].unterstuetzer_name, null);
+  assert.equal(uebersichtUnterstuetzung(db, einst, JETZT).erreicht, 20);
+  const neu = legeUnterstuetzerAn(db, { name: 'Lena', zustimmung: true }, JETZT);
+  assert.ok(neu > 1);                                                                               // 1 gehörte Karl
+  assert.equal(uebersichtUnterstuetzung(db, einst, JETZT).eingaenge[0].unterstuetzer_name, null);   // der Eingang wurde nicht Lena zugeordnet
 });

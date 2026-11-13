@@ -1,9 +1,10 @@
 <script>
   import { t } from '../lib/i18n.js';
   import Icon from '../../shared/Icon.svelte';
+  import { ABZEICHEN } from '../../../lib/abzeichen.js';
 
   // Bereich „Projekt unterstützen“: Fortschrittsbalken, Zahlungswege und Unterstützer mit Abzeichen.
-  // angaben: { wege: { kofi, paypal, ueberweisung }, ziel, erreicht, waehrung, text, zielText, unterstuetzer: [{ name, stufe }] }
+  // angaben: { wege: { kofi, paypal, ueberweisung }, ziel, erreicht, waehrung, text, zielText, unterstuetzer: [{ name, abzeichen }] }
   // aus /api/v2/einstellungen. Beträge einzelner Personen gibt es dort nicht.
   let { lang, angaben } = $props();
 
@@ -14,7 +15,10 @@
   let stand = $derived(t(lang, 'supportProgress', geld.format(angaben.erreicht), geld.format(angaben.ziel)));
   let bank = $derived(angaben.wege.ueberweisung);
 
-  const STUFEN = { bronze: 'badgeBronze', silber: 'badgeSilber', gold: 'badgeGold', platin: 'badgePlatin' };
+  const sprache = (a, feld) => a[lang === 'en' ? feld + '_en' : feld + '_de'];
+  const abzeichenName = (id) => { const a = ABZEICHEN.find(x => x.id === id); return a ? (lang === 'en' ? a.en : a.de) : ''; };
+  // Abzeichen, die tatsächlich vergeben sind, für die Erklärung darunter
+  let vergeben = $derived(ABZEICHEN.filter(a => angaben.unterstuetzer?.some(u => u.abzeichen?.includes(a.id))));
 
   let kopiert = $state(false);
   async function kopiere(iban) {
@@ -74,13 +78,21 @@
       <h3>{t(lang, 'supportThanks')}</h3>
       <ul>
         {#each angaben.unterstuetzer as u (u.name)}
-          <li class="abzeichen {u.stufe}" title={t(lang, STUFEN[u.stufe])}>
-            <span class="medaille"><Icon name="ui-medal" size={16} /></span>
+          <li class="unterstuetzer">
+            {#each u.abzeichen ?? [] as id (id)}
+              <span class="medaille" title={abzeichenName(id)}><Icon name={'badge-' + id} size={16} /></span>
+            {/each}
             <span class="name">{u.name}</span>
-            <span class="stufe">{t(lang, STUFEN[u.stufe])}</span>
           </li>
         {/each}
       </ul>
+      {#if vergeben.length}
+        <ul class="legende">
+          {#each vergeben as a (a.id)}
+            <li><span class="medaille"><Icon name={'badge-' + a.id} size={14} /></span> <strong>{lang === 'en' ? a.en : a.de}:</strong> {sprache(a, 'text')}</li>
+          {/each}
+        </ul>
+      {/if}
       <p class="stand">{t(lang, 'supportThanksNote')}</p>
     </div>
   {/if}
@@ -102,11 +114,9 @@
   dd { margin: 0; word-break: break-word; }
   .iban { font-family: var(--mono, ui-monospace, monospace); letter-spacing: .02em; }
   .danke ul { list-style: none; margin: 0 0 .5rem; padding: 0; display: flex; flex-wrap: wrap; gap: .4rem .5rem; }
-  .abzeichen { display: inline-flex; align-items: center; gap: .35rem; padding: .2rem .6rem .2rem .35rem; border: 1px solid var(--border); border-radius: 999px; font-size: .8125rem; }
-  .medaille { display: inline-flex; color: var(--medaille); }
-  .stufe { font-size: .6875rem; color: var(--fg-muted); }
-  .bronze { --medaille: #b0753d; }
-  .silber { --medaille: #8a95a1; }
-  .gold { --medaille: #d4a72c; }
-  .platin { --medaille: #4aa5bd; }
+  .unterstuetzer { display: inline-flex; align-items: center; gap: .35rem; padding: .2rem .65rem; border: 1px solid var(--border); border-radius: 999px; font-size: .8125rem; }
+  .medaille { display: inline-flex; color: var(--primary); }
+  .danke ul.legende { display: flex; flex-direction: column; gap: .2rem; margin: .5rem 0; font-size: .75rem; color: var(--fg-muted); }
+  .legende li { display: flex; align-items: center; gap: .35rem; }
+  .legende strong { color: var(--fg); font-weight: 600; }
 </style>

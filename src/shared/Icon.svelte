@@ -58,6 +58,14 @@
     'ui-moon': `<path d="M20 14.5A8.5 8.5 0 0 1 9.5 4 8.5 8.5 0 1 0 20 14.5z"/>`,
     'ui-flag': `<path d="M6 21V3.5"/><path d="M6 5h11l-2.5 4 2.5 4H6"/>`,
     'ui-cup': `<path d="M4.5 9.5h11v5a4.5 4.5 0 0 1-4.5 4.5h-2a4.5 4.5 0 0 1-4.5-4.5z"/><path d="M15.5 11h1.25a2.75 2.75 0 0 1 0 5.5H15"/><path d="M8 3.5v2.5M12 3.5v2.5"/>`,
+    // --- Abzeichen der Unterstützer (lib/abzeichen.js) ---
+    'badge-starthelfer': `<path d="M12 3c3 2 4.5 5 4.5 8.5V16h-9v-4.5C7.5 8 9 5 12 3z"/><circle cx="12" cy="10" r="1.5"/><path d="M7.5 13l-3 3.5V19l3-1.5M16.5 13l3 3.5V19l-3-1.5"/><path d="M12 18.5V21"/>`,
+    'badge-kaffee': `<path d="M4.5 9.5h11v5a4.5 4.5 0 0 1-4.5 4.5h-2a4.5 4.5 0 0 1-4.5-4.5z"/><path d="M15.5 11h1.25a2.75 2.75 0 0 1 0 5.5H15"/><path d="M8 3.5v2.5M12 3.5v2.5"/>`,
+    'badge-wiederkehrend': `<path d="M4 12a8 8 0 0 1 13.5-5.8L20 8.5"/><path d="M20 4v4.5h-4.5"/><path d="M20 12a8 8 0 0 1-13.5 5.8L4 15.5"/><path d="M4 20v-4.5h4.5"/>`,
+    'badge-grosszuegig': `<path d="M6 4h12l3.5 5L12 21 2.5 9z"/><path d="M2.5 9h19"/><path d="M9 4l-1.5 5L12 21l4.5-12L15 4"/>`,
+    'badge-ideengeber': `<path d="M12 3a6 6 0 0 0-3.5 10.9c.7.6 1 1.3 1 2.1h5c0-.8.3-1.5 1-2.1A6 6 0 0 0 12 3z"/><path d="M9.5 18.5h5"/><path d="M10.5 21h3"/>`,
+    'badge-datenpfleger': `<rect x="5" y="4.5" width="14" height="16.5" rx="2"/><path d="M9 4.5V3h6v1.5"/><path d="M8.75 13l2.5 2.5 4.25-5"/>`,
+    'badge-botschafter': `<path d="M4 10v4h3l7 4.5v-13L7 10z"/><path d="M17.5 9.5a3.5 3.5 0 0 1 0 5"/><path d="M7 14l1 5h2.5l-1-4.5"/>`,
     'ui-medal': `<circle cx="12" cy="9" r="5"/><path d="M9 13.5 7.5 20.5 12 18l4.5 2.5-1.5-7"/>`,
     'ui-chevron': `<path d="M9 5l7 7-7 7"/>`
   };
