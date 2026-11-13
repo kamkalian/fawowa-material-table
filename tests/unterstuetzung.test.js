@@ -5,7 +5,7 @@ import { liesVerzeichnis } from '../lib/speicher.js';
 import assert from 'node:assert/strict';
 import {
   ladeUnterstuetzung, ladePoweredBy, oeffentlicheAngaben, verarbeiteWebhook, uebersichtUnterstuetzung,
-  traegeEingangEin, aendereEingang, loescheEingang, aendereUnterstuetzer, loescheUnterstuetzer, legeUnterstuetzerAn, uebernehmeLokaleUnterstuetzer
+  traegeEingangEin, aendereEingang, loescheEingang, aendereUnterstuetzer, loescheUnterstuetzer, legeUnterstuetzerAn, uebernehmeLokaleUnterstuetzer, istWiederkehrend
 } from '../lib/unterstuetzung.js';
 import { FehlerEingabe } from '../lib/fehler.js';
 import { neuerSpeicher } from './hilfen.js';
@@ -275,4 +275,73 @@ test('Repo: Eingänge einer im Repo gelöschten Person bleiben anonym, die ID wi
   const neu = legeUnterstuetzerAn(db, { name: 'Lena', zustimmung: true }, JETZT);
   assert.ok(neu > 1);                                                                               // 1 gehörte Karl
   assert.equal(uebersichtUnterstuetzung(db, einst, JETZT).eingaenge[0].unterstuetzer_name, null);   // der Eingang wurde nicht Lena zugeordnet
+});
+
+test('Wiederkehrend: Abo-Zahlung oder Geld in aufeinanderfolgenden Monaten, mehrere im selben Monat zählen einmal', () => {
+  const e = (datum, extra = {}) => ({ datum: datum + ' 12:00:00', ...extra });
+  assert.equal(istWiederkehrend([]), false);
+  assert.equal(istWiederkehrend([e('2026-10-05')]), false);
+  assert.equal(istWiederkehrend([e('2026-10-05'), e('2026-10-20'), e('2026-10-31')]), false);   // drei Mal im selben Monat
+  assert.equal(istWiederkehrend([e('2026-10-05'), e('2026-12-05')]), false);                    // ein Monat dazwischen fehlt
+  assert.equal(istWiederkehrend([e('2026-10-05'), e('2026-11-05')]), true);
+  assert.equal(istWiederkehrend([e('2026-12-20'), e('2027-01-02')]), true);                     // über den Jahreswechsel
+  assert.equal(istWiederkehrend([e('2026-10-05'), e('2026-11-05')], 3), false);
+  assert.equal(istWiederkehrend([e('2026-10-05'), e('2026-11-05'), e('2026-12-05')], 3), true);
+  assert.equal(istWiederkehrend([e('2026-10-05', { abo: true })]), true);
+  assert.equal(istWiederkehrend([e('2026-10-31 22:30:00'.slice(0, 10)), e('2026-11-01')]), true);
+});
+
+test('Wiederkehrend: Ko-fi-Beiträge in zwei Monaten vergeben das Abzeichen automatisch einmal, von Hand entfernt bleibt es entfernt', () => {
+  const { s: db } = neuerSpeicher({ mitGit: true });
+  const einst = ladeUnterstuetzung({ SUPPORT_URL: 'https://ko-fi.com/x', KOFI_VERIFICATION_TOKEN: 't' });
+  const opt = { token: 't', waehrung: 'EUR' };
+  const tip = (id, d = {}) => ({ data: JSON.stringify({ verification_token: 't', message_id: id, amount: '3', currency: 'EUR', from_name: 'Rita', is_public: true, ...d }) });
+  const abz = () => oeffentlicheAngaben(db, einst, JETZT).unterstuetzer.find(u => u.name === 'Rita')?.abzeichen;
+
+  verarbeiteWebhook(db, tip('r1'), opt, new Date('2026-10-10T10:00:00Z'));
+  assert.deepEqual(abz(), []);                                              // angelegt, ein Beitrag: noch nicht wiederkehrend
+  verarbeiteWebhook(db, tip('r2'), opt, new Date('2026-10-20T10:00:00Z'));
+  assert.deepEqual(abz(), []);                                              // derselbe Monat
+  verarbeiteWebhook(db, tip('r3'), opt, new Date('2026-11-10T10:00:00Z'));
+  assert.deepEqual(abz(), ['wiederkehrend']);
+  assert.ok(db.git.verlauf(10).some(c => c.betreff.includes('Abzeichen Wiederkehrend automatisch vergeben')));
+
+  const id = uebersichtUnterstuetzung(db, einst, JETZT).unterstuetzer[0].id;
+  aendereUnterstuetzer(db, id, { abzeichen: [] });                          // von Hand entfernt
+  verarbeiteWebhook(db, tip('r4'), opt, new Date('2026-12-10T10:00:00Z'));
+  assert.deepEqual(abz(), []);                                              // wird nicht wieder vergeben
+});
+
+test('Wiederkehrend: ein Ko-fi-Abo vergibt das Abzeichen sofort, anonyme Beiträge bleiben ohne Person', () => {
+  const { s: db } = neuerSpeicher();
+  const einst = ladeUnterstuetzung({ SUPPORT_URL: 'https://ko-fi.com/x', KOFI_VERIFICATION_TOKEN: 't' });
+  const opt = { token: 't', waehrung: 'EUR' };
+  const tip = (id, d) => ({ data: JSON.stringify({ verification_token: 't', message_id: id, amount: '5', currency: 'EUR', ...d }) });
+  verarbeiteWebhook(db, tip('a1', { from_name: 'Sven', is_public: true, is_subscription_payment: true, type: 'Subscription' }), opt, JETZT);
+  assert.deepEqual(oeffentlicheAngaben(db, einst, JETZT).unterstuetzer, [{ name: 'Sven', abzeichen: ['wiederkehrend'] }]);
+  // nicht öffentlich: keine Person, deshalb auch kein Abzeichen
+  verarbeiteWebhook(db, tip('a2', { from_name: 'Geheim', is_public: false, is_subscription_payment: true }), opt, JETZT);
+  assert.equal(oeffentlicheAngaben(db, einst, JETZT).unterstuetzer.length, 1);
+  assert.equal(uebersichtUnterstuetzung(db, einst, JETZT).eingaenge.find(e => e.nachricht_id === 'a2').unterstuetzer_id, null);
+});
+
+test('Wiederkehrend: auch von Hand eingetragene und nachträglich zugeordnete Eingänge zählen', () => {
+  const { s: db } = neuerSpeicher();
+  const einst = ladeUnterstuetzung({ ...BANK, KOFI_VERIFICATION_TOKEN: 't', SUPPORT_URL: 'https://ko-fi.com/x' });
+  const ein = (d) => traegeEingangEin(db, einst, { quelle: 'ueberweisung', betrag: '5', ...d }, JETZT);
+  ein({ datum: '2026-10-15', name: 'Uwe', zustimmung: true });
+  assert.deepEqual(oeffentlicheAngaben(db, einst, JETZT).unterstuetzer[0].abzeichen, []);
+  ein({ datum: '2026-11-03', name: 'uwe', zustimmung: true });
+  assert.deepEqual(oeffentlicheAngaben(db, einst, JETZT).unterstuetzer[0].abzeichen, ['wiederkehrend']);
+
+  // zwei anonyme Ko-fi-Eingänge in zwei Monaten werden einer Person zugeordnet
+  const opt = { token: 't', waehrung: 'EUR' };
+  const tip = (id) => ({ data: JSON.stringify({ verification_token: 't', message_id: id, amount: '2', currency: 'EUR', from_name: 'x', is_public: false }) });
+  verarbeiteWebhook(db, tip('k1'), opt, new Date('2026-09-10T10:00:00Z'));
+  verarbeiteWebhook(db, tip('k2'), opt, new Date('2026-10-10T10:00:00Z'));
+  const anonym = uebersichtUnterstuetzung(db, einst, JETZT).eingaenge.filter(e => e.quelle === 'kofi');
+  assert.equal(anonym.length, 2);
+  const neu = legeUnterstuetzerAn(db, { name: 'Vera', zustimmung: true }, JETZT);
+  for (const e of anonym) aendereEingang(db, einst, e.id, { unterstuetzer_id: neu }, JETZT);
+  assert.deepEqual(oeffentlicheAngaben(db, einst, JETZT).unterstuetzer.find(u => u.name === 'Vera').abzeichen, ['wiederkehrend']);
 });

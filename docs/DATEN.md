@@ -82,6 +82,8 @@ Materialien einer Verbundplatte).
   Die Geldeingänge liegen lokal auf dem Server und verweisen über die `id` auf die Person.
 - `abzeichen`: Liste aus `starthelfer`, `kaffee`, `wiederkehrend`, `grosszuegig`, `ideengeber`, `datenpfleger`, `botschafter`
   (siehe `lib/abzeichen.js`). Mehrere sind möglich.
+- `auto_abzeichen`: Abzeichen, die der Server schon automatisch vergeben hat (derzeit `wiederkehrend`). Sie werden nicht noch einmal
+  vergeben, wenn jemand sie von Hand entfernt. Fehlt das Feld, ist die Liste leer.
 - `zustimmung_art`: `manuell` (vom Betreiber eingetragen) oder `kofi-oeffentlich` (Beitrag bei Ko-fi als öffentlich markiert).
 - `id` und `zustimmung_am` dürfen bei von Hand ergänzten Einträgen fehlen. Die Datei entfällt, wenn es keine Unterstützer gibt.
 - Wer aus der Liste entfernt wird, steht weiter im Verlauf (alte Commits). Soll ein Name auch dort verschwinden, muss der Verlauf

@@ -116,7 +116,7 @@ app.get('/api/v2/einstellungen', (req, res) => {
 // Ko-fi meldet hier neue Zuwendungen (nur mit KOFI_VERIFICATION_TOKEN in der .env). Gespeichert wird nur der Betrag.
 app.post('/api/v2/kofi', express.urlencoded({ extended: false, limit: '20kb' }), (req, res) => {
   if (!UNTERSTUETZUNG.webhook) return res.status(404).json({ error: 'Not found' });
-  const ergebnis = verarbeiteWebhook(speicher, req.body, { token: process.env.KOFI_VERIFICATION_TOKEN?.trim(), waehrung: UNTERSTUETZUNG.waehrung });
+  const ergebnis = verarbeiteWebhook(speicher, req.body, { token: process.env.KOFI_VERIFICATION_TOKEN?.trim(), waehrung: UNTERSTUETZUNG.waehrung, wiederkehrendMonate: UNTERSTUETZUNG.wiederkehrendMonate });
   // Nur das Ergebnis wird protokolliert, keine Daten der Spender
   console.log(`Ko-fi-Meldung: ${ergebnis}`);
   if (ergebnis === 'ungueltig') return res.status(403).json({ error: 'Forbidden' });
