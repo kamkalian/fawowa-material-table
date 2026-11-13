@@ -121,7 +121,7 @@ Dafür braucht er einen Deploy-Key mit Schreibrecht, nur für dieses eine Repo:
 
 Die Materialdaten sind durch das Repo gesichert (jede Änderung wird nach wenigen Sekunden gesendet; ungesendete Änderungen
 zeigt der Admin-Bereich unter „Protokoll und Repo“ an). Nicht im Repo, weil sie Kontaktangaben enthalten oder flüchtig sind:
-`data/lokal/` (Meldungen, Link-Status, Ko-fi-Beträge). Außerdem sichern: `.env`, `data/schluessel/` und die Zertifikate im
+`data/lokal/` (Meldungen, Link-Status, Geldeingänge und Unterstützer). Außerdem sichern: `.env`, `data/schluessel/` und die Zertifikate im
 Docker-Volume `caddy_caddy_data`.
 
 ## Nützliche Befehle

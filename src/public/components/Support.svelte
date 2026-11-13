@@ -2,19 +2,32 @@
   import { t } from '../lib/i18n.js';
   import Icon from '../../shared/Icon.svelte';
 
-  // angaben: { url, ziel, erreicht, waehrung, text, button, zielText } aus /api/v2/einstellungen (alles aus der .env)
+  // Bereich „Projekt unterstützen“: Fortschrittsbalken, Zahlungswege und Unterstützer mit Abzeichen.
+  // angaben: { wege: { kofi, paypal, ueberweisung }, ziel, erreicht, waehrung, text, zielText, unterstuetzer: [{ name, stufe }] }
+  // aus /api/v2/einstellungen. Beträge einzelner Personen gibt es dort nicht.
   let { lang, angaben } = $props();
 
-  const wahl = (feld, standard) => angaben[feld]?.[lang] || angaben[feld]?.de || standard;
-  let text = $derived(wahl('text', t(lang, 'supportText')));
-  let knopf = $derived(wahl('button', t(lang, 'supportButton')));
+  let text = $derived(angaben.text?.[lang] || angaben.text?.de || t(lang, 'supportText'));
   let zielText = $derived(angaben.zielText?.[lang] || angaben.zielText?.de || '');
   let geld = $derived(new Intl.NumberFormat(lang, { style: 'currency', currency: angaben.waehrung, maximumFractionDigits: 0 }));
   let anteil = $derived(angaben.ziel > 0 ? Math.min(100, Math.round((angaben.erreicht / angaben.ziel) * 100)) : 0);
   let stand = $derived(t(lang, 'supportProgress', geld.format(angaben.erreicht), geld.format(angaben.ziel)));
+  let bank = $derived(angaben.wege.ueberweisung);
+
+  const STUFEN = { bronze: 'badgeBronze', silber: 'badgeSilber', gold: 'badgeGold', platin: 'badgePlatin' };
+
+  let kopiert = $state(false);
+  async function kopiere(iban) {
+    try {
+      await navigator.clipboard.writeText(iban.replace(/\s+/g, ''));
+      kopiert = true;
+      setTimeout(() => (kopiert = false), 2000);
+    } catch { /* Kopieren nicht möglich: die IBAN steht sichtbar daneben */ }
+  }
 </script>
 
-<div class="unterstuetzen">
+<section class="unterstuetzen" aria-labelledby="unterstuetzen-titel">
+  <h2 id="unterstuetzen-titel">{t(lang, 'supportTitle')}</h2>
   <p class="text">{text}</p>
 
   {#if angaben.ziel > 0}
@@ -25,15 +38,75 @@
     <p class="stand">{stand}{zielText ? ` · ${zielText}` : ''}</p>
   {/if}
 
-  <a class="btn btn-outline btn-sm" href={angaben.url} target="_blank" rel="noopener noreferrer">
-    <Icon name="ui-cup" size={14} /> {knopf}
-  </a>
-</div>
+  <div class="wege">
+    {#if angaben.wege.kofi}
+      <a class="btn btn-outline btn-sm" href={angaben.wege.kofi} target="_blank" rel="noopener noreferrer">
+        <Icon name="ui-cup" size={14} /> {t(lang, 'supportKofi')}
+      </a>
+    {/if}
+    {#if angaben.wege.paypal}
+      <a class="btn btn-outline btn-sm" href={angaben.wege.paypal} target="_blank" rel="noopener noreferrer">
+        <Icon name="ui-cup" size={14} /> {t(lang, 'supportPaypal')}
+      </a>
+    {/if}
+  </div>
+
+  {#if bank}
+    <div class="bank">
+      <h3>{t(lang, 'supportBank')}</h3>
+      <dl>
+        <dt>{t(lang, 'supportHolder')}</dt><dd>{bank.inhaber}</dd>
+        <dt>IBAN</dt>
+        <dd>
+          <span class="iban">{bank.iban}</span>
+          <button class="btn btn-ghost btn-sm" type="button" onclick={() => kopiere(bank.iban)}>
+            {kopiert ? t(lang, 'supportCopied') : t(lang, 'supportCopy')}
+          </button>
+        </dd>
+        {#if bank.bic}<dt>{t(lang, 'supportBic')}</dt><dd>{bank.bic}</dd>{/if}
+        {#if bank.zweck}<dt>{t(lang, 'supportReference')}</dt><dd>{bank.zweck}</dd>{/if}
+      </dl>
+    </div>
+  {/if}
+
+  {#if angaben.unterstuetzer?.length}
+    <div class="danke">
+      <h3>{t(lang, 'supportThanks')}</h3>
+      <ul>
+        {#each angaben.unterstuetzer as u (u.name)}
+          <li class="abzeichen {u.stufe}" title={t(lang, STUFEN[u.stufe])}>
+            <span class="medaille"><Icon name="ui-medal" size={16} /></span>
+            <span class="name">{u.name}</span>
+            <span class="stufe">{t(lang, STUFEN[u.stufe])}</span>
+          </li>
+        {/each}
+      </ul>
+      <p class="stand">{t(lang, 'supportThanksNote')}</p>
+    </div>
+  {/if}
+</section>
 
 <style>
-  .unterstuetzen { display: flex; flex-direction: column; align-items: flex-start; gap: .5rem; max-width: 26rem; }
+  .unterstuetzen { margin-top: 2rem; padding: 1.25rem; border: 1px solid var(--border); border-radius: var(--radius); display: flex; flex-direction: column; align-items: flex-start; gap: .75rem; max-width: 40rem; }
+  h2 { font-size: 1rem; font-weight: 600; margin: 0; }
+  h3 { font-size: .8125rem; font-weight: 600; margin: 0 0 .35rem; }
   .text { font-size: .8125rem; color: var(--fg-muted); }
   .balken { width: 100%; height: .5rem; background: var(--bg-hover); border: 1px solid var(--border); border-radius: 999px; overflow: hidden; }
   .fuellung { height: 100%; background: var(--primary); border-radius: 999px; transition: width .4s; }
-  .stand { font-size: .75rem; color: var(--fg-muted); margin-top: -.25rem; }
+  .stand { font-size: .75rem; color: var(--fg-muted); margin: 0; }
+  .balken + .stand { margin-top: -.35rem; }
+  .wege { display: flex; flex-wrap: wrap; gap: .5rem; }
+  .bank { font-size: .8125rem; }
+  dl { display: grid; grid-template-columns: max-content 1fr; gap: .15rem .75rem; margin: 0; }
+  dt { color: var(--fg-muted); }
+  dd { margin: 0; word-break: break-word; }
+  .iban { font-family: var(--mono, ui-monospace, monospace); letter-spacing: .02em; }
+  .danke ul { list-style: none; margin: 0 0 .5rem; padding: 0; display: flex; flex-wrap: wrap; gap: .4rem .5rem; }
+  .abzeichen { display: inline-flex; align-items: center; gap: .35rem; padding: .2rem .6rem .2rem .35rem; border: 1px solid var(--border); border-radius: 999px; font-size: .8125rem; }
+  .medaille { display: inline-flex; color: var(--medaille); }
+  .stufe { font-size: .6875rem; color: var(--fg-muted); }
+  .bronze { --medaille: #b0753d; }
+  .silber { --medaille: #8a95a1; }
+  .gold { --medaille: #d4a72c; }
+  .platin { --medaille: #4aa5bd; }
 </style>

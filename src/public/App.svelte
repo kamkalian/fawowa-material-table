@@ -18,6 +18,7 @@
   let props = $state([]);
   let kategorien = $state([]);
   let unterstuetzung = $state(null); // Angaben für den Bereich „Projekt unterstützen“ (aus der .env des Servers), sonst null
+  let poweredBy = $state(null); // Betreiber der Firma für „Powered by“ am Seitenende
   let adminPfad = $state(null); // Adresse des Admin-Bereichs für den dezenten Link am Seitenende
   let state = $state(emptyState());
   let ignored = $state(0);
@@ -144,6 +145,7 @@
         const einst = await res.json();
         adminPfad = einst.adminPfad ?? null;
         unterstuetzung = einst.unterstuetzung ?? null;
+        poweredBy = einst.poweredBy ?? null;
       }
     } catch { /* ignorieren */ }
 
@@ -248,11 +250,16 @@
       onreport={(m) => (report = { mode: 'fehler', material: m })}
     />
 
+    {#if unterstuetzung}
+      <Support {lang} angaben={unterstuetzung} />
+    {/if}
+
     <footer class="fuss">
-      {#if unterstuetzung}
-        <Support {lang} angaben={unterstuetzung} />
-      {/if}
       <p class="fuss-links">
+        {#if poweredBy}
+          <span class="powered">{t(lang, 'poweredBy')}
+            {#if poweredBy.url}<a href={poweredBy.url} target="_blank" rel="noopener noreferrer">{poweredBy.name}</a>{:else}{poweredBy.name}{/if}</span>
+        {/if}
         <a href={'/impressum' + (lang === 'en' ? '?lang=en' : '')}>{t(lang, 'imprintLink')}</a>
         <a href={'/datenschutz' + (lang === 'en' ? '?lang=en' : '')}>{t(lang, 'privacyLink')}</a>
         {#if adminPfad}
@@ -295,7 +302,8 @@
   .page { padding-top: 1.5rem; padding-bottom: 2rem; }
   .muted { color: var(--fg-muted); }
   .fuss { margin-top: 2rem; padding-top: 1.25rem; border-top: 1px solid var(--border); display: flex; flex-wrap: wrap; gap: 1rem 1.5rem; align-items: flex-end; justify-content: space-between; }
-  .fuss-links { display: flex; gap: 1rem; margin-left: auto; font-size: .75rem; }
+  .powered { color: var(--fg-muted); }
+  .fuss-links { display: flex; flex-wrap: wrap; gap: .25rem 1rem; margin-left: auto; font-size: .75rem; }
   .fuss-links a { color: var(--fg-muted); text-decoration: none; }
   .fuss-links a:hover, .fuss-links a:focus-visible { color: var(--fg); text-decoration: underline; }
   .verwaltung { opacity: .55; }

@@ -9,7 +9,7 @@ import { registerAdminRoutes } from './lib/admin-routes.js';
 import { registerMeldungRoutes } from './lib/meldungen-routes.js';
 import { adminPfad } from './lib/pfade.js';
 import { pruefeAlleLinks } from './lib/linkpruefung.js';
-import { ladeUnterstuetzung, oeffentlicheAngaben, verarbeiteWebhook } from './lib/unterstuetzung.js';
+import { ladeUnterstuetzung, ladePoweredBy, oeffentlicheAngaben, verarbeiteWebhook } from './lib/unterstuetzung.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
@@ -98,16 +98,17 @@ app.get('/api/v2/materialien/:id', (req, res) => {
 
 // Einstellungen, die die Oberfläche braucht (Adresse des Admin-Bereichs für den dezenten Link)
 const UNTERSTUETZUNG = ladeUnterstuetzung();
+const POWERED_BY = ladePoweredBy();
 // Angaben zum Betreiber für die Datenschutzerklärung; in der .env steht \n für einen Zeilenumbruch
 const BETREIBER = (process.env.OPERATOR || '').replace(/\\n/g, '\n').trim().slice(0, 600) || null;
 
 app.get('/api/v2/einstellungen', (req, res) => {
-  res.json({ adminPfad: ADMIN_PFAD, unterstuetzung: oeffentlicheAngaben(speicher, UNTERSTUETZUNG), betreiber: BETREIBER });
+  res.json({ adminPfad: ADMIN_PFAD, unterstuetzung: oeffentlicheAngaben(speicher, UNTERSTUETZUNG), poweredBy: POWERED_BY, betreiber: BETREIBER });
 });
 
 // Ko-fi meldet hier neue Zuwendungen (nur mit KOFI_VERIFICATION_TOKEN in der .env). Gespeichert wird nur der Betrag.
 app.post('/api/v2/kofi', express.urlencoded({ extended: false, limit: '20kb' }), (req, res) => {
-  if (!UNTERSTUETZUNG?.webhook) return res.status(404).json({ error: 'Not found' });
+  if (!UNTERSTUETZUNG.webhook) return res.status(404).json({ error: 'Not found' });
   const ergebnis = verarbeiteWebhook(speicher, req.body, { token: process.env.KOFI_VERIFICATION_TOKEN?.trim(), waehrung: UNTERSTUETZUNG.waehrung });
   // Nur das Ergebnis wird protokolliert, keine Daten der Spender
   console.log(`Ko-fi-Meldung: ${ergebnis}`);
@@ -119,7 +120,7 @@ app.post('/api/v2/kofi', express.urlencoded({ extended: false, limit: '20kb' }),
 registerMeldungRoutes(app, speicher);
 
 // --- Admin-Bereich: Login und Bearbeiten ---
-registerAdminRoutes(app, speicher);
+registerAdminRoutes(app, speicher, { unterstuetzung: UNTERSTUETZUNG });
 
 // Admin-Oberfläche: im Betrieb unter ADMIN_PFAD, in der Entwicklung liefert Vite sie unter demselben Pfad aus
 app.get(ADMIN_PFAD, (req, res, next) => {

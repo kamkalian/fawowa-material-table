@@ -73,14 +73,15 @@
           ]
         },
         {
-          h: 'Projekt unterstützen (Ko-fi)',
+          h: 'Projekt unterstützen und Unterstützer-Liste',
           nurMitUnterstuetzung: true,
           p: [
-            'Der Knopf „Projekt unterstützen“ ist ein gewöhnlicher Link. Beim Laden dieser Seite wird keine Verbindung zu Ko-fi aufgebaut, es werden also keine Daten dorthin übertragen.',
-            'Erst wenn du den Link anklickst, öffnet sich die Seite von Ko-fi, ein Dienst eines Drittanbieters. Dabei erfährt Ko-fi technisch zwingend deine IP-Adresse und Angaben zu deinem Browser; auf der Ko-fi-Seite können eigene Cookies gesetzt werden, und Daten können außerhalb der EU verarbeitet werden. Darauf haben wir keinen Einfluss. Was Ko-fi damit macht, steht in dessen Datenschutzerklärung. Wenn du das nicht möchtest, klicke den Link nicht an.'
+            'Die Zahlungswege Ko-fi und PayPal sind gewöhnliche Links. Beim Laden dieser Seite wird keine Verbindung zu diesen Diensten aufgebaut, es werden also keine Daten dorthin übertragen. Erst wenn du einen Link anklickst, öffnet sich die Seite des jeweiligen Anbieters, ein Dienst eines Drittanbieters. Dabei erfährt der Anbieter technisch zwingend deine IP-Adresse und Angaben zu deinem Browser; es können eigene Cookies gesetzt und Daten außerhalb der EU verarbeitet werden. Darauf haben wir keinen Einfluss. Was die Anbieter damit machen, steht in deren Datenschutzerklärungen. Wenn du das nicht möchtest, klicke die Links nicht an.',
+            'Überweist du uns Geld, erhalten wir von unserer Bank deine Kontodaten (Name, IBAN, Betrag, Verwendungszweck). Wir brauchen sie für die Buchhaltung unseres Gewerbes und speichern sie für die gesetzlichen Aufbewahrungsfristen.',
+            'Wenn du möchtest, nennen wir dich auf dieser Seite als Unterstützer. Das geschieht nur mit deiner ausdrücklichen Einwilligung (Art. 6 Abs. 1 lit. a DSGVO): bei Ko-fi, wenn du deinen Beitrag dort als „öffentlich“ markierst, sonst, wenn du uns dein Einverständnis mitteilst. Angezeigt werden ausschließlich der Name oder das Pseudonym, das du angibst, und ein Abzeichen, das grob die Höhe deiner Unterstützung zeigt. Beträge einzelner Personen zeigen wir nicht. Dafür speichern wir deinen Namen, den Zeitpunkt der Einwilligung und deine Beträge auf unserem Server, nicht im öffentlichen Datenrepository. Du kannst deine Einwilligung jederzeit mit Wirkung für die Zukunft widerrufen: Schreib uns an die oben genannte Adresse, dann nehmen wir dich aus der Liste und löschen deinen Namen. Deine Beträge bleiben ohne Namen im Fortschrittsbalken erhalten.'
           ],
-          link: { href: 'https://ko-fi.com/privacy', text: 'Datenschutzerklärung von Ko-fi' },
-          webhook: 'Der Fortschrittsbalken wird aktuell gehalten, indem Ko-fi unserem Server meldet, dass ein Beitrag eingegangen ist. Wir speichern davon nur den Betrag und eine Transaktionsnummer, damit nichts doppelt gezählt wird. Namen, E-Mail-Adressen und Nachrichten speichern wir nicht.'
+          links: [{ href: 'https://ko-fi.com/privacy', text: 'Datenschutzerklärung von Ko-fi' }, { href: 'https://www.paypal.com/de/legalhub/privacy-full', text: 'Datenschutzerklärung von PayPal' }],
+          webhook: 'Der Fortschrittsbalken wird aktuell gehalten, indem Ko-fi unserem Server meldet, dass ein Beitrag eingegangen ist. Wir speichern davon den Betrag, eine Transaktionsnummer, damit nichts doppelt gezählt wird, und nur wenn der Beitrag bei Ko-fi als öffentlich markiert ist den angegebenen Namen. E-Mail-Adressen und Nachrichten speichern wir nicht.'
         },
         {
           h: 'Wo läuft die Seite?',
@@ -142,14 +143,15 @@
           ]
         },
         {
-          h: 'Supporting the project (Ko-fi)',
+          h: 'Supporting the project and the supporters list',
           nurMitUnterstuetzung: true,
           p: [
-            'The “Support the project” button is an ordinary link. Loading this page makes no connection to Ko-fi, so no data is sent there.',
-            'Only when you click the link does the Ko-fi site open, a third-party service. Ko-fi then necessarily learns your IP address and details about your browser; the Ko-fi site may set its own cookies, and data may be processed outside the EU. We have no influence on this. What Ko-fi does with it is described in its privacy policy. If you do not want this, do not click the link.'
+            'The payment options Ko-fi and PayPal are ordinary links. Loading this page makes no connection to these services, so no data is sent there. Only when you click a link does the provider’s site open, a third-party service. The provider then necessarily learns your IP address and details about your browser; it may set its own cookies, and data may be processed outside the EU. We have no influence on this. What the providers do with it is described in their privacy policies. If you do not want this, do not click the links.',
+            'If you transfer money to us, our bank gives us your account details (name, IBAN, amount, reference). We need them for the bookkeeping of our business and keep them for the statutory retention periods.',
+            'If you wish, we name you on this page as a supporter. This only happens with your explicit consent (Art. 6(1)(a) GDPR): on Ko-fi, when you mark your contribution as “public” there, otherwise when you tell us you agree. Only the name or pseudonym you give and a badge that roughly shows the level of your support are displayed. We do not show amounts of individual people. For this we store your name, the time of your consent and your amounts on our server, not in the public data repository. You can withdraw your consent at any time with effect for the future: write to us at the address above and we will remove you from the list and delete your name. Your amounts remain in the progress bar without a name.'
           ],
-          link: { href: 'https://ko-fi.com/privacy', text: 'Ko-fi privacy policy' },
-          webhook: 'The progress bar is kept up to date by Ko-fi telling our server that a contribution has arrived. We store only the amount and a transaction number so that nothing is counted twice. We do not store names, email addresses or messages.'
+          links: [{ href: 'https://ko-fi.com/privacy', text: 'Ko-fi privacy policy' }, { href: 'https://www.paypal.com/uk/legalhub/privacy-full', text: 'PayPal privacy policy' }],
+          webhook: 'The progress bar is kept up to date by Ko-fi telling our server that a contribution has arrived. We store the amount, a transaction number so that nothing is counted twice, and, only if the contribution is marked as public on Ko-fi, the name given. We do not store email addresses or messages.'
         },
         {
           h: 'Where does the site run?',
@@ -197,8 +199,8 @@
       {#each a.p ?? [] as absatz}
         <p>{absatz}</p>
       {/each}
-      {#if a.link}
-        <p><a href={a.link.href} target="_blank" rel="noopener noreferrer">{a.link.text}</a></p>
+      {#if a.links}
+        <p>{#each a.links as l, i}{#if i > 0} · {/if}<a href={l.href} target="_blank" rel="noopener noreferrer">{l.text}</a>{/each}</p>
       {/if}
       {#if a.webhook && unterstuetzung?.webhook}
         <p>{a.webhook}</p>

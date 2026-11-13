@@ -8,6 +8,7 @@
   import Protokoll from './Protokoll.svelte';
   import Meldungen from './Meldungen.svelte';
   import Links from './Links.svelte';
+  import Unterstuetzer from './Unterstuetzer.svelte';
 
   let angemeldet = $state(null); // null = prüfe noch
   let tab = $state('materialien');
@@ -21,6 +22,7 @@
     ['eigenschaften', 'Eigenschaften'],
     ['kategorien', 'Kategorien'],
     ['links', 'Links'],
+    ['unterstuetzer', 'Unterstützer'],
     ['protokoll', 'Protokoll und Repo']
   ];
 
@@ -81,6 +83,8 @@
       {#key oeffneId}<Materialien {oeffneId} />{/key}
     {:else if tab === 'links'}
       <Links onzaehler={(n) => (kaputt = n)} onmaterial={(id) => { oeffneId = id; tab = 'materialien'; }} />
+    {:else if tab === 'unterstuetzer'}
+      <Unterstuetzer />
     {:else if tab === 'eigenschaften'}
       <Eigenschaften />
     {:else if tab === 'kategorien'}
