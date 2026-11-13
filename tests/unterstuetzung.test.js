@@ -345,3 +345,11 @@ test('Wiederkehrend: auch von Hand eingetragene und nachträglich zugeordnete Ei
   for (const e of anonym) aendereEingang(db, einst, e.id, { unterstuetzer_id: neu }, JETZT);
   assert.deepEqual(oeffentlicheAngaben(db, einst, JETZT).unterstuetzer.find(u => u.name === 'Vera').abzeichen, ['wiederkehrend']);
 });
+
+test('Kontaktadresse für Unterstützer: nur eine gültige E-Mail-Adresse wird öffentlich', () => {
+  const { s: db } = neuerSpeicher();
+  const mit = (adresse) => oeffentlicheAngaben(db, ladeUnterstuetzung({ SUPPORT_URL: 'https://ko-fi.com/x', SUPPORT_CONTACT_EMAIL: adresse }), JETZT).kontakt;
+  assert.equal(mit('kontakt@kurm-industries.de'), 'kontakt@kurm-industries.de');
+  assert.equal(mit(' kontakt@kurm-industries.de '), 'kontakt@kurm-industries.de');
+  for (const schlecht of ['kein mail', 'a@b', '<script>@x.de', 'a b@c.de', '']) assert.equal(mit(schlecht), null, schlecht);
+});

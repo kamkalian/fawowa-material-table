@@ -260,6 +260,8 @@
           <span class="powered">{t(lang, 'poweredBy')}
             {#if poweredBy.url}<a href={poweredBy.url} target="_blank" rel="noopener noreferrer">{poweredBy.name}</a>{:else}{poweredBy.name}{/if}</span>
         {/if}
+        <a href="https://github.com/kamkalian/fawowa-material-table" target="_blank" rel="noopener noreferrer">{t(lang, 'sourceLink')}</a>
+        <a href="https://github.com/kamkalian/fawowa-material-daten" target="_blank" rel="noopener noreferrer">{t(lang, 'dataLink')}</a>
         <a href={'/impressum' + (lang === 'en' ? '?lang=en' : '')}>{t(lang, 'imprintLink')}</a>
         <a href={'/datenschutz' + (lang === 'en' ? '?lang=en' : '')}>{t(lang, 'privacyLink')}</a>
         {#if adminPfad}

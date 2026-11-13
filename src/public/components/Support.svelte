@@ -137,6 +137,10 @@
         {#if bank.bic}<dt>{t(lang, 'supportBic')}</dt><dd>{bank.bic}</dd>{/if}
         {#if bank.zweck}<dt>{t(lang, 'supportReference')}</dt><dd>{bank.zweck}</dd>{/if}
       </dl>
+      {#if angaben.kontakt}
+        <p class="notiz">{t(lang, 'bankNameHint', angaben.kontakt)}
+          <a href={'mailto:' + angaben.kontakt}>{angaben.kontakt}</a></p>
+      {/if}
     </div>
   </div>
 {/if}

@@ -2,7 +2,7 @@
 
 const STRINGS = {
   de: {
-    title: 'Materialdatenbank',
+    title: 'Materialdatenbank für Fahrradwagen Community',
     loading: 'Lade Materialien ...',
     loadError: 'Die Daten konnten nicht geladen werden.',
     search: 'Suchen nach Name oder Hersteller',
@@ -80,6 +80,7 @@ const STRINGS = {
     nameAskDone: 'Danke, wir tragen dich in die Liste ein, sobald wir deine Meldung geprüft haben.',
     nameAskError: 'Das hat leider nicht geklappt. Bitte versuch es später noch einmal mit einer neuen Meldung.',
     bankTitle: 'Überweisung',
+    bankNameHint: 'Möchtest du als Unterstützer mit Namen genannt werden? Melde dich dazu bitte kurz per E-Mail an {0}.',
     supportFees: 'Bei Ko-fi (die Zahlung läuft dort über PayPal) und bei PayPal fallen Gebühren an, deshalb kommt nicht der volle Betrag bei uns an. Eine Überweisung kommt ohne diese Gebühren an.',
     supportKofi: 'Über Ko-fi',
     supportPaypal: 'Über PayPal',
@@ -94,6 +95,8 @@ const STRINGS = {
     poweredBy: 'Powered by',
     supportProgress: '{0} von {1} erreicht',
     privacyLink: 'Datenschutz',
+    sourceLink: 'Quellcode auf GitHub',
+    dataLink: 'Daten auf GitHub',
     imprintLink: 'Impressum',
     backToTable: 'Zur Tabelle',
     groupToggle: 'Gruppieren',
@@ -139,7 +142,7 @@ const STRINGS = {
     langSwitch: 'Sprache'
   },
   en: {
-    title: 'Material database',
+    title: 'Material database for the bicycle caravan community',
     loading: 'Loading materials ...',
     loadError: 'The data could not be loaded.',
     search: 'Search by name or manufacturer',
@@ -217,6 +220,7 @@ const STRINGS = {
     nameAskDone: 'Thank you, we will add you to the list once we have checked your report.',
     nameAskError: 'Unfortunately that did not work. Please try again later with a new report.',
     bankTitle: 'Bank transfer',
+    bankNameHint: 'Would you like to be named as a supporter? Please send a short email to {0}.',
     supportFees: 'Ko-fi (where the payment is processed by PayPal) and PayPal charge fees, so not the full amount reaches us. A bank transfer arrives without these fees.',
     supportKofi: 'Via Ko-fi',
     supportPaypal: 'Via PayPal',
@@ -231,6 +235,8 @@ const STRINGS = {
     poweredBy: 'Powered by',
     supportProgress: '{0} of {1} reached',
     privacyLink: 'Privacy',
+    sourceLink: 'Source code on GitHub',
+    dataLink: 'Data on GitHub',
     imprintLink: 'Legal notice',
     backToTable: 'Back to the table',
     groupToggle: 'Group',

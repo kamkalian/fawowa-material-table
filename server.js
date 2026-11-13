@@ -9,6 +9,8 @@ import { registerAdminRoutes } from './lib/admin-routes.js';
 import { registerMeldungRoutes } from './lib/meldungen-routes.js';
 import { adminPfad } from './lib/pfade.js';
 import { pruefeAlleLinks } from './lib/linkpruefung.js';
+import { sicherheitsHeader, fehlerAntwort } from './lib/sicherheit.js';
+import { Begrenzung } from './lib/spam.js';
 import { ladeUnterstuetzung, ladePoweredBy, oeffentlicheAngaben, verarbeiteWebhook, uebernehmeLokaleUnterstuetzer } from './lib/unterstuetzung.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
@@ -26,6 +28,9 @@ const ADMIN_PFAD = adminPfad();
 // Der Container veröffentlicht keinen Port, erreichbar ist er nur über Caddy.
 app.set('trust proxy', 1);
 app.disable('x-powered-by');
+// Einfacher Parser für Adressparameter (Node-eigen statt "qs"): die Anwendung braucht keine verschachtelten Parameter
+app.set('query parser', 'simple');
+app.use(sicherheitsHeader);
 app.use(express.json({ limit: '50kb' }));
 
 // Gebaute Oberfläche (nur im Betrieb; in der Entwicklung liefert Vite sie aus)
@@ -107,15 +112,20 @@ app.get('/api/v2/materialien/:id', (req, res) => {
 const UNTERSTUETZUNG = ladeUnterstuetzung();
 const POWERED_BY = ladePoweredBy();
 // Angaben zum Betreiber für die Datenschutzerklärung; in der .env steht \n für einen Zeilenumbruch
-const BETREIBER = (process.env.OPERATOR || '').replace(/\\n/g, '\n').trim().slice(0, 600) || null;
+const BETREIBER = (process.env.OPERATOR || '').replace(/\\n/g, '\n').trim().slice(0, 800) || null;
+// Name der verantwortlichen Person (Impressum, § 18 Abs. 2 MStV); ohne Angabe wird sie aus den Angaben zum Betreiber abgeleitet
+const BETREIBER_PERSON = (process.env.OPERATOR_PERSON || '').trim().slice(0, 200) || null;
 
 app.get('/api/v2/einstellungen', (req, res) => {
-  res.json({ adminPfad: ADMIN_PFAD, unterstuetzung: oeffentlicheAngaben(speicher, UNTERSTUETZUNG), poweredBy: POWERED_BY, betreiber: BETREIBER });
+  res.json({ adminPfad: ADMIN_PFAD, unterstuetzung: oeffentlicheAngaben(speicher, UNTERSTUETZUNG), poweredBy: POWERED_BY, betreiber: BETREIBER, betreiberPerson: BETREIBER_PERSON });
 });
 
 // Ko-fi meldet hier neue Zuwendungen (nur mit KOFI_VERIFICATION_TOKEN in der .env). Gespeichert wird nur der Betrag.
+const kofiBegrenzung = new Begrenzung({ max: 120, fensterMs: 60 * 60 * 1000 }); // großzügig: Ko-fi sendet selten, Ausfälle werden wiederholt
 app.post('/api/v2/kofi', express.urlencoded({ extended: false, limit: '20kb' }), (req, res) => {
   if (!UNTERSTUETZUNG.webhook) return res.status(404).json({ error: 'Not found' });
+  if (!kofiBegrenzung.erlaubt(req.ip)) return res.status(429).json({ error: 'Too many requests' });
+  kofiBegrenzung.zaehle(req.ip);
   const ergebnis = verarbeiteWebhook(speicher, req.body, { token: process.env.KOFI_VERIFICATION_TOKEN?.trim(), waehrung: UNTERSTUETZUNG.waehrung, wiederkehrendMonate: UNTERSTUETZUNG.wiederkehrendMonate });
   // Nur das Ergebnis wird protokolliert, keine Daten der Spender
   console.log(`Ko-fi-Meldung: ${ergebnis}`);
@@ -146,6 +156,9 @@ app.get('*', (req, res) => {
     res.json({ message: 'Use Vite dev server at http://localhost:5173' });
   }
 });
+
+// Fehler als JSON, ohne Interna
+app.use(fehlerAntwort);
 
 const server = app.listen(PORT, () => {
   console.log(`API server running on http://localhost:${PORT} (Admin-Bereich: ${ADMIN_PFAD})`);

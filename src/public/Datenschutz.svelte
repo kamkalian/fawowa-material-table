@@ -59,10 +59,10 @@
         {
           h: 'Fehler melden und Materialien vorschlagen',
           p: [
-            'Über die Formulare kannst du Fehler melden oder neue Materialien vorschlagen. Gespeichert wird, was du eingibst: deine Angaben zum Material, ein Kommentar, eine Quelle und, wenn du es möchtest, eine Kontaktmöglichkeit. Die Kontaktangabe ist freiwillig. Bitte schreibe keine persönlichen Daten in die anderen Felder.',
+            'Über die Formulare kannst du Fehler melden oder neue Materialien vorschlagen. Gespeichert wird, was du eingibst: deine Angaben zum Material, ein Kommentar, eine Quelle und, wenn du es möchtest, eine Kontaktmöglichkeit sowie ein Name oder Pseudonym. Beides ist freiwillig. Bitte schreibe keine persönlichen Daten in die anderen Felder.',
             'Wir nutzen die Angaben, um die Datenbank zu pflegen und bei Rückfragen antworten zu können. Erledigte Meldungen bleiben zunächst gespeichert. Auf Wunsch löschen wir deine Meldung oder deine Kontaktangabe jederzeit.',
             'Nach dem Absenden fragen wir, ob wir dich als Unterstützer nennen dürfen. Nur wenn du ausdrücklich zustimmst und einen Namen oder ein Pseudonym angibst, speichern wir das zusammen mit deiner Meldung und tragen dich später in die öffentliche Liste der Unterstützer ein (siehe Abschnitt zur Unterstützung). Ohne deine Zustimmung wirst du nie genannt.',
-            'Als Schutz vor automatisch erzeugtem Spam zählt der Server, wie oft von einer IP-Adresse aus Meldungen kommen (höchstens fünf pro Stunde). Diese Zählung liegt nur im Arbeitsspeicher, wird nicht gespeichert und ist nach spätestens einer Stunde oder einem Neustart des Servers weg.',
+            'Als Schutz vor automatisch erzeugtem Spam zählt der Server, wie oft von einer IP-Adresse aus Meldungen kommen (höchstens fünf pro Stunde). Das Gleiche gilt für Fehlversuche beim Anmelden im Verwaltungsbereich. Diese Zählung liegt nur im Arbeitsspeicher, wird nicht gespeichert und ist nach spätestens einer Stunde oder einem Neustart des Servers weg.',
             'Rechtsgrundlage: berechtigtes Interesse an einer gepflegten Datenbank und am Schutz vor Missbrauch (Art. 6 Abs. 1 lit. f DSGVO), bei der Kontaktangabe deine Einwilligung (Art. 6 Abs. 1 lit. a DSGVO).'
           ]
         },
@@ -70,7 +70,8 @@
           h: 'Links zu anderen Seiten',
           p: [
             'Bei manchen Materialien stehen Links zu Quellen im Internet. Wenn du einen Link anklickst, verlässt du diese Seite. Für die Datenverarbeitung auf der anderen Seite ist deren Betreiber verantwortlich.',
-            'Der Server prüft von Zeit zu Zeit, ob diese Links noch erreichbar sind. Dabei werden nur die gespeicherten Adressen abgerufen. Daten von Besuchern sind daran nicht beteiligt.'
+            'Der Server prüft von Zeit zu Zeit, ob diese Links noch erreichbar sind. Dabei werden nur die gespeicherten Adressen abgerufen. Daten von Besuchern sind daran nicht beteiligt.',
+            'Am Seitenende stehen Links zu den Repositories dieses Projekts bei GitHub (Quellcode und Daten) und zur Internetseite des Betreibers. Es sind gewöhnliche Links: Beim Laden dieser Seite wird keine Verbindung zu GitHub aufgebaut. Erst wenn du einen davon anklickst, öffnet sich die jeweilige Seite, und der Anbieter erfährt technisch zwingend deine IP-Adresse und Angaben zu deinem Browser. GitHub gehört zu Microsoft; was dort verarbeitet wird, steht in der Datenschutzerklärung von GitHub.'
           ]
         },
         {
@@ -78,7 +79,7 @@
           nurMitUnterstuetzung: true,
           p: [
             'Die Zahlungswege Ko-fi und PayPal sind gewöhnliche Links. Beim Laden dieser Seite wird keine Verbindung zu diesen Diensten aufgebaut, es werden also keine Daten dorthin übertragen. Erst wenn du einen Link anklickst, öffnet sich die Seite des jeweiligen Anbieters, ein Dienst eines Drittanbieters. Dabei erfährt der Anbieter technisch zwingend deine IP-Adresse und Angaben zu deinem Browser; es können eigene Cookies gesetzt und Daten außerhalb der EU verarbeitet werden. Darauf haben wir keinen Einfluss. Was die Anbieter damit machen, steht in deren Datenschutzerklärungen. Wenn du das nicht möchtest, klicke die Links nicht an.',
-            'Überweist du uns Geld, erhalten wir von unserer Bank deine Kontodaten (Name, IBAN, Betrag, Verwendungszweck). Wir brauchen sie für die Buchhaltung unseres Gewerbes und speichern sie für die gesetzlichen Aufbewahrungsfristen.',
+            'Überweist du uns Geld, erhalten wir von unserer Bank deine Kontodaten (Name, IBAN, Betrag, Verwendungszweck). Wir brauchen sie für die Buchhaltung unseres Gewerbes und speichern sie für die gesetzlichen Aufbewahrungsfristen (Rechtsgrundlage: rechtliche Verpflichtung, Art. 6 Abs. 1 lit. c DSGVO).',
             'Wenn du möchtest, nennen wir dich auf dieser Seite als Unterstützer. Das geschieht nur mit deiner ausdrücklichen Einwilligung (Art. 6 Abs. 1 lit. a DSGVO): bei Ko-fi, wenn du deinen Beitrag dort als „öffentlich“ markierst, sonst, wenn du uns dein Einverständnis mitteilst. Angezeigt werden ausschließlich der Name oder das Pseudonym, das du angibst, und Abzeichen, die wir dir von Hand zuordnen. Beträge einzelner Personen zeigen wir nicht. Dafür speichern wir deinen Namen, die Abzeichen und den Zeitpunkt der Einwilligung in der Liste der Unterstützer im öffentlichen Datenrepository auf GitHub (dort steht dein Name also für jeden lesbar, auch im Verlauf der Änderungen). Deine Beträge speichern wir getrennt davon nur auf unserem Server und veröffentlichen sie nicht. Du kannst deine Einwilligung jederzeit mit Wirkung für die Zukunft widerrufen: Schreib uns an die oben genannte Adresse, dann nehmen wir dich aus der Liste, löschen deinen Namen auch aus dem Verlauf des Repositorys und trennen ihn von deinen Beträgen. Deine Beträge bleiben ohne Namen im Fortschrittsbalken erhalten. GitHub ist ein Dienst eines Drittanbieters; was dort über Besucher des Repositorys verarbeitet wird, steht in dessen Datenschutzerklärung.'
           ],
           links: [{ href: 'https://ko-fi.com/privacy', text: 'Datenschutzerklärung von Ko-fi' }, { href: 'https://www.paypal.com/de/legalhub/privacy-full', text: 'Datenschutzerklärung von PayPal' }, { href: 'https://docs.github.com/de/site-policy/privacy-policies/github-general-privacy-statement', text: 'Datenschutzerklärung von GitHub' }],
@@ -130,10 +131,10 @@
         {
           h: 'Reporting errors and suggesting materials',
           p: [
-            'The forms let you report errors or suggest new materials. What you enter is stored: your details about the material, a comment, a source and, if you wish, a way to contact you. The contact detail is optional. Please do not put personal data into the other fields.',
+            'The forms let you report errors or suggest new materials. What you enter is stored: your details about the material, a comment, a source and, if you wish, a way to contact you and a name or pseudonym. Both are optional. Please do not put personal data into the other fields.',
             'We use it to maintain the database and to be able to reply to questions. Completed reports are kept for now. On request we delete your report or your contact detail at any time.',
             'After sending we ask whether we may name you as a supporter. Only if you explicitly agree and give a name or pseudonym do we store it together with your report and later add you to the public supporters list (see the section on supporting the project). Without your consent you are never named.',
-            'To protect against automatically generated spam, the server counts how often reports come from one IP address (at most five per hour). This count exists only in memory, is not stored, and is gone after one hour at the latest or when the server restarts.',
+            'To protect against automatically generated spam, the server counts how often reports come from one IP address (at most five per hour). The same applies to failed sign-in attempts in the administration area. This count exists only in memory, is not stored, and is gone after one hour at the latest or when the server restarts.',
             'Legal basis: legitimate interest in a well-kept database and in protection against abuse (Art. 6(1)(f) GDPR); for the contact detail, your consent (Art. 6(1)(a) GDPR).'
           ]
         },
@@ -141,7 +142,8 @@
           h: 'Links to other sites',
           p: [
             'Some materials have links to sources on the internet. When you click a link you leave this site. The operator of the other site is responsible for data processing there.',
-            'From time to time the server checks whether these links can still be reached. Only the stored addresses are requested; no visitor data is involved.'
+            'From time to time the server checks whether these links can still be reached. Only the stored addresses are requested; no visitor data is involved.',
+            'At the bottom of the page there are links to this project’s repositories on GitHub (source code and data) and to the operator’s website. They are ordinary links: loading this page makes no connection to GitHub. Only when you click one does the respective site open, and the provider then necessarily learns your IP address and details about your browser. GitHub belongs to Microsoft; what it processes is described in GitHub’s privacy statement.'
           ]
         },
         {
@@ -149,7 +151,7 @@
           nurMitUnterstuetzung: true,
           p: [
             'The payment options Ko-fi and PayPal are ordinary links. Loading this page makes no connection to these services, so no data is sent there. Only when you click a link does the provider’s site open, a third-party service. The provider then necessarily learns your IP address and details about your browser; it may set its own cookies, and data may be processed outside the EU. We have no influence on this. What the providers do with it is described in their privacy policies. If you do not want this, do not click the links.',
-            'If you transfer money to us, our bank gives us your account details (name, IBAN, amount, reference). We need them for the bookkeeping of our business and keep them for the statutory retention periods.',
+            'If you transfer money to us, our bank gives us your account details (name, IBAN, amount, reference). We need them for the bookkeeping of our business and keep them for the statutory retention periods (legal basis: legal obligation, Art. 6(1)(c) GDPR).',
             'If you wish, we name you on this page as a supporter. This only happens with your explicit consent (Art. 6(1)(a) GDPR): on Ko-fi, when you mark your contribution as “public” there, otherwise when you tell us you agree. Only the name or pseudonym you give and badges that we assign to you by hand are displayed. We do not show amounts of individual people. For this we store your name, the badges and the time of your consent in the supporters list in the public data repository on GitHub (so your name is readable by anyone there, including in the change history). Your amounts are stored separately, only on our server, and are not published. You can withdraw your consent at any time with effect for the future: write to us at the address above and we will remove you from the list, delete your name from the repository history as well and separate it from your amounts. Your amounts remain in the progress bar without a name. GitHub is a third-party service; what it processes about visitors of the repository is described in its privacy policy.'
           ],
           links: [{ href: 'https://ko-fi.com/privacy', text: 'Ko-fi privacy policy' }, { href: 'https://www.paypal.com/uk/legalhub/privacy-full', text: 'PayPal privacy policy' }, { href: 'https://docs.github.com/en/site-policy/privacy-policies/github-general-privacy-statement', text: 'GitHub privacy statement' }],
