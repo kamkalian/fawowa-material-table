@@ -251,7 +251,7 @@
     />
 
     {#if unterstuetzung}
-      <Support {lang} angaben={unterstuetzung} />
+      <Support {lang} angaben={unterstuetzung} onsuggest={() => (report = { mode: 'vorschlag' })} />
     {/if}
 
     <footer class="fuss">

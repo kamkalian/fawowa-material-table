@@ -6,7 +6,7 @@
   // Bereich „Projekt unterstützen“: Fortschrittsbalken, Zahlungswege und Unterstützer mit Abzeichen.
   // angaben: { wege: { kofi, paypal, ueberweisung }, ziel, erreicht, waehrung, text, zielText, unterstuetzer: [{ name, abzeichen }] }
   // aus /api/v2/einstellungen. Beträge einzelner Personen gibt es dort nicht.
-  let { lang, angaben } = $props();
+  let { lang, angaben, onsuggest = null } = $props();
 
   let text = $derived(angaben.text?.[lang] || angaben.text?.de || t(lang, 'supportText'));
   let zielText = $derived(angaben.zielText?.[lang] || angaben.zielText?.de || '');
@@ -34,44 +34,58 @@
   <h2 id="unterstuetzen-titel">{t(lang, 'supportTitle')}</h2>
   <p class="text">{text}</p>
 
-  {#if angaben.ziel > 0}
-    <div class="balken" role="progressbar" aria-valuemin="0" aria-valuemax={angaben.ziel}
-      aria-valuenow={Math.min(angaben.erreicht, angaben.ziel)} aria-label={zielText || stand}>
-      <div class="fuellung" style:width="{anteil}%"></div>
-    </div>
-    <p class="stand">{stand}{zielText ? ` · ${zielText}` : ''}</p>
-  {/if}
+  <h3 class="kopf-abschnitt">{t(lang, 'supportWays')}</h3>
 
-  <div class="wege">
-    {#if angaben.wege.kofi}
-      <a class="btn btn-outline btn-sm" href={angaben.wege.kofi} target="_blank" rel="noopener noreferrer">
-        <Icon name="ui-cup" size={14} /> {t(lang, 'supportKofi')}
-      </a>
-    {/if}
-    {#if angaben.wege.paypal}
-      <a class="btn btn-outline btn-sm" href={angaben.wege.paypal} target="_blank" rel="noopener noreferrer">
-        <Icon name="ui-cup" size={14} /> {t(lang, 'supportPaypal')}
-      </a>
+  <div class="weg">
+    <h4>{t(lang, 'supportKnowTitle')}</h4>
+    <p class="text">{t(lang, 'supportKnowText')}</p>
+    {#if onsuggest}
+      <button class="btn btn-outline btn-sm" type="button" onclick={onsuggest}>{t(lang, 'suggest')}</button>
     {/if}
   </div>
 
-  {#if bank}
-    <div class="bank">
-      <h3>{t(lang, 'supportBank')}</h3>
-      <dl>
-        <dt>{t(lang, 'supportHolder')}</dt><dd>{bank.inhaber}</dd>
-        <dt>IBAN</dt>
-        <dd>
-          <span class="iban">{bank.iban}</span>
-          <button class="btn btn-ghost btn-sm" type="button" onclick={() => kopiere(bank.iban)}>
-            {kopiert ? t(lang, 'supportCopied') : t(lang, 'supportCopy')}
-          </button>
-        </dd>
-        {#if bank.bic}<dt>{t(lang, 'supportBic')}</dt><dd>{bank.bic}</dd>{/if}
-        {#if bank.zweck}<dt>{t(lang, 'supportReference')}</dt><dd>{bank.zweck}</dd>{/if}
-      </dl>
+  <div class="weg">
+    <h4>{t(lang, 'supportMoneyTitle')}</h4>
+    <p class="text">{t(lang, 'supportMoneyText')}</p>
+    <div class="wege">
+      {#if angaben.wege.kofi}
+        <a class="btn btn-outline btn-sm" href={angaben.wege.kofi} target="_blank" rel="noopener noreferrer">
+          <Icon name="ui-cup" size={14} /> {t(lang, 'supportKofi')}
+        </a>
+      {/if}
+      {#if angaben.wege.paypal}
+        <a class="btn btn-outline btn-sm" href={angaben.wege.paypal} target="_blank" rel="noopener noreferrer">
+          <Icon name="ui-cup" size={14} /> {t(lang, 'supportPaypal')}
+        </a>
+      {/if}
     </div>
-  {/if}
+
+    {#if bank}
+      <div class="bank">
+        <h5>{t(lang, 'supportBank')}</h5>
+        <dl>
+          <dt>{t(lang, 'supportHolder')}</dt><dd>{bank.inhaber}</dd>
+          <dt>IBAN</dt>
+          <dd>
+            <span class="iban">{bank.iban}</span>
+            <button class="btn btn-ghost btn-sm" type="button" onclick={() => kopiere(bank.iban)}>
+              {kopiert ? t(lang, 'supportCopied') : t(lang, 'supportCopy')}
+            </button>
+          </dd>
+          {#if bank.bic}<dt>{t(lang, 'supportBic')}</dt><dd>{bank.bic}</dd>{/if}
+          {#if bank.zweck}<dt>{t(lang, 'supportReference')}</dt><dd>{bank.zweck}</dd>{/if}
+        </dl>
+      </div>
+    {/if}
+
+    {#if angaben.ziel > 0}
+      <div class="balken" role="progressbar" aria-valuemin="0" aria-valuemax={angaben.ziel}
+        aria-valuenow={Math.min(angaben.erreicht, angaben.ziel)} aria-label={zielText || stand}>
+        <div class="fuellung" style:width="{anteil}%"></div>
+      </div>
+      <p class="stand">{stand}{zielText ? ` · ${zielText}` : ''}</p>
+    {/if}
+  </div>
 
   {#if angaben.unterstuetzer?.length}
     <div class="danke">
@@ -102,6 +116,10 @@
   .unterstuetzen { margin-top: 2rem; padding: 1.25rem; border: 1px solid var(--border); border-radius: var(--radius); display: flex; flex-direction: column; align-items: flex-start; gap: .75rem; max-width: 40rem; }
   h2 { font-size: 1rem; font-weight: 600; margin: 0; }
   h3 { font-size: .8125rem; font-weight: 600; margin: 0 0 .35rem; }
+  .kopf-abschnitt { margin: .5rem 0 0; }
+  .weg { display: flex; flex-direction: column; align-items: flex-start; gap: .5rem; width: 100%; padding-top: .75rem; border-top: 1px solid var(--border); }
+  h4 { font-size: .875rem; font-weight: 600; margin: 0; }
+  h5 { font-size: .8125rem; font-weight: 600; margin: 0 0 .35rem; }
   .text { font-size: .8125rem; color: var(--fg-muted); }
   .balken { width: 100%; height: .5rem; background: var(--bg-hover); border: 1px solid var(--border); border-radius: 999px; overflow: hidden; }
   .fuellung { height: 100%; background: var(--primary); border-radius: 999px; transition: width .4s; }
