@@ -61,6 +61,7 @@
           p: [
             'Über die Formulare kannst du Fehler melden oder neue Materialien vorschlagen. Gespeichert wird, was du eingibst: deine Angaben zum Material, ein Kommentar, eine Quelle und, wenn du es möchtest, eine Kontaktmöglichkeit. Die Kontaktangabe ist freiwillig. Bitte schreibe keine persönlichen Daten in die anderen Felder.',
             'Wir nutzen die Angaben, um die Datenbank zu pflegen und bei Rückfragen antworten zu können. Erledigte Meldungen bleiben zunächst gespeichert. Auf Wunsch löschen wir deine Meldung oder deine Kontaktangabe jederzeit.',
+            'Nach dem Absenden fragen wir, ob wir dich als Unterstützer nennen dürfen. Nur wenn du ausdrücklich zustimmst und einen Namen oder ein Pseudonym angibst, speichern wir das zusammen mit deiner Meldung und tragen dich später in die öffentliche Liste der Unterstützer ein (siehe Abschnitt zur Unterstützung). Ohne deine Zustimmung wirst du nie genannt.',
             'Als Schutz vor automatisch erzeugtem Spam zählt der Server, wie oft von einer IP-Adresse aus Meldungen kommen (höchstens fünf pro Stunde). Diese Zählung liegt nur im Arbeitsspeicher, wird nicht gespeichert und ist nach spätestens einer Stunde oder einem Neustart des Servers weg.',
             'Rechtsgrundlage: berechtigtes Interesse an einer gepflegten Datenbank und am Schutz vor Missbrauch (Art. 6 Abs. 1 lit. f DSGVO), bei der Kontaktangabe deine Einwilligung (Art. 6 Abs. 1 lit. a DSGVO).'
           ]
@@ -131,6 +132,7 @@
           p: [
             'The forms let you report errors or suggest new materials. What you enter is stored: your details about the material, a comment, a source and, if you wish, a way to contact you. The contact detail is optional. Please do not put personal data into the other fields.',
             'We use it to maintain the database and to be able to reply to questions. Completed reports are kept for now. On request we delete your report or your contact detail at any time.',
+            'After sending we ask whether we may name you as a supporter. Only if you explicitly agree and give a name or pseudonym do we store it together with your report and later add you to the public supporters list (see the section on supporting the project). Without your consent you are never named.',
             'To protect against automatically generated spam, the server counts how often reports come from one IP address (at most five per hour). This count exists only in memory, is not stored, and is gone after one hour at the latest or when the server restarts.',
             'Legal basis: legitimate interest in a well-kept database and in protection against abuse (Art. 6(1)(f) GDPR); for the contact detail, your consent (Art. 6(1)(a) GDPR).'
           ]

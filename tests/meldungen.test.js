@@ -4,8 +4,9 @@ import express from 'express';
 import { neuerSpeicher } from './hilfen.js';
 import { anlegenMaterial, setzeWert, FehlerEingabe } from '../lib/admin.js';
 import {
-  legeMeldungAn, listeMeldungen, zaehleOffene, uebernehmeFehler, schliesseAb, lehneAb
+  legeMeldungAn, listeMeldungen, zaehleOffene, uebernehmeFehler, schliesseAb, lehneAb, nenneAlsUnterstuetzer
 } from '../lib/meldungen.js';
+import { ladeUnterstuetzung, oeffentlicheAngaben, uebersichtUnterstuetzung } from '../lib/unterstuetzung.js';
 import { erzeugeToken, pruefeToken, Begrenzung, MIN_MS, MAX_MS } from '../lib/spam.js';
 import { registerMeldungRoutes } from '../lib/meldungen-routes.js';
 
@@ -154,7 +155,10 @@ async function starteServer(optionen) {
   const senden = (body, ip = '9.9.9.9') => fetch(`${basis}/api/v2/meldungen`, {
     method: 'POST', headers: { 'Content-Type': 'application/json', 'X-Forwarded-For': ip }, body: JSON.stringify(body)
   });
-  return { db, material, token, senden };
+  const nennung = (id, body) => fetch(`${basis}/api/v2/meldungen/${id}/nennung`, {
+    method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body)
+  });
+  return { db, material, token, senden, nennung };
 }
 
 test('HTTP: gültige Meldung wird gespeichert, Token zu schnell und ungültig werden abgelehnt', async () => {
@@ -194,4 +198,50 @@ test('HTTP: sechste Meldung derselben Adresse in einer Stunde wird abgelehnt, an
   assert.equal((await senden({ token: await token(), art: 'fehler', material_id: material, kommentar: 'zu viel' }, '7.7.7.7')).status, 429);
   assert.equal((await senden({ token: await token(), art: 'fehler', material_id: material, kommentar: 'andere Adresse' }, '8.8.8.8')).status, 201);
   assert.equal(zaehleOffene(db), 6);
+});
+
+test('HTTP: der Melder kann danach der Nennung als Unterstützer zustimmen, nur mit dem Token und nur einmal', async () => {
+  const { db, material, token, senden, nennung } = await starteServer({ minMs: 0 });
+  const antwort = await (await senden({ token: await token(), art: 'fehler', material_id: material, kommentar: 'Test', kontakt: 'x@example.org', melder_name: ' Emma ' })).json();
+  assert.ok(antwort.id > 0 && antwort.token.length >= 32);
+
+  // ohne oder mit falschem Token, mit fremder Meldung: abgelehnt
+  assert.equal((await nennung(antwort.id, {})).status, 403);
+  assert.equal((await nennung(antwort.id, { token: 'falsch' })).status, 403);
+  assert.equal((await nennung(9999, { token: antwort.token })).status, 403);
+  assert.equal(listeMeldungen(db)[0].nennung, null);
+  assert.equal(listeMeldungen(db)[0].melder_name, 'Emma');
+
+  // ein mitgeschickter anderer Name wird ignoriert: es zählt der Name aus der Meldung
+  assert.equal((await nennung(antwort.id, { token: antwort.token, name: 'Fremder' })).status, 200);
+  const m = listeMeldungen(db)[0];
+  assert.equal(m.nennung.name, 'Emma');
+  assert.equal(m.nennung.eingetragen, false);
+  assert.equal((await nennung(antwort.id, { token: antwort.token })).status, 403); // gilt nur einmal
+  assert.equal(listeMeldungen(db)[0].nennung.name, 'Emma');
+  assert.ok(!JSON.stringify(listeMeldungen(db)).includes(antwort.token));                          // der Token steht nicht in der Admin-Liste
+
+  // Admin trägt sie als Unterstützer ein: ohne Abzeichen, mit Vermerk der Zustimmung
+  const einst = ladeUnterstuetzung({ SUPPORT_URL: 'https://ko-fi.com/x' });
+  nenneAlsUnterstuetzer(db, antwort.id);
+  const u = uebersichtUnterstuetzung(db, einst).unterstuetzer;
+  assert.deepEqual(u.map(x => [x.name, x.abzeichen, x.zustimmung_art]), [['Emma', [], 'meldung']]);
+  assert.deepEqual(oeffentlicheAngaben(db, einst).unterstuetzer, [{ name: 'Emma', abzeichen: [] }]);
+  assert.throws(() => nenneAlsUnterstuetzer(db, antwort.id), FehlerEingabe);                       // nicht zweimal
+});
+
+test('Nennung: ohne Zustimmung des Melders lässt sich niemand eintragen, der Honigtopf liefert keinen Token', async () => {
+  const { db, material, token, senden } = await starteServer({ minMs: 0 });
+  const id = (await (await senden({ token: await token(), art: 'fehler', material_id: material, kommentar: 'Test' })).json()).id;
+  assert.throws(() => nenneAlsUnterstuetzer(db, id), FehlerEingabe);
+  const bot = await (await senden({ token: await token(), art: 'fehler', material_id: material, kommentar: 'Bot', website: 'http://spam.example' })).json();
+  assert.equal(bot.token, undefined);
+});
+
+test('Nennung: ohne Namen in der Meldung gibt es keinen Token zum Zustimmen', async () => {
+  const { db, material, token, senden } = await starteServer({ minMs: 0 });
+  const antwort = await (await senden({ token: await token(), art: 'fehler', material_id: material, kommentar: 'Test' })).json();
+  assert.ok(antwort.id > 0);
+  assert.equal(antwort.token, null);
+  assert.equal(listeMeldungen(db)[0].melder_name, null);
 });

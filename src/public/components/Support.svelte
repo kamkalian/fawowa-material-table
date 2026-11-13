@@ -20,6 +20,7 @@
   // Abzeichen, die tatsächlich vergeben sind, für die Erklärung darunter
   let vergeben = $derived(ABZEICHEN.filter(a => angaben.unterstuetzer?.some(u => u.abzeichen?.includes(a.id))));
 
+  let bankOffen = $state(false);
   let kopiert = $state(false);
   async function kopiere(iban) {
     try {
@@ -50,6 +51,7 @@
         <h4>{t(lang, 'supportMoneyTitle')}</h4>
         <p class="text">{t(lang, 'supportMoneyText')}</p>
         <p class="text">{t(lang, 'supportFees')}</p>
+        <p class="text">{t(lang, 'supportSync')}</p>
         <div class="wege">
           {#if angaben.wege.kofi}
             <a class="btn btn-outline btn-sm" href={angaben.wege.kofi} target="_blank" rel="noopener noreferrer">
@@ -61,25 +63,13 @@
               <Icon name="ui-cup" size={14} /> {t(lang, 'supportPaypal')}
             </a>
           {/if}
+          {#if bank}
+            <button class="btn btn-outline btn-sm" type="button" onclick={() => (bankOffen = true)}>
+              <Icon name="ui-cup" size={14} /> {t(lang, 'supportBank')}
+            </button>
+          {/if}
         </div>
 
-        {#if bank}
-          <div class="bank">
-            <h5>{t(lang, 'supportBank')}</h5>
-            <dl>
-              <dt>{t(lang, 'supportHolder')}</dt><dd>{bank.inhaber}</dd>
-              <dt>IBAN</dt>
-              <dd>
-                <span class="iban">{bank.iban}</span>
-                <button class="btn btn-ghost btn-sm" type="button" onclick={() => kopiere(bank.iban)}>
-                  {kopiert ? t(lang, 'supportCopied') : t(lang, 'supportCopy')}
-                </button>
-              </dd>
-              {#if bank.bic}<dt>{t(lang, 'supportBic')}</dt><dd>{bank.bic}</dd>{/if}
-              {#if bank.zweck}<dt>{t(lang, 'supportReference')}</dt><dd>{bank.zweck}</dd>{/if}
-            </dl>
-          </div>
-        {/if}
       </div>
     </div>
 
@@ -126,6 +116,32 @@
   </div>
 </section>
 
+<svelte:window onkeydown={(e) => e.key === 'Escape' && bankOffen && (bankOffen = false)} />
+
+{#if bankOffen && bank}
+  <div class="modal-overlay" role="presentation">
+    <div class="modal bank-modal" role="dialog" aria-modal="true" aria-label={t(lang, 'bankTitle')}>
+      <div class="bank-kopf">
+        <h2>{t(lang, 'bankTitle')}</h2>
+        <button type="button" class="btn btn-ghost btn-icon" aria-label={t(lang, 'close')} title={t(lang, 'close')} onclick={() => (bankOffen = false)}>×</button>
+      </div>
+      <dl>
+        <dt>{t(lang, 'supportHolder')}</dt><dd>{bank.inhaber}</dd>
+        <dt>IBAN</dt>
+        <dd>
+          <span class="iban">{bank.iban}</span>
+          <button class="btn btn-ghost btn-sm" type="button" onclick={() => kopiere(bank.iban)}>
+            {kopiert ? t(lang, 'supportCopied') : t(lang, 'supportCopy')}
+          </button>
+        </dd>
+        {#if bank.bic}<dt>{t(lang, 'supportBic')}</dt><dd>{bank.bic}</dd>{/if}
+        {#if bank.zweck}<dt>{t(lang, 'supportReference')}</dt><dd>{bank.zweck}</dd>{/if}
+      </dl>
+      <p class="notiz">{t(lang, 'supportSync')}</p>
+    </div>
+  </div>
+{/if}
+
 <style>
   .unterstuetzen { margin-top: 2rem; padding: 1.5rem; border: 1px solid var(--border); border-radius: var(--radius); display: flex; flex-direction: column; gap: .75rem; }
   h2 { font-size: 1.125rem; font-weight: 600; margin: 0; }
@@ -146,7 +162,9 @@
   .weg + .weg { padding-top: 1rem; border-top: 1px solid var(--border); }
   .wege { display: flex; flex-wrap: wrap; gap: .5rem; }
 
-  .bank { font-size: .875rem; }
+  .bank-modal { max-width: 28rem; padding: 1.25rem 1.5rem 1.5rem; display: flex; flex-direction: column; gap: 1rem; font-size: .9375rem; }
+  .bank-kopf { display: flex; justify-content: space-between; align-items: center; }
+  .bank-kopf h2 { margin: 0; font-size: 1.0625rem; }
   dl { display: grid; grid-template-columns: max-content 1fr; gap: .15rem .75rem; margin: 0; }
   dt { color: var(--fg-muted); }
   dd { margin: 0; word-break: break-word; }

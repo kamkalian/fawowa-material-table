@@ -14,9 +14,13 @@
   let fehler = $state('');
   let website = $state(''); // Honigtopf: bleibt bei Menschen leer
 
+  // Nach dem Absenden: darf der Melder als Unterstützer genannt werden?
+  let nennung = $state({ id: null, token: null, phase: 'frage' }); // phase: frage | senden | ja | nein | fehler
+
   let kommentar = $state('');
   let quelle = $state('');
   let kontakt = $state('');
+  let melderName = $state('');
 
   // Fehlermeldung
   let eigenschaft = $state('');
@@ -59,6 +63,20 @@
     return formatValue(p, material?.werte[p.kurzwort], lang) ?? t(lang, 'empty');
   }
 
+  async function zustimmen() {
+    nennung.phase = 'senden';
+    try {
+      const res = await fetch(`/api/v2/meldungen/${nennung.id}/nennung`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ token: nennung.token })
+      });
+      nennung.phase = res.ok ? 'ja' : 'fehler';
+    } catch {
+      nennung.phase = 'fehler';
+    }
+  }
+
   async function senden(e) {
     e.preventDefault();
     fehler = '';
@@ -95,9 +113,14 @@
       const res = await fetch('/api/v2/meldungen', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ ...koerper, kommentar, quelle, kontakt, token, website })
+        body: JSON.stringify({ ...koerper, kommentar, quelle, kontakt, melder_name: melderName, token, website })
       });
-      if (res.status === 201) { status = 'fertig'; return; }
+      if (res.status === 201) {
+        const antwort = await res.json().catch(() => ({}));
+        nennung = { id: antwort.id ?? null, token: antwort.token ?? null, phase: 'frage' };
+        status = 'fertig';
+        return;
+      }
       const daten = await res.json().catch(() => ({}));
       fehler = daten.error || t(lang, 'sendError');
       // Ein abgelaufener oder zu schneller Token wird neu geholt, damit ein zweiter Versuch klappt
@@ -124,6 +147,22 @@
       <div class="danke" role="status">
         <h3>{t(lang, 'thanksTitle')}</h3>
         <p>{t(lang, 'thanksText')}</p>
+
+        {#if nennung.token && melderName.trim() && nennung.phase !== 'nein'}
+          <div class="nennung">
+            {#if nennung.phase === 'ja'}
+              <p>{t(lang, 'nameAskDone')}</p>
+            {:else}
+              <h4>{t(lang, 'nameAskTitle')}</h4>
+              <p class="hinweis">{t(lang, 'nameAskText', melderName.trim())}</p>
+              {#if nennung.phase === 'fehler'}<p class="fehler" role="alert">{t(lang, 'nameAskError')}</p>{/if}
+              <div class="aktionen">
+                <button type="button" class="btn btn-ghost" disabled={nennung.phase === 'senden'} onclick={() => (nennung.phase = 'nein')}>{t(lang, 'nameAskNo')}</button>
+                <button type="button" class="btn btn-outline" disabled={nennung.phase === 'senden'} onclick={zustimmen}>{t(lang, 'nameAskYes')}</button>
+              </div>
+            {/if}
+          </div>
+        {/if}
         <button type="button" class="btn btn-primary" onclick={onclose}>{t(lang, 'close')}</button>
       </div>
     {:else}
@@ -200,6 +239,12 @@
           <span>{t(lang, 'fieldComment')}</span>
           <textarea class="input" rows="3" maxlength="2000" bind:value={kommentar}></textarea>
         </label>
+        <label class="feld">
+          <span>{t(lang, 'fieldReporter')}</span>
+          <input class="input" maxlength="60" autocomplete="nickname" bind:value={melderName} />
+          <span class="hinweis">{t(lang, 'fieldReporterHint')}</span>
+        </label>
+
         <div class="zweispaltig">
           <label class="feld">
             <span>{t(lang, 'fieldSource')}</span>
@@ -246,6 +291,8 @@
   .hinweis { color: var(--fg-muted); font-size: .75rem; }
   .fehler { color: var(--danger); font-size: .8125rem; }
   .aktionen { display: flex; justify-content: flex-end; gap: .5rem; }
+  .nennung { border-top: 1px solid var(--border); padding-top: 1rem; width: 100%; text-align: left; display: flex; flex-direction: column; gap: .5rem; }
+  .nennung h4 { margin: 0; font-size: .9375rem; }
   .danke { text-align: center; padding: 1.5rem .5rem; display: flex; flex-direction: column; gap: .75rem; align-items: center; }
   .hp { position: absolute; left: -10000px; top: auto; width: 1px; height: 1px; overflow: hidden; }
   @media (max-width: 560px) { .zeile { grid-template-columns: 1fr; } }

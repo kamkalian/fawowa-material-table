@@ -174,7 +174,7 @@
             </td>
             <td class="nowrap">{geld(u.gesamt)}</td>
             <td>{u.anzahl}</td>
-            <td class="nowrap">{datum(u.zustimmung_am)} ({u.zustimmung_art === 'kofi-oeffentlich' ? 'Ko-fi öffentlich' : 'von Hand'})</td>
+            <td class="nowrap">{datum(u.zustimmung_am)} ({u.zustimmung_art === 'kofi-oeffentlich' ? 'Ko-fi öffentlich' : u.zustimmung_art === 'meldung' ? 'beim Melden' : 'von Hand'})</td>
             <td class="nowrap"><button class="btn btn-ghost btn-sm" onclick={() => oeffne(u)}>Bearbeiten</button></td>
           </tr>
         {:else}
@@ -206,7 +206,7 @@
             <input type="checkbox" bind:checked={form.zustimmung} /> Die Person hat der Anzeige ihres Namens auf der Seite ausdrücklich zugestimmt
           </label>
         {:else}
-          <p class="hinweis">Zustimmung: {datum(person.zustimmung_am)} ({person.zustimmung_art === 'kofi-oeffentlich' ? 'bei Ko-fi als öffentlich markiert' : 'von Hand eingetragen'})</p>
+          <p class="hinweis">Zustimmung: {datum(person.zustimmung_am)} ({person.zustimmung_art === 'kofi-oeffentlich' ? 'bei Ko-fi als öffentlich markiert' : person.zustimmung_art === 'meldung' ? 'beim Melden zugestimmt' : 'von Hand eingetragen'})</p>
         {/if}
       </section>
 

@@ -65,6 +65,10 @@
     }
   }
 
+  function unterstuetzerEintragen(m) {
+    return aktion(() => api('POST', `/meldungen/${m.id}/unterstuetzer`), `„${m.nennung.name}“ als Unterstützer eingetragen (Abzeichen im Reiter „Unterstützer“ vergeben).`);
+  }
+
   function uebernehmen(m) {
     const p = props.find(q => q.kurzwort === m.eigenschaft.kurzwort);
     return aktion(
@@ -183,9 +187,20 @@
         {#if m.kommentar}<p class="kommentar">{m.kommentar}</p>{/if}
         <p class="meta">
           {#if m.quelle}Quelle: <a href={m.quelle} target="_blank" rel="noopener noreferrer nofollow">{m.quelle}</a>{/if}
+          {#if m.melder_name}<span>Name: {m.melder_name}</span>{/if}
           {#if m.kontakt}<span>Kontakt: {m.kontakt}</span>{/if}
         </p>
         {#if m.admin_notiz}<p class="notiz">Notiz: {m.admin_notiz}</p>{/if}
+        {#if m.nennung}
+          <p class="nennung">
+            Möchte als Unterstützer genannt werden: <strong>{m.nennung.name}</strong>
+            {#if m.nennung.eingetragen}
+              <span class="hinweis">(schon eingetragen)</span>
+            {:else}
+              <button class="btn btn-outline btn-sm" onclick={() => unterstuetzerEintragen(m)}>Als Unterstützer eintragen</button>
+            {/if}
+          </p>
+        {/if}
 
         {#if ansicht === 'offen'}
           {#if ablehnenId === m.id}
