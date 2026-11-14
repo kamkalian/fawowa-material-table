@@ -19,6 +19,7 @@
   let kategorien = $state([]);
   let unterstuetzung = $state(null); // Angaben für den Bereich „Projekt unterstützen“ (aus der .env des Servers), sonst null
   let poweredBy = $state(null); // Betreiber der Firma für „Powered by“ am Seitenende
+  let hauptseiteUrl = $state(null); // Adresse der Hauptseite für den Link im Kopf
   let adminPfad = $state(null); // Adresse des Admin-Bereichs für den dezenten Link am Seitenende
   let state = $state(emptyState());
   let ignored = $state(0);
@@ -143,6 +144,7 @@
       const res = await fetch('/api/v2/einstellungen');
       if (res.ok) {
         const einst = await res.json();
+        hauptseiteUrl = einst.hauptseiteUrl ?? null;
         adminPfad = einst.adminPfad ?? null;
         unterstuetzung = einst.unterstuetzung ?? null;
         poweredBy = einst.poweredBy ?? null;
@@ -181,6 +183,9 @@
       {/if}
     </div>
     <div class="header-tools">
+      {#if hauptseiteUrl}
+        <a class="btn btn-ghost btn-sm" href={hauptseiteUrl}>{t(lang, 'backToMain')}</a>
+      {/if}
       <div class="lang-switch" role="group" aria-label={t(lang, 'langSwitch')}>
         <button class="btn btn-sm {lang === 'de' ? 'btn-primary' : 'btn-ghost'}" aria-pressed={lang === 'de'} onclick={() => setLang('de')}>DE</button>
         <button class="btn btn-sm {lang === 'en' ? 'btn-primary' : 'btn-ghost'}" aria-pressed={lang === 'en'} onclick={() => setLang('en')}>EN</button>

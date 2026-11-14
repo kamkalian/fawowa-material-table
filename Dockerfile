@@ -8,6 +8,7 @@ COPY package.json package-lock.json ./
 RUN npm ci
 
 COPY vite.config.js index.html admin.html ./
+COPY public/ ./public/
 COPY src/ ./src/
 COPY lib/ ./lib/
 RUN npm run build
@@ -41,6 +42,6 @@ USER node
 EXPOSE 3456
 
 HEALTHCHECK --interval=30s --timeout=5s --start-period=20s --retries=3 \
-  CMD node -e "fetch('http://127.0.0.1:3456/api/v2/kategorien').then(r => process.exit(r.ok ? 0 : 1)).catch(() => process.exit(1))"
+  CMD node -e "fetch('http://127.0.0.1:3456/api/health').then(r => process.exit(r.ok ? 0 : 1)).catch(() => process.exit(1))"
 
 CMD ["node", "server.js"]

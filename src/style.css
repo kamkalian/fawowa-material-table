@@ -304,7 +304,7 @@ tbody tr:first-child td{border-top:none}
 
 /* ===== RESPONSIVE ===== */
 @media(max-width:768px){
-  .header-inner{gap:.5rem}
+  .header-inner{gap:.5rem;flex-wrap:wrap}
   .filter-grid{grid-template-columns:1fr}
   .req-card .req-actions{flex-direction:column}
   .form-grid{grid-template-columns:1fr}

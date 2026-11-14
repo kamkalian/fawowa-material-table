@@ -8,6 +8,7 @@
   let lang = $state(startSprache());
   let betreiber = $state(null);
   let betreiberPerson = $state(null);
+  let hauptseiteUrl = $state(null);
 
   onMount(async () => {
     try {
@@ -16,6 +17,7 @@
         const d = await res.json();
         betreiber = d.betreiber ?? null;
         betreiberPerson = d.betreiberPerson ?? null;
+        hauptseiteUrl = d.hauptseiteUrl ?? null;
       }
     } catch { /* ohne Angaben erscheint ein Hinweis */ }
   });
@@ -80,7 +82,7 @@
 <SeitenKopf
   {lang}
   titel={inhalt.titel}
-  links={[{ href: '/' + zusatz(lang), text: inhalt.tabelle }, { href: '/datenschutz' + zusatz(lang), text: inhalt.datenschutz }]}
+  links={[{ href: '/' + zusatz(lang), text: inhalt.tabelle }, { href: '/datenschutz' + zusatz(lang), text: inhalt.datenschutz }, ...(hauptseiteUrl ? [{ href: hauptseiteUrl, text: t(lang, 'backToMain') }] : [])]}
   onlang={(l) => { lang = l; speichereSprache(l); }}
   ontheme={wechsleDesign}
 />

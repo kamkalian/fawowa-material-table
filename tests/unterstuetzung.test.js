@@ -4,7 +4,7 @@ import { join } from 'node:path';
 import { liesVerzeichnis } from '../lib/speicher.js';
 import assert from 'node:assert/strict';
 import {
-  ladeUnterstuetzung, ladePoweredBy, oeffentlicheAngaben, verarbeiteWebhook, uebersichtUnterstuetzung,
+  ladeUnterstuetzung, ladePoweredBy, ladeHauptseite, oeffentlicheAngaben, verarbeiteWebhook, uebersichtUnterstuetzung,
   traegeEingangEin, aendereEingang, loescheEingang, aendereUnterstuetzer, loescheUnterstuetzer, legeUnterstuetzerAn, uebernehmeLokaleUnterstuetzer, istWiederkehrend
 } from '../lib/unterstuetzung.js';
 import { FehlerEingabe } from '../lib/fehler.js';
@@ -352,4 +352,11 @@ test('Kontaktadresse für Unterstützer: nur eine gültige E-Mail-Adresse wird �
   assert.equal(mit('kontakt@kurm-industries.de'), 'kontakt@kurm-industries.de');
   assert.equal(mit(' kontakt@kurm-industries.de '), 'kontakt@kurm-industries.de');
   for (const schlecht of ['kein mail', 'a@b', '<script>@x.de', 'a b@c.de', '']) assert.equal(mit(schlecht), null, schlecht);
+});
+
+test('Hauptseite: Adresse aus HAUPTSEITE_URL, nur https, sonst der Standard', () => {
+  assert.equal(ladeHauptseite({}), 'https://fawowa-tools.de');
+  assert.equal(ladeHauptseite({ HAUPTSEITE_URL: 'https://start.example.org' }), 'https://start.example.org');
+  assert.equal(ladeHauptseite({ HAUPTSEITE_URL: 'http://unsicher.example' }), 'https://fawowa-tools.de');
+  assert.equal(ladeHauptseite({ HAUPTSEITE_URL: 'javascript:alert(1)' }), 'https://fawowa-tools.de');
 });

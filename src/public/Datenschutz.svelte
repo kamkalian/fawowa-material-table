@@ -10,6 +10,7 @@
   let lang = $state(startSprache());
   let betreiber = $state(null);
   let unterstuetzung = $state(null);
+  let hauptseiteUrl = $state(null);
 
   onMount(async () => {
     try {
@@ -18,6 +19,7 @@
         const e = await res.json();
         betreiber = e.betreiber ?? null;
         unterstuetzung = e.unterstuetzung ?? null;
+        hauptseiteUrl = e.hauptseiteUrl ?? null;
       }
     } catch { /* ohne diese Angaben bleibt der Rest des Textes gültig */ }
   });
@@ -181,7 +183,7 @@
 <SeitenKopf
   {lang}
   titel={inhalt.titel}
-  links={[{ href: '/' + (lang === 'en' ? '?lang=en' : ''), text: t(lang, 'backToTable') }, { href: '/impressum' + (lang === 'en' ? '?lang=en' : ''), text: t(lang, 'imprintLink') }]}
+  links={[{ href: '/' + (lang === 'en' ? '?lang=en' : ''), text: t(lang, 'backToTable') }, { href: '/impressum' + (lang === 'en' ? '?lang=en' : ''), text: t(lang, 'imprintLink') }, ...(hauptseiteUrl ? [{ href: hauptseiteUrl, text: t(lang, 'backToMain') }] : [])]}
   onlang={(l) => { lang = l; speichereSprache(l); }}
   ontheme={wechsleDesign}
 />

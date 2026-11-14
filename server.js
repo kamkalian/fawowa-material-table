@@ -11,7 +11,7 @@ import { adminPfad } from './lib/pfade.js';
 import { pruefeAlleLinks } from './lib/linkpruefung.js';
 import { sicherheitsHeader, fehlerAntwort } from './lib/sicherheit.js';
 import { Begrenzung } from './lib/spam.js';
-import { ladeUnterstuetzung, ladePoweredBy, oeffentlicheAngaben, verarbeiteWebhook, uebernehmeLokaleUnterstuetzer } from './lib/unterstuetzung.js';
+import { ladeUnterstuetzung, ladePoweredBy, ladeHauptseite, oeffentlicheAngaben, verarbeiteWebhook, uebernehmeLokaleUnterstuetzer } from './lib/unterstuetzung.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
@@ -111,13 +111,19 @@ app.get('/api/v2/materialien/:id', (req, res) => {
 // Einstellungen, die die Oberfläche braucht (Adresse des Admin-Bereichs für den dezenten Link)
 const UNTERSTUETZUNG = ladeUnterstuetzung();
 const POWERED_BY = ladePoweredBy();
+const HAUPTSEITE_URL = ladeHauptseite();
 // Angaben zum Betreiber für die Datenschutzerklärung; in der .env steht \n für einen Zeilenumbruch
 const BETREIBER = (process.env.OPERATOR || '').replace(/\\n/g, '\n').trim().slice(0, 800) || null;
 // Name der verantwortlichen Person (Impressum, § 18 Abs. 2 MStV); ohne Angabe wird sie aus den Angaben zum Betreiber abgeleitet
 const BETREIBER_PERSON = (process.env.OPERATOR_PERSON || '').trim().slice(0, 200) || null;
 
+// Gesundheitsprüfung für die Hauptseite und den Docker-Healthcheck (jedes Tool bietet GET /api/health, siehe design_rules.md der Hauptseite)
+app.get('/api/health', (req, res) => {
+  res.set('Cache-Control', 'no-store').json({ ok: true });
+});
+
 app.get('/api/v2/einstellungen', (req, res) => {
-  res.json({ adminPfad: ADMIN_PFAD, unterstuetzung: oeffentlicheAngaben(speicher, UNTERSTUETZUNG), poweredBy: POWERED_BY, betreiber: BETREIBER, betreiberPerson: BETREIBER_PERSON });
+  res.json({ hauptseiteUrl: HAUPTSEITE_URL, adminPfad: ADMIN_PFAD, unterstuetzung: oeffentlicheAngaben(speicher, UNTERSTUETZUNG), poweredBy: POWERED_BY, betreiber: BETREIBER, betreiberPerson: BETREIBER_PERSON });
 });
 
 // Ko-fi meldet hier neue Zuwendungen (nur mit KOFI_VERIFICATION_TOKEN in der .env). Gespeichert wird nur der Betrag.
